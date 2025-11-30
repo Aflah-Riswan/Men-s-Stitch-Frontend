@@ -6,6 +6,9 @@ import { useSelector } from 'react-redux'
 // import RequireAuth from './RequireAuth'
 import Login from './pages/Login'
 import Home from './Home'
+import AddProducts from './pages/admin/AddProducts'
+import CategoryPage from './pages/admin/Category'
+import AddCategoryPage from './pages/admin/AddCategory'
 
 
 function App() {
@@ -18,8 +21,13 @@ function App() {
         role  === "admin" ? <Navigate to ='/admin/dashboard'/>
         : role ==='user' ? <Navigate to ='/'/> : <Login/>
         }/>
+        
+        <Route path ='/categories' element={<CategoryPage/>} />
+        <Route path = '/add/categories' element={<AddCategoryPage/>}/>
+
         <Route path = '/' element={<Home/>}/>
         <Route path ='/admin/dashboard' element={role ? <DashboardDesign/> : <Navigate to ='/login' />}/>
+        <Route path = '/admin/products/add' element = {role ? <AddProducts/> : <Navigate to ='/login' />}/>
       </Routes>
      </BrowserRouter>
     </>

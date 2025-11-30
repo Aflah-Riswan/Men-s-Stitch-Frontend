@@ -38,6 +38,7 @@ const authSlice =createSlice({
      state.accessToken=null,
      state.isError=false
      localStorage.removeItem("accessToken")
+     localStorage.removeItem("role")
     },
     clearError : (state) =>{
       state.isError =null
@@ -54,8 +55,6 @@ const authSlice =createSlice({
       state.isError = null
     })
     .addCase(loginUser.fulfilled, (state,action) =>{
-      console.log("fulfilled")
-      console.log(action.payload)
       state.isLoading=false
       state.role = action.payload.role
       state.accessToken = action.payload.accessToken

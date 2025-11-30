@@ -1,0 +1,120 @@
+import React from 'react';
+import { Plus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
+import AdminSidebar from '../../Components/AdminSidebar';
+
+const CategoryPage = () => {
+  // Mock data
+  const categories = [
+    { id: 1, name: "New Arrivals", sales: "15,020", stock: "2000", date: "29 Dec 2022", status: "Unlist", offer: "0", max: "0" },
+    { id: 2, name: "Tops", sales: "998", stock: "700", date: "24 Dec 2022", status: "Unlist", offer: "0", max: "0" },
+    { id: 3, name: "Sports Wear", sales: "576", stock: "500", date: "12 Dec 2022", status: "List", offer: "10", max: "100" },
+    { id: 4, name: "Casuals", sales: "998", stock: "700", date: "24 Dec 2022", status: "Unlist", offer: "0", max: "0" },
+    { id: 5, name: "Bottom Wears", sales: "576", stock: "500", date: "12 Dec 2022", status: "List", offer: "10", max: "100" },
+    { id: 6, name: "Festivals", sales: "576", stock: "500", date: "12 Dec 2022", status: "List", offer: "10", max: "100" },
+  ];
+
+  const categoryCards = [
+    { title: "New Arrivals", img: "bg-gray-200" },
+    { title: "Tops", img: "bg-gray-200" },
+    { title: "Sports Wear", img: "bg-blue-900" },
+    { title: "Casuals", img: "bg-yellow-500" },
+    { title: "Bottom Wears", img: "bg-red-800" },
+    { title: "Festivals", img: "bg-green-700" },
+  ];
+
+  return (
+    // 1. Main container must be a flexbox to sit side-by-side
+    <div className="flex min-h-screen bg-gray-50">
+      
+      {/* 2. Add the Sidebar Component here */}
+      <AdminSidebar />
+
+      {/* 3. Wrap your page content in a div that takes the remaining space (flex-1) */}
+      <div className="flex-1 p-8 overflow-y-auto h-screen">
+        
+        {/* --- HEADER SECTION --- */}
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-gray-800 mb-6">Categories</h2>
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-700">Discover</h3>
+            <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition">
+              <Plus size={18} />
+              Add Category
+            </button>
+          </div>
+
+          {/* --- DISCOVER GRID CARDS --- */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            {categoryCards.map((card, index) => (
+              <div key={index} className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg ${card.img} flex items-center justify-center shrink-0`}>
+                  <ImageIcon size={16} className="text-white opacity-70" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 truncate">{card.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* --- TABLE SECTION --- */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-[#1a4d2e] text-white">
+                <tr>
+                  <th className="px-6 py-4 font-medium">SNO</th>
+                  <th className="px-6 py-4 font-medium">Category Name</th>
+                  <th className="px-6 py-4 font-medium">Sales (Last 7 days)</th>
+                  <th className="px-6 py-4 font-medium">Stock</th>
+                  <th className="px-6 py-4 font-medium">Date Added</th>
+                  <th className="px-6 py-4 font-medium">List / Unlist</th>
+                  <th className="px-6 py-4 font-medium text-center">Action</th>
+                  <th className="px-6 py-4 font-medium text-center">Offer %</th>
+                  <th className="px-6 py-4 font-medium text-center">Max Redeemable ₹</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {categories.map((item, index) => (
+                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500">{item.id}</td>
+                    <td className="px-6 py-4 font-medium text-gray-800">{item.name}</td>
+                    <td className="px-6 py-4 text-gray-600">{item.sales}</td>
+                    <td className="px-6 py-4 text-gray-600">{item.stock}</td>
+                    <td className="px-6 py-4 text-gray-500">{item.date}</td>
+                    <td className="px-6 py-4">
+                      <button 
+                        className={`
+                          flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold text-white transition-all
+                          ${item.status === 'Unlist' ? 'bg-[#7fad39] flex-row' : 'bg-red-500 flex-row-reverse'}
+                        `}
+                      >
+                        <span>{item.status.toUpperCase()}</span>
+                        <div className="w-3 h-3 bg-white rounded-full shadow-sm" />
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded border border-gray-200">
+                          <Pencil size={14} />
+                        </button>
+                        <button className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded border border-gray-200">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center font-medium text-gray-700">{item.offer}</td>
+                    <td className="px-6 py-4 text-center font-medium text-gray-700">{item.max}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default CategoryPage;

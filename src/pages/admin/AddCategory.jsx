@@ -2,17 +2,20 @@
 
 import React, { useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import axios from 'axios';
 
 const AddCategoryPage = () => {
 
   const inputBoxRef = useRef(null)
   const [fileName, setFileName] = useState('No file choosen')
   const [preview, setPreview] = useState(null)
-  const [listed,setListed] = useState('listed')
- 
+  const [listed, setListed] = useState('listed')
+  const { register, handleSubmit, formState: { errors } } = useForm()
 
   function handleClick(e) {
     e.preventDefault()
+    e.stopPropagation();
     console.log("1. Button Clicked!");
 
     if (inputBoxRef.current) {
@@ -28,8 +31,26 @@ const AddCategoryPage = () => {
     const url = URL.createObjectURL(e.target.files[0])
     setPreview(url)
     setFileName(e.target.files[0].name)
-    console.log(url)
-    console.log(fileName)
+
+  }
+
+  const {
+    ref: fileRef,
+    onChange: fileOnChange,
+    ...fileRest
+  } = register('headerImage', { required: true });
+
+  const onSubmit = async (data)=> {
+    try {
+      const formData = new FormData ()
+      formData.append('image',data.headerImage[0])
+      const uploadresponse = await axios.post('http://localhost:3000/api/upload',formData)
+      console.log(uploadresponse.data)
+
+    } catch (error) {
+      
+    }
+
   }
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans text-gray-800">
@@ -40,7 +61,7 @@ const AddCategoryPage = () => {
         <h1 className="text-2xl font-bold text-gray-900 mt-2">Add New Category</h1>
       </div>
 
-      <form action="">
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-8" >
 
           {/* --- Header Image Upload --- */}
@@ -49,10 +70,19 @@ const AddCategoryPage = () => {
             <input
               type="file"
               className="hidden"
-              ref={inputBoxRef}
-              onChange={(e) => handleChangeFileName(e)}
+              {...fileRest} // 1. Pass name, onBlur, etc.
+              ref={(e) => {
+                fileRef(e); // 2. Share ref with React Hook Form
+                inputBoxRef.current = e; // 3. Share ref with your custom click handler
+              }}
+              onChange={(e) => {
+                fileOnChange(e); // 4. Tell RHF the file changed
+                handleChangeFileName(e); // 5. Run your preview logic
+              }}
             />
-            <div className="border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-xl p-8 flex flex-col items-center justify-center text-center h-64" onClick={handleClick}>
+
+
+            <div className="border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-xl p-8 flex flex-col items-center justify-center text-center h-64" onClick={(e)=>handleClick(e)}>
 
               {preview ? (
                 <>
@@ -65,7 +95,8 @@ const AddCategoryPage = () => {
                 <>
                   <p className="text-red-500 text-sm">{fileName}</p>
                   <p className="text-sm text-gray-500 mb-4">Drag and drop image here, or click add image</p>
-                  <button className="px-6 py-2 bg-blue-100 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors" onClick={handleClick}>
+                  {errors.headerImage && <span>This field is required</span>}
+                  <button className="px-6 py-2 bg-blue-100 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors" onClick={(e)=>handleClick(e)}>
                     Add Image
                   </button>
                 </>
@@ -81,8 +112,10 @@ const AddCategoryPage = () => {
               <input
                 type="text"
                 placeholder="category Offer"
+                {...register('categoryOffer', { required: true })}
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
               />
+              {errors.categoryOffer && <span>This field is required</span>}
             </div>
 
             <div className="flex-1">
@@ -90,19 +123,22 @@ const AddCategoryPage = () => {
               <input
                 type="text"
                 placeholder="Max Redeemable"
+                {...register('maxRedeemable', { required: true })}
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
               />
+              {errors.maxRedeemable && <span>This field is required</span>}
             </div>
 
 
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">Discount Type :</label>
               <div className="relative">
-                <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600">
-                  <option>Flat</option>
-                  <option>Percentage</option>
+                <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600" {...register('discountTypes', { required: true })}>
+                  <option value='Flat'>Flat</option>
+                  <option value='Percentage'>Percentage</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                {errors.discoutTypes && <span>This field is required</span>}
               </div>
             </div>
           </div>
@@ -115,47 +151,52 @@ const AddCategoryPage = () => {
               type="text"
               placeholder="Type category name here..."
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
+              {...register('categoryName', { required: true })}
             />
+            {errors.categoryName && <span>This field is required</span>}
           </div>
 
           {/* --- Parent Category --- */}
           <div>
             <div className="relative">
-              <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600">
+              <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600" defaultValue='' {...register('parentCategory', { required: true })}>
                 <option>Select your parent-categories</option>
-                <option>None</option>
-                <option>Men</option>
-                <option>Women</option>
+                <option value='none'>None</option>
+                <option value='shirts'>Shirts</option>
+                <option value='pants'>Pants</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              {errors.parentCategory && <span>This field is required</span>}
             </div>
           </div>
 
-         
+
           <div className="space-y-6 pt-4">
 
             {/* Custom Radio Buttons for Visibility */}
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center   ${listed  === 'listed' ? 'border-black-700 bg-white focus:ring-black':'border-gray-300'  }`}>
-                 
+                <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center   ${listed === 'listed' ? 'border-black-700 bg-white focus:ring-black' : 'border-gray-300'}`}>
+
                 </div>
                 <span className="text-sm font-medium text-gray-700">Listed</span>
-                <input type="radio" name="visibility" className="hidden" value={listed} onClick={()=>setListed('listed')}/>
+                <input type="radio" name="visibility" className="hidden" value='listed' onClick={(e) => setListed(e.target.value)} {...register('visibility')} />
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
-                <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center   ${listed  === 'unlisted' ? 'border-black-700 bg-white focus:ring-black':'border-gray-300 ' }`}>
+                <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center   ${listed === 'unlisted' ? 'border-black-700 bg-white focus:ring-black' : 'border-gray-300 '}`}>
 
                 </div>
                 <span className="text-sm font-medium text-gray-700">Unlisted</span>
-                <input type="radio" name="visibility" className="hidden" value={listed} onClick={()=>setListed('unlisted')} />
+                <input type="radio" name="visibility" className="hidden" value='unlisted' onClick={(e) => setListed(e.target.value)}  {...register('visibility')} />
               </label>
             </div>
 
             {/* Checkbox */}
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black" />
+              <input type="checkbox" className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black"
+                {...register('isFeatured')}
+              />
               <span className="text-sm text-gray-600">Highlight this Category in a featured section.</span>
             </label>
 
@@ -163,7 +204,7 @@ const AddCategoryPage = () => {
 
           {/* --- Submit Button --- */}
           <div>
-            <button className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-900 transition-colors">
+            <button className="px-8 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-900 transition-colors" type='submit'>
               Add Category
             </button>
           </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import AdminSidebar from '../../Components/AdminSidebar';
 
-const CategoryPage = () => {
+const Category = () => {
   // Mock data
   const categories = [
     { id: 1, name: "New Arrivals", sales: "15,020", stock: "2000", date: "29 Dec 2022", status: "Unlist", offer: "0", max: "0" },
@@ -27,7 +27,7 @@ const CategoryPage = () => {
     <div className="flex min-h-screen bg-gray-50">
       
       {/* 2. Add the Sidebar Component here */}
-      <AdminSidebar />
+     
 
       {/* 3. Wrap your page content in a div that takes the remaining space (flex-1) */}
       <div className="flex-1 p-8 overflow-y-auto h-screen">
@@ -117,4 +117,4 @@ const CategoryPage = () => {
   );
 };
 
-export default CategoryPage;
+export default Category;

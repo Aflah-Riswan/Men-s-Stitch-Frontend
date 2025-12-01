@@ -10,7 +10,7 @@ const AddProducts = () => {
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
 
       {/* --- SIDEBAR (Ideally this goes in src/layouts/AdminLayout.jsx) --- */}
-      <AdminSidebar />
+      
 
       {/* --- MAIN CONTENT (src/pages/admin/products/AddProductPage.jsx) --- */}
       <main className="flex-1 p-8 overflow-y-auto">

@@ -2,7 +2,7 @@
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { loginUser } from '../../redux/slice/authSlice';
+import { loginUser } from '../redux/slice/authSlice';
 import { useEffect, useState } from 'react';
 
 

@@ -27,6 +27,8 @@ const AdminSidebar = () => {
   };
 
   return (
+    
+     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0">
       
       {/* --- HEADER --- */}
@@ -151,6 +153,8 @@ const AdminSidebar = () => {
       </div>
 
     </aside>
+    </div> 
+    
   );
 };
 

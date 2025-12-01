@@ -6,7 +6,7 @@ export default function Home (){
 
   return(
     <>
-    <Navbar/>
+ 
   
     <section className="relative w-full bg-[#FACC15] overflow-hidden font-sans">
       

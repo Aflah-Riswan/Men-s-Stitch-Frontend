@@ -1,36 +1,53 @@
-
-
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import DashboardDesign from './pages/admin/Dashboard'
-import { useSelector } from 'react-redux'
-// import RequireAuth from './RequireAuth'
-import Login from './pages/Login'
-import Home from './Home'
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
+import PublicRoutes from './Components/PublicRoutes'
+import UserLayout from './Components/layout/userLayout'
 import AddProducts from './pages/admin/AddProducts'
-import CategoryPage from './pages/admin/Category'
+import  Category from './pages/admin/Category'
+import AdminLayout from './Components/layout/adminLayout'
+import DashboardDesign from './pages/admin/Dashboard'
+import Login from './Login'
+import RequireAuth from './Components/RequireAuth'
+import Home from './Home'
 import AddCategoryPage from './pages/admin/AddCategory'
 
-
 function App() {
-  const {role,accessToken}=useSelector((state)=>state.auth)
   return (
-    <>
-     <BrowserRouter>
-     <Routes>
-       <Route path='/login'  element={
-        role  === "admin" ? <Navigate to ='/admin/dashboard'/>
-        : role ==='user' ? <Navigate to ='/'/> : <Login/>
-        }/>
-        
-        <Route path ='/categories' element={<CategoryPage/>} />
-        <Route path = '/add/categories' element={<AddCategoryPage/>}/>
+    <BrowserRouter>
+      <Routes>
 
-        <Route path = '/' element={<Home/>}/>
-        <Route path ='/admin/dashboard' element={role ? <DashboardDesign/> : <Navigate to ='/login' />}/>
-        <Route path = '/admin/products/add' element = {role ? <AddProducts/> : <Navigate to ='/login' />}/>
+   
+            <Route element={<PublicRoutes/>}>
+                <Route path='/login' element={<Login/>} />
+            </Route>
+
+
+            <Route element={<RequireAuth allowedRoles={['admin']} />}>
+                <Route path='/admin' element={<AdminLayout/>}>
+                    <Route path='dashboard' element={<DashboardDesign/>} />
+                    <Route path='products' element={<h1>Products</h1>} />
+                    <Route path ='products/add' element={<AddProducts/>} />
+                    <Route path ='categories' element={<Category/>}/>
+                    <Route path ='categories/add' element={<AddCategoryPage/>}/>
+                </Route>
+            </Route>
+
+
+  
+            <Route path='/' element={<UserLayout/>}>
+                
+                <Route index element={<Home/>} />
+               
+                <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
+                    <Route path='profile' element={<h1>user profile</h1>} />
+                    <Route path='orders' element={<h1>My Orders</h1>} />
+                </Route>
+
+            </Route>
+
+       
+
       </Routes>
-     </BrowserRouter>
-    </>
+    </BrowserRouter>
   )
 }
 

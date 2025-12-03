@@ -9,13 +9,14 @@ import Login from './Login'
 import RequireAuth from './Components/RequireAuth'
 import Home from './Home'
 import AddCategoryPage from './pages/admin/AddCategory'
+import EditCategory from './pages/admin/EditCategory'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-   
+           
             <Route element={<PublicRoutes/>}>
                 <Route path='/login' element={<Login/>} />
             </Route>
@@ -28,6 +29,7 @@ function App() {
                     <Route path ='products/add' element={<AddProducts/>} />
                     <Route path ='categories' element={<Category/>}/>
                     <Route path ='categories/add' element={<AddCategoryPage/>}/>
+                    <Route path ='categories/edit/:id' element ={<EditCategory/>}/>
                 </Route>
             </Route>
 

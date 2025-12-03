@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
+import config from '../../utils/config';
 
 const AddCategoryPage = () => {
 
@@ -41,7 +42,8 @@ const AddCategoryPage = () => {
   } = register('headerImage', { required: true });
 
   const onSubmit = async (data) => {
-    const {categoryOffer,categoryName,discoutTypes,isFeatured,maxRedeemable,parentCategory,visibility} = data
+    const {categoryOffer,categoryName,discountType,isFeatured,maxRedeemable,parentCategory,visibility} = data
+    console.log("discount type = ",discountType)
     try {
       const formData = new FormData()
       formData.append('image', data.headerImage[0])
@@ -50,15 +52,15 @@ const AddCategoryPage = () => {
       console.log(data)
       const categoryData = {
         name:categoryName,
-        image:uploadresponse.data,
-        parent:parentCategory,
-        categoryOffer,
-        discoutTypes,
+        image:uploadresponse.data.imageUrl,
+        parent:parentCategory === 'None' && null,
+        categoryOffer:Number(categoryOffer),
+        discountType,
         maxRedeemable,
         isListed:visibility === 'listed' ? true :false,
         isFeatured,
       }
-     const responseCategory = await axios.post('http://localhost:3000/api/categories',categoryData)
+     const responseCategory = await axios.post('http://localhost:3000/api/categories',categoryData,config)
      console.log(responseCategory.data)
     } catch (error) {
 
@@ -156,7 +158,7 @@ const AddCategoryPage = () => {
                 <div className="relative">
                   <select
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
-                    {...register('discountTypes', { required: true })}
+                    {...register('discountType', { required: true })}
                   >
                     <option value='Flat'>Flat</option>
                     <option value='Percentage'>Percentage</option>

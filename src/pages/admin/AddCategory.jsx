@@ -4,7 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import config from '../../utils/config';
+import axiosInstance from '../../utils/axiosInstance';
 
 const AddCategoryPage = () => {
 
@@ -42,28 +42,34 @@ const AddCategoryPage = () => {
   } = register('headerImage', { required: true });
 
   const onSubmit = async (data) => {
+     console.log(data)
     const {categoryOffer,categoryName,discountType,isFeatured,maxRedeemable,parentCategory,visibility} = data
     console.log("discount type = ",discountType)
     try {
       const formData = new FormData()
       formData.append('image', data.headerImage[0])
-      const uploadresponse = await axios.post('http://localhost:3000/api/upload', formData)
+      const uploadresponse = await axiosInstance.post('/upload', formData,
+      { headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       console.log(uploadresponse.data)
-      console.log(data)
+     
       const categoryData = {
-        name:categoryName,
+        categoryName,
         image:uploadresponse.data.imageUrl,
-        parent:parentCategory === 'None' && null,
+        parentCategory:parentCategory === 'None' && null,
         categoryOffer:Number(categoryOffer),
         discountType,
         maxRedeemable,
         isListed:visibility === 'listed' ? true :false,
         isFeatured,
       }
-     const responseCategory = await axios.post('http://localhost:3000/api/categories',categoryData,config)
+      console.log(categoryData)
+     const responseCategory = await axiosInstance.post('/categories',categoryData)
      console.log(responseCategory.data)
     } catch (error) {
-
+      console.log("error in onSubmit : ",error)
     }
 
   }
@@ -99,6 +105,7 @@ const AddCategoryPage = () => {
                   fileOnChange(e);
                   handleChangeFileName(e);
                 }}
+                accept='image/*'
               />
 
               <div
@@ -132,63 +139,70 @@ const AddCategoryPage = () => {
             <div className="flex flex-col md:flex-row gap-6 items-end w-full">
 
               <div className='flex-1 w-full'>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Offer:</label>
+                <label className="block text-md font-medium text-gray-700 mb-2">Category Offer:</label>
                 <input
-                  type="text"
+                  type="number"
                   placeholder="Category Offer"
-                  {...register('categoryOffer', { required: true })}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
+                  {...register('categoryOffer',{required:"Offer percentage is Required",
+                    min:{value:0,message:'cannt be negative'},
+                    max:{value:100,message:'cannt become greater than 100'}
+                  })}
+                  className=" no-spinner w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
                 />
-                {errors.categoryOffer && <span className="text-red-500 text-xs mt-1 block">This field is required</span>}
+                {errors.categoryOffer && <span className="text-red-500 text-sm mt-1 block">{errors.categoryOffer.message}</span>}
               </div>
 
               <div className="flex-1 w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Max Redeemable:</label>
+                <label className="block text-md font-medium text-gray-700 mb-2">Max Redeemable:</label>
                 <input
                   type="text"
                   placeholder="Max Redeemable"
-                  {...register('maxRedeemable', { required: true })}
+                  {...register('maxRedeemable', { required:'maxRedeemable is Required',
+                    min:{value:1,message:'must be greater than 1'}
+                  })}
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
                 />
-                {errors.maxRedeemable && <span className="text-red-500 text-xs mt-1 block">This field is required</span>}
+                {errors.maxRedeemable && <span className="text-red-500 text-sm mt-1 block">{errors.maxRedeemable.message}</span>}
               </div>
 
               <div className="flex-1 w-full">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Discount Type :</label>
+                <label className="block text-md font-medium text-gray-700 mb-2">Discount Type :</label>
                 <div className="relative">
                   <select
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
-                    {...register('discountType', { required: true })}
+                    defaultValue=''
+                    {...register('discountType', { required:'Please select a discount type',validate:(value)=>value !== '' || "select a valid discount type" })}
                   >
+                    <option value="" disabled>Select Discount Type</option>
                     <option value='Flat'>Flat</option>
                     <option value='Percentage'>Percentage</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  {errors.discoutTypes && <span className="text-red-500 text-xs mt-1 block">This field is required</span>}
+                  {errors.discountType && <span className="text-red-500 text-sm mt-1 block">{errors.discountType.message}</span>}
                 </div>
               </div>
             </div>
 
             {/* --- Category Name --- */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+              <label className="block text-md font-medium text-gray-700 mb-2">Category Name</label>
               <input
                 type="text"
                 placeholder="Type category name here..."
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
-                {...register('categoryName', { required: true })}
+                {...register('categoryName', { required:'category name is required',minLength:{value:3,message:'name should be with minimum characters of 3'},pattern:{value:/^[a-zA-Z\s]+$/,message:'name can contain only letters'} })}
               />
-              {errors.categoryName && <span className="text-red-500 text-xs mt-1 block">This field is required</span>}
+              {errors.categoryName && <span className="text-red-500 text-sm mt-1 block">{errors.categoryName.message}</span>}
             </div>
 
             {/* --- Parent Category --- */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Parent Category</label>
+              <label className="block text-md font-medium text-gray-700 mb-2">Parent Category</label>
               <div className="relative">
                 <select
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
                   defaultValue=''
-                  {...register('parentCategory', { required: true })}
+                  {...register('parentCategory', { required:' parent category is required',validate:(value)=>value !== ''||'select a valid parent category option' })}
                 >
                   <option value="" disabled>Select your parent-categories</option>
                   <option value='none'>None</option>
@@ -196,7 +210,7 @@ const AddCategoryPage = () => {
                   <option value='pants'>Pants</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                {errors.parentCategory && <span className="text-red-500 text-xs mt-1 block">This field is required</span>}
+                {errors.parentCategory && <span className="text-red-500 text-sm mt-1 block">{errors.parentCategory.message}</span>}
               </div>
             </div>
 
@@ -207,13 +221,13 @@ const AddCategoryPage = () => {
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center ${listed === 'listed' ? 'border-black bg-white' : 'border-gray-300'}`}></div>
-                  <span className="text-sm font-medium text-gray-700">Listed</span>
+                  <span className="text-md font-medium text-gray-700">Listed</span>
                   <input type="radio" name="visibility" className="hidden" value='listed' onClick={(e) => setListed(e.target.value)} {...register('visibility')} />
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <div className={`w-5 h-5 rounded-full border-4 flex items-center justify-center ${listed === 'unlisted' ? 'border-black bg-white' : 'border-gray-300'}`}></div>
-                  <span className="text-sm font-medium text-gray-700">Unlisted</span>
+                  <span className="text-md font-medium text-gray-700">Unlisted</span>
                   <input type="radio" name="visibility" className="hidden" value='unlisted' onClick={(e) => setListed(e.target.value)} {...register('visibility')} />
                 </label>
               </div>
@@ -225,7 +239,7 @@ const AddCategoryPage = () => {
                   className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black accent-black"
                   {...register('isFeatured')}
                 />
-                <span className="text-sm text-gray-600">Highlight this Category in a featured section.</span>
+                <span className="text-md text-gray-600">Highlight this Category in a featured section.</span>
               </label>
 
             </div>

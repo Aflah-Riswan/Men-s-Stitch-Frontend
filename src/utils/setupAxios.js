@@ -23,17 +23,13 @@ const setupAxios = (store) => {
     async (error) => {
       const originalRequest = error.config
 
-      // 🛑 FIX 1: SAFETY CHECK
-      // If the error comes from the refresh-token endpoint itself, 
-      // STOP immediately. Don't retry. Log out.
+     
       if (originalRequest.url.includes('/auth/refresh-token')) {
         store.dispatch(setLogout()); 
-        window.location.href = '/login'; // Redirect to login
+        window.location.href = '/login'; 
         return Promise.reject(error);
       }
 
-      // 🛑 FIX 2: LOGIC PLACEMENT
-      // The try-catch MUST be inside this IF block
       if (error.response && error.response.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true
         
@@ -51,12 +47,8 @@ const setupAxios = (store) => {
 
         } catch (refreshError) {
           console.log("Refresh token failed: ", refreshError)
-          
-          // Clear Redux state
           store.dispatch(setLogout());
-          
-          // 🛑 FIX 3: SYNTAX ERROR
-          // href is a property, use '=' not '()'
+         
           window.location.href = '/login'; 
           
           return Promise.reject(refreshError)

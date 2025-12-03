@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Image as ImageIcon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories, toggleListButton } from '../../../redux/slice/categorySlice';
+import { fetchCategories, toggleListButton,deleteCategory } from '../../../redux/slice/categorySlice';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -12,7 +12,7 @@ const Category = () => {
   const dispatch = useDispatch()
   useEffect(()=>{
     dispatch(fetchCategories())  
-  },[])
+  },[dispatch,categories])
   const navigate = useNavigate()
 
 
@@ -29,7 +29,7 @@ const Category = () => {
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-700">Discover</h3>
-            <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition">
+            <button className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-800 transition" onClick={()=>navigate('/admin/categories/add')}>
               <Plus size={18} />
               Add Category
             </button>
@@ -42,7 +42,7 @@ const Category = () => {
                 <div className={`w-10 h-10 rounded-lg  flex items-center justify-center shrink-0`}>
                  <img src={card.image} alt="" sizes='16' />
                 </div>
-                <span className="text-sm font-medium text-gray-700 truncate">{card.name}</span>
+                <span className="text-sm font-medium text-gray-700 truncate">{card.categoryName}</span>
               </div>
             ))}
           </div>
@@ -56,12 +56,12 @@ const Category = () => {
                 <tr>
                   <th className="px-6 py-4 font-medium">SNO</th>
                   <th className="px-6 py-4 font-medium">Category Name</th>
-                  <th className="px-6 py-4 font-medium">Sales (Last 7 days)</th>
+                  <th className="px-6 py-4 font-medium">Offer</th>
                   <th className="px-6 py-4 font-medium">Stock</th>
                   <th className="px-6 py-4 font-medium">Date Added</th>
                   <th className="px-6 py-4 font-medium">List / Unlist</th>
                   <th className="px-6 py-4 font-medium text-center">Action</th>
-                  <th className="px-6 py-4 font-medium text-center">Offer %</th>
+                  <th className="px-6 py-4 font-medium text-center">Discount-Type</th>
                   <th className="px-6 py-4 font-medium text-center">Max Redeemable ₹</th>
                 </tr>
               </thead>
@@ -69,8 +69,8 @@ const Category = () => {
                 {categories.map((item, index) => (
                   <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-gray-500">{index+1}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{item.name}</td>
-                    <td className="px-6 py-4 text-gray-600">{5000}</td>
+                    <td className="px-6 py-4 font-medium text-gray-800">{item.categoryName}</td>
+                    <td className="px-6 py-4 text-gray-600">{item.categoryOffer}</td>
                     <td className="px-6 py-4 text-gray-600">{100}</td>
                     <td className="px-6 py-4 text-gray-500">{item.createdAt}</td>
                     <td className="px-6 py-4">
@@ -90,7 +90,7 @@ const Category = () => {
                         <button className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded border border-gray-200" onClick={()=>navigate(`edit/${item._id}`)}>
                           <Pencil size={14} />
                         </button>
-                        <button className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded border border-gray-200">
+                        <button className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded border border-gray-200" onClick={()=>dispatch(deleteCategory(item._id))}>
                           <Trash2 size={14} />
                         </button>
                       </div>

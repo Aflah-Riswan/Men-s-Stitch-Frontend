@@ -1,10 +1,12 @@
 
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
+import Modal from '../../Components/Modal';
+import { useNavigate } from 'react-router-dom';
 
 const AddCategoryPage = () => {
 
@@ -13,11 +15,30 @@ const AddCategoryPage = () => {
   const [preview, setPreview] = useState(null)
   const [listed, setListed] = useState('listed')
   const { register, handleSubmit, formState: { errors } } = useForm()
+  const [showModal, setShowModal] = useState(false);
+  const [parentCategories, setParentCategories] = useState([])
+  const navigate = useNavigate()
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axiosInstance.get('/categories')
+        const categories = response.data.categories
+        console.log(categories)
+        const validParents = categories.filter((cat) => cat.parentCategory === null)
+        setParentCategories(validParents)
+        
+      } catch (error) {
+        console.log("found error : ",error)
+      }
+
+    }
+    fetchCategories()
+
+  },[])
 
   function handleClick(e) {
     e.preventDefault()
-    e.stopPropagation();
-    console.log("1. Button Clicked!");
+    e.stopPropagation()
 
     if (inputBoxRef.current) {
       console.log("2. Opening File Dialog...");
@@ -42,41 +63,54 @@ const AddCategoryPage = () => {
   } = register('headerImage', { required: true });
 
   const onSubmit = async (data) => {
-     console.log(data)
-    const {categoryOffer,categoryName,discountType,isFeatured,maxRedeemable,parentCategory,visibility} = data
-    console.log("discount type = ",discountType)
+    console.log(data)
+    const { categoryOffer, categoryName, discountType, isFeatured, maxRedeemable, parentCategory, visibility } = data
+    console.log("discount type = ", discountType)
     try {
       const formData = new FormData()
       formData.append('image', data.headerImage[0])
       const uploadresponse = await axiosInstance.post('/upload', formData,
-      { headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        })
       console.log(uploadresponse.data)
-     
+
       const categoryData = {
         categoryName,
-        image:uploadresponse.data.imageUrl,
-        parentCategory:parentCategory === 'None' && null,
-        categoryOffer:Number(categoryOffer),
+        image: uploadresponse.data.imageUrl,
+        parentCategory: parentCategory === 'None' ? null : parentCategory,
+        categoryOffer: Number(categoryOffer),
         discountType,
         maxRedeemable,
-        isListed:visibility === 'listed' ? true :false,
+        isListed: visibility === 'listed' ? true : false,
         isFeatured,
       }
       console.log(categoryData)
-     const responseCategory = await axiosInstance.post('/categories',categoryData)
-     console.log(responseCategory.data)
+      const responseCategory = await axiosInstance.post('/categories', categoryData)
+      if (responseCategory.data.success) setShowModal(true);
     } catch (error) {
-      console.log("error in onSubmit : ",error)
+      console.log("error in onSubmit : ", error)
     }
 
   }
 
+  const handleModalClose = () => {
+    setShowModal(false);
+    navigate('/admin/categories'); // Navigate ONLY when clicked
+  };
   return (
-   
+
     <div className="p-8 bg-gray-50 w-full h-full font-sans text-gray-800">
+
+      <Modal
+        isOpen={showModal}
+        title="Success!"
+        message="Category has been updated successfully."
+        onConfirm={handleModalClose}
+        type="success"
+      />
 
       <div className="w-full"> {/* Container takes full width */}
 
@@ -143,9 +177,10 @@ const AddCategoryPage = () => {
                 <input
                   type="number"
                   placeholder="Category Offer"
-                  {...register('categoryOffer',{required:"Offer percentage is Required",
-                    min:{value:0,message:'cannt be negative'},
-                    max:{value:100,message:'cannt become greater than 100'}
+                  {...register('categoryOffer', {
+                    required: "Offer percentage is Required",
+                    min: { value: 0, message: 'cannt be negative' },
+                    max: { value: 100, message: 'cannt become greater than 100' }
                   })}
                   className=" no-spinner w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
                 />
@@ -157,8 +192,9 @@ const AddCategoryPage = () => {
                 <input
                   type="text"
                   placeholder="Max Redeemable"
-                  {...register('maxRedeemable', { required:'maxRedeemable is Required',
-                    min:{value:1,message:'must be greater than 1'}
+                  {...register('maxRedeemable', {
+                    required: 'maxRedeemable is Required',
+                    min: { value: 1, message: 'must be greater than 1' }
                   })}
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
                 />
@@ -171,7 +207,7 @@ const AddCategoryPage = () => {
                   <select
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
                     defaultValue=''
-                    {...register('discountType', { required:'Please select a discount type',validate:(value)=>value !== '' || "select a valid discount type" })}
+                    {...register('discountType', { required: 'Please select a discount type', validate: (value) => value !== '' || "select a valid discount type" })}
                   >
                     <option value="" disabled>Select Discount Type</option>
                     <option value='Flat'>Flat</option>
@@ -190,7 +226,7 @@ const AddCategoryPage = () => {
                 type="text"
                 placeholder="Type category name here..."
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
-                {...register('categoryName', { required:'category name is required',minLength:{value:3,message:'name should be with minimum characters of 3'},pattern:{value:/^[a-zA-Z\s]+$/,message:'name can contain only letters'} })}
+                {...register('categoryName', { required: 'category name is required', minLength: { value: 3, message: 'name should be with minimum characters of 3' }, pattern: { value: /^[a-zA-Z\s]+$/, message: 'name can contain only letters' } })}
               />
               {errors.categoryName && <span className="text-red-500 text-sm mt-1 block">{errors.categoryName.message}</span>}
             </div>
@@ -201,13 +237,14 @@ const AddCategoryPage = () => {
               <div className="relative">
                 <select
                   className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
-                  defaultValue=''
-                  {...register('parentCategory', { required:' parent category is required',validate:(value)=>value !== ''||'select a valid parent category option' })}
+                  defaultValue='None'
+                  {...register('parentCategory', { required: ' parent category is required', validate: (value) => value !== '' || 'select a valid parent category option' })}
                 >
-                  <option value="" disabled>Select your parent-categories</option>
-                  <option value='none'>None</option>
-                  <option value='shirts'>Shirts</option>
-                  <option value='pants'>Pants</option>
+                  <option value="None">Select your parent-categories</option>
+                  {parentCategories.map((parent) =>( 
+                    <option value={parent._id} key={parent._id}>{parent.categoryName}</option>
+                  ))}
+
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                 {errors.parentCategory && <span className="text-red-500 text-sm mt-1 block">{errors.parentCategory.message}</span>}

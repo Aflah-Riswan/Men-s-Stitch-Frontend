@@ -2,10 +2,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon } from 'lucide-react'; // Using Lucide icons as placeholders, you can swap them out.
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Form, useForm } from 'react-hook-form';
 import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
+import Modal from '../../Components/Modal';
 
 
 const EditCategory = () => {
@@ -14,7 +15,8 @@ const EditCategory = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm()
   const [preview, setPreview] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
-
+  const [showModal, setShowModal] = useState(false)
+  const navigate = useNavigate()
   const inputBoxRef = useRef(null)
   useEffect(() => {
 
@@ -62,7 +64,7 @@ const EditCategory = () => {
   async function onSubmit(data) {
     const { categoryName, categoryOffer, maxRedeemable, isListed, isFeatured, parentCategory, discountType } = data
     let finalImage = preview;
-   console.log(data)
+    console.log(data)
     try {
 
       if (selectedFile) {
@@ -78,23 +80,36 @@ const EditCategory = () => {
         categoryOffer,
         maxRedeemable,
         discountType,
-        parentCategory : parentCategory.toUpperCase() === 'NONE' ? null : parentCategory,
-        isListed:isListed === 'listed' ? true :false,
+        parentCategory: parentCategory.toUpperCase() === 'NONE' ? null : parentCategory,
+        isListed: isListed === 'listed' ? true : false,
         isFeatured,
       }
-     console.log('HII')
-      const result =  await axiosInstance.put(`categories/${id}/edit`,updatedCategory)
-      console.log(result.data)
+      console.log('HII')
+      const result = await axiosInstance.put(`categories/${id}/edit`, updatedCategory)
+      if (result.data.success) setShowModal(true)
     } catch (error) {
       console.log("error in onSubmit : ", error)
     }
 
   }
 
+  const handleModalClose = () => {
+    setShowModal(false);
+    navigate('/admin/categories'); // Navigate ONLY when clicked
+  };
+
   if (isLoading) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="flex h-screen font-sans bg-gray-50">
+
+      <Modal
+        isOpen={showModal}
+        title="Success!"
+        message="Category has been updated successfully."
+        onConfirm={handleModalClose}
+        type="success"
+      />
 
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">

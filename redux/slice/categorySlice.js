@@ -23,12 +23,12 @@ export const deleteCategory = createAsyncThunk('category/updateIsDeleted', async
   try {
     confirm("Are you sure")
     const response = await axiosInstance.patch(`/categories/${id}/delete`)
-    if(response.data.success){
-      return  response.data.deletedItem
+    if (response.data.success) {
+      return response.data.deletedItem
     }
     else return rejectWithValue(response.data.error)
   } catch (error) {
-   return  rejectWithValue(error.response?.data?.message || error.message)
+    return rejectWithValue(error.response?.data?.message || error.message)
   }
 
 })
@@ -37,13 +37,32 @@ const categorySlice = createSlice({
   name: 'category',
   initialState: {
     items: [],
+    parentCategories: [],
+    subCategories: [],
     isError: null,
     isLoading: false,
   },
   reducers: {
     getCategories: (state) => {
       return state.items
+    },
+    setParentCategories: (state, action) => {
+      const categories = action.payload
+      const parents = categories.filter((cat) => cat.parentCategory === null)
+      state.parentCategories = parents
+    },
+    setSubCategories: (state, action) => {
+      const selectedCategory = action.payload
+      console.log("selected : ",action.payload)
+      console.log("parents : ",state.parentCategories)
+      const filtered = state.items.filter(
+        (cat) => cat.parentCategory === selectedCategory._id
+      )
+      state.subCategories = filtered
+      console.log("filtered : ",filtered)
+      
     }
+    
   },
   extraReducers: (builder) => {
     builder.
@@ -53,6 +72,7 @@ const categorySlice = createSlice({
       .addCase(fetchCategories.fulfilled, (state, action) => {
         state.isLoading = false
         state.items = action.payload
+        console.log(action.payload)
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.isError = action.payload
@@ -90,5 +110,5 @@ const categorySlice = createSlice({
 
   }
 })
-export const { getCategories } = categorySlice.actions
+export const { getCategories, setParentCategories, setSubCategories } = categorySlice.actions
 export default categorySlice.reducer

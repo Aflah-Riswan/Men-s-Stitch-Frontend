@@ -1,7 +1,6 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import PublicRoutes from './Components/PublicRoutes'
 import UserLayout from './Components/layout/userLayout'
-import AddProducts from './pages/admin/AddProducts'
 import  Category from './pages/admin/Category'
 import AdminLayout from './Components/layout/adminLayout'
 import DashboardDesign from './pages/admin/Dashboard'
@@ -10,6 +9,8 @@ import RequireAuth from './Components/RequireAuth'
 import Home from './Home'
 import AddCategoryPage from './pages/admin/AddCategory'
 import EditCategory from './pages/admin/EditCategory'
+import ProductList from './pages/admin/products/ProductList'
+import AddProducts from './pages/admin/products/AddProducts'
 
 function App() {
   return (
@@ -25,7 +26,7 @@ function App() {
             <Route element={<RequireAuth allowedRoles={['admin']} />}>
                 <Route path='/admin' element={<AdminLayout/>}>
                     <Route path='dashboard' element={<DashboardDesign/>} />
-                    <Route path='products' element={<h1>Products</h1>} />
+                    <Route path='products' element={<ProductList/>} />
                     <Route path ='products/add' element={<AddProducts/>} />
                     <Route path ='categories' element={<Category/>}/>
                     <Route path ='categories/add' element={<AddCategoryPage/>}/>

@@ -219,11 +219,14 @@ const AddProducts = () => {
           attributes: formattedAttributes,
           coverImages: urlCollections,
           mainCategory,
-          subCategory,
+          subCategory:subCategory === '' ? null : subCategory,
           tags
         }
-        console.log(finalData)
-        alert("data finalized : ", finalData)
+        const result = await axiosInstance.post('/products',finalData)
+        dispatch
+        if(result.data.success)alert('data added into db') 
+        else  console.log(result.data) 
+        
       }
 
     } catch (error) {

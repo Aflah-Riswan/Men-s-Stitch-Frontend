@@ -8,6 +8,7 @@ import { fetchProducts, toggleProductList } from '../../../../redux/slice/produc
 import { fetchCategories } from '../../../../redux/slice/categorySlice';
 import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 export default function ProductList() {
 
@@ -21,6 +22,7 @@ export default function ProductList() {
   const categories = useSelector((state) => state.category.items)
   const pagination = useSelector((state) => state.product.pagination)
   const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const filters = {
@@ -233,7 +235,7 @@ export default function ProductList() {
                     {/* Actions */}
                     <td className="py-4 px-6 align-top text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit">
+                        <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit" onClick={()=>navigate(`edit/${product._id}`)}>
                           <Edit size={18} />
                         </button>
                         <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete">

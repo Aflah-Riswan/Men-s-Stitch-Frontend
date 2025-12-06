@@ -1,68 +1,49 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   PlusCircle, Search, Filter, Edit, Trash2,
-  Package, X, ChevronDown
+  Package, RotateCcw
 } from 'lucide-react';
-
-// Mock Data
-const ProductListData = [
-  {
-    id: 1,
-    name: "Men's Classic T-Shirt",
-    category: "Casuals",
-    price: "₹559",
-    status: "Active",
-    statusColor: "green",
-    variants: [
-      {
-        colorName: "Navy Blue",
-        colorCode: "#000080",
-        stock: { XS: 5, S: 20, M: 50, L: 30, XL: 10, XXL: 0 }
-      },
-      {
-        colorName: "Maroon",
-        colorCode: "#800000",
-        stock: { XS: 0, S: 10, M: 15, L: 5, XL: 0, XXL: 0 }
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Slim Fit Chinos",
-    category: "Trousers",
-    price: "₹1,299",
-    status: "Draft",
-    statusColor: "red",
-    variants: [
-      {
-        colorName: "Beige",
-        colorCode: "#F5F5DC",
-        stock: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0 }
-      }
-    ],
-    isListed: true
-  },
-  {
-    id: 3,
-    name: "Denim Jacket",
-    category: "Jackets",
-    price: "₹2,499",
-    status: "Active",
-    statusColor: "green",
-    variants: [
-      {
-        colorName: "Black",
-        colorCode: "#000000",
-        stock: { S: 5, M: 8, L: 2 }
-      }
-    ],
-    isListed: false
-  },
-];
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProducts, toggleProductList } from '../../../../redux/slice/productSlice';
+import { fetchCategories } from '../../../../redux/slice/categorySlice';
+import Stack from '@mui/material/Stack';
+import Pagination from '@mui/material/Pagination';
 
 export default function ProductList() {
-  const [showFilters, setShowFilters] = useState(false);
 
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [category, setCategory] = useState('')
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('')
+  const [status, setStatus] = useState('')
+  const products = useSelector((state) => state.product.items)
+  const categories = useSelector((state) => state.category.items)
+  const pagination = useSelector((state) => state.product.pagination)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    const filters = {
+      page:currentPage,
+      category,
+      search,
+      sort,
+      status
+    }
+    dispatch(fetchProducts(filters))
+    console.log("products : ", products)
+  }, [dispatch, currentPage, category, search, sort, status])
+
+  useEffect(() => {
+    dispatch(fetchCategories())
+  }, [])
+
+  function handleReset() {
+    setCategory('')
+    setStatus('')
+    setSort('')
+    setCurrentPage(1)
+  }
   return (
     <div className="w-full p-6 md:p-8 font-sans text-gray-800 h-full flex flex-col bg-gray-50 min-h-screen">
 
@@ -74,23 +55,29 @@ export default function ProductList() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex-col flex-1 min-h-[600px] flex overflow-hidden ">
 
         {/* --- TOP ACTION BAR --- */}
-        <div className="p-5 border-b border-gray-100 bg-white">
+        <div className="p-5 border-b border-gray-100 bg-white ">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
 
             {/* Search & Filter Toggle */}
             <div className="flex w-full md:w-auto gap-2">
               <div className="relative flex-1 md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input type="text" placeholder="Search products..." className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-md" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-md transition-all"
+                />
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`px-3 py-2 border rounded-lg flex items-center gap-2 text-md font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}
               >
-                <Filter size={16} /> Filters
+                <Filter size={18} /> Filters
               </button>
             </div>
 
@@ -102,182 +89,183 @@ export default function ProductList() {
 
           {/* --- FILTER OPTIONS PANEL (Collapsible) --- */}
           {showFilters && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4 animate-in slide-in-from-top-2 duration-200">
+            <div className="mt-4 p-5 bg-gray-50 border border-gray-200 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex flex-col md:flex-row gap-6 items-end">
 
-              {/* Category Filter */}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-600 uppercase">Category</label>
-                <div className="relative">
-                  <select className="w-full p-2 pl-3 pr-8 text-md border border-gray-300 rounded-md bg-white appearance-none focus:ring-1 focus:ring-blue-500 outline-none">
-                    <option>All Categories</option>
-                    <option>Casuals</option>
-                    <option>Trousers</option>
-                    <option>Jackets</option>
+                {/* Category Filter */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Category</label>
+                  <select className="p-2.5 border border-gray-300 rounded-lg text-sm bg-white outline-none focus:border-blue-500" value={category} onChange={(e) => setCategory(e.target.value)}>
+                    <option value="">All Categories</option>
+                    {categories.map((cat) => (
+                      <option value={cat._id}>{cat.categoryName}</option>
+                    ))
+
+                    }
+
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                 </div>
-              </div>
 
-              {/* Status Filter */}
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-gray-600 uppercase">Status</label>
-                <div className="relative">
-                  <select className="w-full p-2 pl-3 pr-8 text-md border border-gray-300 rounded-md bg-white appearance-none focus:ring-1 focus:ring-blue-500 outline-none">
-                    <option>All Status</option>
-                    <option>Active</option>
-                    <option>Draft</option>
-                    <option>Out of Stock</option>
+                {/* Status Filter */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Status</label>
+                  <select className="p-2.5 border border-gray-300 rounded-lg text-sm bg-white outline-none focus:border-blue-500" value={status} onChange={(e) => setStatus(e.target.value)}>
+                    <option value="">All Status</option>
+                    <option value="active">Listed (Active)</option>
+                    <option value="inactive">Unlisted (Inactive)</option>
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                 </div>
-              </div>
 
-              {/* Stock Level Filter */}
-              <div className="space-y-1">
-                <label className="text-sm font-semibold text-gray-600 uppercase">Stock Level</label>
-                <div className="relative">
-                  <select className="w-full p-2 pl-3 pr-8 text-md border border-gray-300 rounded-md bg-white appearance-none focus:ring-1 focus:ring-blue-500 outline-none">
-                    <option>Any</option>
-                    <option>Low Stock (&lt;10)</option>
-                    <option>Out of Stock</option>
+                {/* Sort Filter */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Sort By</label>
+                  <select className="p-2.5 border border-gray-300 rounded-lg text-sm bg-white outline-none focus:border-blue-500" value={sort} onChange={(e) => setSort(e.target.value)}>
+                    <option value="">Default</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                 </div>
-              </div>
 
-              {/* Reset Actions */}
-              <div className="flex items-end gap-2">
-                <button className="flex-1 py-2 bg-blue-600 text-white text-md rounded-md hover:bg-blue-700 font-medium">Apply</button>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="px-3 py-2 bg-white border border-gray-300 text-gray-600 text-md rounded-md hover:bg-gray-50"
-                >
-                  <X size={16} />
+                {/* Reset Button */}
+                <button onClick={() => handleReset()} className="px-4 py-2.5 bg-white border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 hover:text-red-500 transition-colors flex items-center gap-2 text-sm font-medium h-fit">
+                  <RotateCcw size={16} /> Reset
                 </button>
               </div>
-
             </div>
           )}
+
         </div>
 
         {/* --- TABLE --- */}
-        <div className="overflow-x-auto flex-1">
+        <div className="overflow-x-auto ">
           <table className="w-full text-left border-collapse">
-            <thead>
-              {/* Made header much darker for clear identification */}
+            <thead className=''>
               <tr className="bg-gray-800 text-white text-sm font-semibold uppercase tracking-wider">
                 <th className="py-4 px-6 border-r border-gray-700 w-[250px]">Product Info</th>
-                <th className="py-4 px-6 border-r border-gray-700 w-[120px]">category</th>
+                <th className="py-4 px-6 border-r border-gray-700 w-[120px]">Category</th>
                 <th className="py-4 px-6 border-r border-gray-700 w-[120px]">Price</th>
                 <th className="py-4 px-6 border-r border-gray-700">Variants & Stock</th>
-                <th className="py-4 px-6 text-center border-r border-gray-700 w-[120px]">Status</th>
+                <th className="py-4 px-6 text-center border-r border-gray-700 w-[140px]">Status</th>
                 <th className="py-4 px-6 text-center w-[120px]">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-800">
-              {ProductListData.map((product) => (
-                <tr key={product.id} className="group hover:bg-blue-50/30 transition-colors">
+            <tbody className="divide-y divide-gray-100">
 
-                  {/* Product Info */}
-                  <td className="py-4 px-6 border-r border-gray-800 align-top">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center shrink-0">
-                        <Package size={18} className="text-gray-400" />
+              {products.length > 0 ? (
+                products.map((product) => (
+                  <tr key={product._id} className="group hover:bg-blue-50/20 transition-colors">
+
+                    {/* Product Info */}
+                    <td className="py-4 px-6 border-r border-gray-100 align-top">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center shrink-0">
+                          <img src={product.coverImages[0]} />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-md text-gray-900 leading-tight">{product.productName}</p>
+                          <span className="text-xs text-gray-400">ID: #{product._id}</span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-md text-gray-900 leading-tight">{product.name}</p>
-                        <span className="inline-block mt-1 text-[13px] font-medium bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">
-                          {product.category}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Price */}
-                  <td className="py-4 px-6 border-r border-gray-800 align-top font-medium text-gray-700 text-md">
-                    {product.category}
-                  </td>
-
-                  <td className="py-4 px-6 border-r border-gray-800 align-top font-medium text-gray-700 text-md">
-                    {product.price}
-                  </td>
-
-
-                  {/* Variants & Stock (Visible directly in table) */}
-                  <td className="py-4 px-6 border-r border-gray-800 align-top">
-                    <div className="flex flex-col gap-3">
-                      {product.variants.map((variant, idx) => {
-                        // Filter out sizes with 0 stock to keep UI clean
-                        const stockItems = Object.entries(variant.stock).filter(([_, qty]) => Number(qty) > 0);
-                        const isOutOfStock = stockItems.length === 0;
-
-                        return (
-                          <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-md">
-                            {/* Color Info */}
-                            <div className="flex items-center gap-2 w-28 shrink-0">
-                              <div
-                                className="w-3 h-3 rounded-full border border-gray-300 shadow-sm"
-                                style={{ backgroundColor: variant.colorCode }}
-                              ></div>
-                              <span className="font-medium text-gray-700 text-sm">{variant.colorName}</span>
-                            </div>
-
-                            {/* Stock Pills */}
-                            <div className="flex flex-wrap gap-1.5">
-                              {isOutOfStock ? (
-                                <span className="text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-100 font-medium">Out of Stock</span>
-                              ) : (
-                                stockItems.map(([size, qty]) => (
-                                  <span key={size} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 bg-white text-red-400 text-[15px]">
-                                    <span className="font-bold text-blue-300">{size}:</span> {qty}
-                                  </span>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </td>
-
-                  {/* Status */}
-                  <td className="py-4 px-6 border-r border-gray-800 align-top text-center">
-                    <button
-                      className={`flex items-center justify-between px-1.5 w-20 py-1 rounded-full text-[10px] font-bold text-white transition-all shadow-sm ${product.isListed ? 'bg-[#7fad39] flex-row' : 'bg-red-500 flex-row-reverse'}`}
-                    >
-                      <span className="flex-1 text-center">
-                        {product.isListed ? 'ACTIVE' : 'INACTIVE'}
+                    {/* Category */}
+                    <td className="py-4 px-6 border-r border-gray-100 align-top">
+                      <span className="inline-block text-[13px] font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
+                        {product.mainCategory.categoryName}
                       </span>
-                      <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform"/>
-                    </button>
-                  </td>
+                    </td>
 
-                  {/* Actions */}
-                  <td className="py-4 px-6 align-top text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button className="p-1.5 hover:bg-blue-50 text-blue-400 hover:text-blue-800 rounded transition border border-transparent hover:border-blue-100">
-                        <Edit size={17} />
+                    {/* Price */}
+                    <td className="py-4 px-6 border-r border-gray-100 align-top font-bold text-gray-700 text-md">
+                      ₹{product.salePrice}
+                    </td>
+
+                    {/* Variants & Stock */}
+                    <td className="py-4 px-6 border-r border-gray-100 align-top">
+                      <div className="flex flex-col gap-3">
+                        {product.variants.map((variant, idx) => {
+                          const stockItems = Object.entries(variant.stock).filter(([_, qty]) => Number(qty) > 0);
+                          const isOutOfStock = stockItems.length === 0;
+
+                          return (
+                            <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-md">
+                              {/* Color Info */}
+                              <div className="flex items-center gap-2 w-24 shrink-0">
+                                <div
+                                  className="w-3.5 h-3.5 rounded-full border border-gray-300 shadow-sm"
+                                  style={{ backgroundColor: variant.colorCode }}
+                                ></div>
+                                <span className="font-medium text-gray-700 text-sm">{variant.colorName}</span>
+                              </div>
+
+                              {/* Stock Pills */}
+                              <div className="flex flex-wrap gap-1.5">
+                                {isOutOfStock ? (
+                                  <span className="text-[10px] text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 font-bold">Out of Stock</span>
+                                ) : (
+                                  stockItems.map(([size, qty]) => (
+                                    <span key={size} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-200 bg-white text-gray-600 text-[11px] shadow-sm">
+                                      <span className="font-bold text-gray-800">{size}:</span> {qty}
+                                    </span>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </td>
+
+                    {/* Status Toggle Button */}
+                    <td className="py-4 px-6 border-r border-gray-100 align-middle text-center">
+                      <button
+                        className={`relative inline-flex items-center p-2 rounded-full w-16 h-6 px-1 transition-colors focus:outline-none text[9px] ${product.isListed ? 'bg-[#7fad39]' : 'bg-red-500'}`} onClick={()=>dispatch(toggleProductList(product._id))}
+                      >
+                        <span className={`${product.isListed ? 'translate-x-10' : 'translate-x-0'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform shadow-md`} />
+                        <span className={`absolute text-[10px] font-bold text-white ${product.isListed ? 'left-1' : 'right-1'}`}>
+                          {product.isListed ? 'ACTIVE' : 'HIDDEN'}
+                        </span>
                       </button>
-                      <button className="p-1.5 hover:bg-red-50 text-red-400 hover:text-red-800 rounded transition border border-transparent hover:border-red-100">
-                        <Trash2 size={17} />
-                      </button>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-4 px-6 align-top text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit">
+                          <Edit size={18} />
+                        </button>
+                        <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-400">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search size={32} className="opacity-20" />
+                      <p>No products match your filters.</p>
+                      <button className="text-blue-500 text-sm hover:underline">Clear all filters</button>
                     </div>
                   </td>
-
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
         <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
-          <span className="text-sm text-gray-500 font-medium">Showing 1-3 of 3 products</span>
-          <div className="flex gap-2">
-            <button className="px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium text-gray-600 disabled:opacity-50">Previous</button>
-            <button className="px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm font-medium text-gray-600">Next</button>
-          </div>
+          <Stack spacing={2}>
+            <Pagination page={currentPage} count={pagination.totalPages}  className='custom-pagination' onChange={(e,value)=>setCurrentPage(value)} />
+          </Stack>
         </div>
+
+
 
       </div>
     </div>

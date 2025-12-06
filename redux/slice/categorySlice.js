@@ -43,9 +43,7 @@ const categorySlice = createSlice({
     isLoading: false,
   },
   reducers: {
-    getCategories: (state) => {
-      return state.items
-    },
+
     setParentCategories: (state, action) => {
       const categories = action.payload
       const parents = categories.filter((cat) => cat.parentCategory === null)

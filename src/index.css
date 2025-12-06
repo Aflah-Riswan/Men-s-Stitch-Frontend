@@ -13,3 +13,30 @@
     -moz-appearance: textfield;
   }
 }
+
+/* 1. Base Style for all buttons */
+.custom-pagination .MuiPaginationItem-root {
+  color: #6b7280;       /* text-gray-500 */
+  border-color: #e5e7eb; /* border-gray-200 */
+  font-weight: 500;      /* font-medium */
+  transition: all 200ms;
+}
+
+/* 2. Hover State (for non-active buttons) */
+.custom-pagination .MuiPaginationItem-root:hover {
+  background-color: #f9fafb; /* bg-gray-50 */
+  color: #111827;            /* text-gray-900 */
+  border-color: #d1d5db;     /* border-gray-300 */
+}
+
+/* 3. Active State (The Black Button) */
+.custom-pagination .Mui-selected {
+  background-color: black !important;
+  color: white !important;
+  border-color: black !important;
+}
+
+/* 4. Hover State for the Active Button */
+.custom-pagination .Mui-selected:hover {
+  background-color: #1f2937 !important; /* bg-gray-800 */
+}

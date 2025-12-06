@@ -42,7 +42,7 @@ const AdminSidebar = () => {
       </div>
 
       {/* --- NAVIGATION --- */}
-      <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-6">
+      <nav className="flex-1  px-4 py-2 space-y-6">
         
         {/* Section: Main Menu */}
         <div>

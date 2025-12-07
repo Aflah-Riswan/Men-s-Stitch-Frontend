@@ -95,7 +95,7 @@ const EditCategory = () => {
 
   const handleModalClose = () => {
     setShowModal(false);
-    navigate('/admin/categories'); // Navigate ONLY when clicked
+    navigate('/admin/categories');
   };
 
   if (isLoading) return <div className="p-8">Loading...</div>;

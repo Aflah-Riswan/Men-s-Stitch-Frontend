@@ -4,7 +4,7 @@ import {
   Package, RotateCcw
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, toggleProductList } from '../../../../redux/slice/productSlice';
+import { deleteProduct, fetchProducts, toggleProductList } from '../../../../redux/slice/productSlice';
 import { fetchCategories } from '../../../../redux/slice/categorySlice';
 import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
@@ -34,7 +34,7 @@ export default function ProductList() {
     }
     dispatch(fetchProducts(filters))
     console.log("products : ", products)
-  }, [dispatch, currentPage, category, search, sort, status])
+  }, [dispatch, currentPage, category, search, sort, status ])
 
   useEffect(() => {
     dispatch(fetchCategories())
@@ -238,7 +238,7 @@ export default function ProductList() {
                         <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit" onClick={()=>navigate(`edit/${product._id}`)}>
                           <Edit size={18} />
                         </button>
-                        <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete">
+                        <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete" onClick={()=>dispatch(deleteProduct(product._id))}>
                           <Trash2 size={18} />
                         </button>
                       </div>

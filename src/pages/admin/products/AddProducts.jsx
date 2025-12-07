@@ -48,11 +48,11 @@ const AddProducts = () => {
 
   function handleVariantImageUpload(e) {
     const newFiles = Array.from(e.target.files)
-    console.log('new files : ', newFiles)
+   
     const totalFiles = variantImages.length + newFiles.length
-    console.log('totalFiles : ', totalFiles)
+   
     if (totalFiles > 3) {
-      console.log("inside if condition")
+      
       setError('variantImages', { type: 'manual', message: '3 images are allowed' })
       return
     }
@@ -202,6 +202,7 @@ const AddProducts = () => {
           }
         })
         console.log('product image response : ', response.data)
+        const urlCollections = response.data.urlCollection
 
         const formattedAttributes = {}
         if (data.attributes) {
@@ -209,7 +210,7 @@ const AddProducts = () => {
             formattedAttributes[item.label] = item.value
           })
         }
-        const urlCollections = response.data.urlCollection
+        
         const finalData = {
           productName,
           productDescription,
@@ -223,10 +224,8 @@ const AddProducts = () => {
           tags
         }
         const result = await axiosInstance.post('/products',finalData)
-        dispatch
-        if(result.data.success)alert('data added into db') 
-        else  console.log(result.data) 
-        
+        alert('data added into db') 
+  
       }
 
     } catch (error) {
@@ -503,8 +502,8 @@ const AddProducts = () => {
                     ...register("mainCategory", {
                       required: "Category is required",
                       onChange: (e) => handleSelectCategory(e.target.value)
-                    })}>
-                    <option key={crypto.randomUUID()} value='' disabled >select your main category</option>
+                    })} >
+                    <option >select your main category</option>
                     {parentCategories && parentCategories.map((cat) => (
                       <option key={cat._id} value={cat._id} >{cat.categoryName}</option>
                     ))}

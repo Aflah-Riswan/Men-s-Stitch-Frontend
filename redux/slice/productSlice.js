@@ -29,6 +29,16 @@ export const toggleProductList = createAsyncThunk('product/toggleList', async (i
   }
 })
 
+export const deleteProduct = createAsyncThunk('delete/product', async (id, { rejectWithValue }) => {
+  try {
+    const response = await axiosInstance.patch(`/products/${id}/delete`)
+    if (response.data.success) return response.data.deletedData
+    else return rejectWithValue(response.data.message)
+  } catch (error) {
+    return rejectWithValue(error.message)
+  }
+})
+
 
 const productSlice = createSlice({
   name: 'products',
@@ -59,7 +69,7 @@ const productSlice = createSlice({
         console.log('pagination : ', action.payload.pagination)
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.isLoding = false
+        state.isLoading = false
         state.isError = action.payload
       })
       .addCase(toggleProductList.pending, (state, action) => {
@@ -77,6 +87,18 @@ const productSlice = createSlice({
       .addCase(toggleProductList.rejected, (state, action) => {
         state.isError = action.payload.message
         state.isLoading = false
+      })
+      .addCase(deleteProduct.pending, (state) => {
+        state.isLoading = true
+      })
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.isLoading = false
+        const { _id } = action.payload
+        state.items = state.items.filter((item)=>item._id !== _id)
+      })
+      .addCase(deleteProduct.rejected,(state,action)=>{
+        console.log(action.payload)
+        state.isError = action.payload.message
       })
   }
 })

@@ -7,8 +7,7 @@ import { fetchCategories, setParentCategories, setSubCategories } from '../../..
 import { useForm } from 'react-hook-form';
 import ImageUpload from '../../../Components/ImageUpload';
 import axiosInstance from '../../../utils/axiosInstance';
-import ImageCropper from '../../../Components/ImageCropper';
-import Modal from '../../../Components/Modal';
+import ImageCropper from '../../../Components/ImageCropper'; 
 
 const AddProducts = () => {
   const [selectedCategory, setCategory] = useState('')
@@ -22,17 +21,17 @@ const AddProducts = () => {
   const [variantsCollection, setVariantCollection] = useState([])
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState("")
-  const [showModal, setShowModal] = useState(false)
   const dispatch = useDispatch()
 
-
+  // --- CROPPER STATE ---
   const [imageToCrop, setImageToCrop] = useState(null)
-  const [croppingTarget, setCroppingTarget] = useState(null)
-
-
-  const [cropQueue, setCropQueue] = useState([]);
+  const [croppingTarget, setCroppingTarget] = useState(null) // 'cover' or 'variant'
+  
+  // Queue for multiple variant images
+  const [cropQueue, setCropQueue] = useState([]); 
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
-  const [processedVariantFiles, setProcessedVariantFiles] = useState([]);
+  const [processedVariantFiles, setProcessedVariantFiles] = useState([]); // Temp storage while looping
+
 
   useEffect(() => {
     dispatch(fetchCategories())
@@ -57,12 +56,12 @@ const AddProducts = () => {
     dispatch(setSubCategories(selected))
   }
 
-
+  // --- 1. UPDATED VARIANT UPLOAD (Queue System) ---
   const handleVariantImageUpload = async (e) => {
     const files = Array.from(e.target.files)
     if (!files.length) return;
 
-
+    // Validation
     const totalFiles = variantImages.length + files.length
     if (totalFiles > 3) {
       setError('variantImages', { type: 'manual', message: '3 images are allowed' })
@@ -70,68 +69,79 @@ const AddProducts = () => {
     }
     clearErrors('variantImages')
 
+    // Read all files into Base64 URLs for the queue
     const fileReaders = files.map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
     });
 
     const imagesToCrop = await Promise.all(fileReaders);
 
-
+    // Initialize Queue
     setCropQueue(imagesToCrop);
-    setProcessedVariantFiles([]);
+    setProcessedVariantFiles([]); // Clear temp array
     setCurrentCropIndex(0);
-    setCroppingTarget('variant');
+    setCroppingTarget('variant'); // Tell onCropDone we are doing variants
 
-
+    // Start First Crop
     setImageToCrop(imagesToCrop[0]);
     e.target.value = '';
   }
 
+  // --- 2. UPDATED COVER UPLOAD ---
   function handleCoverImageUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      setCroppingTarget('cover');
+      setCroppingTarget('cover'); // Tell onCropDone we are doing cover
       setImageToCrop(reader.result);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   }
 
-
+  // --- 3. UPDATED CROP DONE HANDLER (Handles Loop) ---
   const onCropDone = (croppedFile) => {
-
+    
     if (croppingTarget === 'cover') {
-      const fileArray = [croppedFile];
-      setCoverImages(fileArray);
-      setValue('coverImages', fileArray, { shouldValidate: true });
-      clearErrors('coverImages');
-      setImageToCrop(null);
-      setCroppingTarget(null);
-    }
-    else if (croppingTarget === 'variant') {
-      const updatedProcessed = [...processedVariantFiles, croppedFile];
-      setProcessedVariantFiles(updatedProcessed);
-      const nextIndex = currentCropIndex + 1;
-
-      if (nextIndex < cropQueue.length) {
-        setCurrentCropIndex(nextIndex);
-        setImageToCrop(cropQueue[nextIndex]);
-      } else {
-        const finalVariantList = [...variantImages, ...updatedProcessed];
-        setVariantImages(finalVariantList);
-        setValue('variantImages', finalVariantList, { shouldValidate: true });
+        // --- LOGIC FOR COVER ---
+        const fileArray = [croppedFile];
+        setCoverImages(fileArray);
+        setValue('coverImages', fileArray, { shouldValidate: true });
+        clearErrors('coverImages');
         setImageToCrop(null);
         setCroppingTarget(null);
-        setCropQueue([]);
-        setProcessedVariantFiles([]);
-      }
+    } 
+    else if (croppingTarget === 'variant') {
+        // --- LOGIC FOR VARIANTS LOOP ---
+        
+        // 1. Add this finished file to our temp list
+        // Note: We use a functional update or the scoped variable to ensure we don't lose data
+        const updatedProcessed = [...processedVariantFiles, croppedFile];
+        setProcessedVariantFiles(updatedProcessed);
+
+        // 2. Check if there is a next image
+        const nextIndex = currentCropIndex + 1;
+
+        if (nextIndex < cropQueue.length) {
+            // YES: Open next image
+            setCurrentCropIndex(nextIndex);
+            setImageToCrop(cropQueue[nextIndex]);
+        } else {
+         
+            const finalVariantList = [...variantImages, ...updatedProcessed];
+            setVariantImages(finalVariantList);
+            setValue('variantImages', finalVariantList, { shouldValidate: true });
+            setImageToCrop(null);
+            setCroppingTarget(null);
+            setCropQueue([]);
+            setProcessedVariantFiles([]);
+        }
     }
   };
 
@@ -141,7 +151,7 @@ const AddProducts = () => {
     setCropQueue([]);
     setProcessedVariantFiles([]);
   };
-
+  
 
   function handleRemoveImage(type, indexToRemove) {
     if (type === 'cover') {
@@ -250,10 +260,6 @@ const AddProducts = () => {
     const filtered = variantsCollection.filter((_, index) => i !== index)
     setVariantCollection(filtered)
   }
-  function handleModalClose() {
-    setShowModal(false);
-    navigate('/admin/products');
-  }
 
   const onSubmit = async (data) => {
     try {
@@ -278,7 +284,7 @@ const AddProducts = () => {
             formattedAttributes[item.label] = item.value
           })
         }
-
+        
         const finalData = {
           productName,
           productDescription,
@@ -286,17 +292,14 @@ const AddProducts = () => {
           salePrice,
           variants: variantsCollection,
           attributes: formattedAttributes,
-          coverImages: urlCollections,
+          coverImages: urlCollections, 
           mainCategory,
-          subCategory: subCategory === '' ? null : subCategory,
+          subCategory:subCategory === '' ? null : subCategory,
           tags
         }
-        const result = await axiosInstance.post('/products', finalData)
-        if (result.data.success) {
-          setShowModal(true)
-        } else {
-          alert("found error ", `${result.data.message}`)
-        }
+        const result = await axiosInstance.post('/products',finalData)
+        alert('data added into db') 
+  
       }
 
     } catch (error) {
@@ -313,14 +316,6 @@ const AddProducts = () => {
   }
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans text-gray-800">
-
-      <Modal
-        isOpen={showModal}
-        title="Success!"
-        message="Product Added Succefully."
-        onConfirm={handleModalClose}
-        type="success"
-      />
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="mb-8">
@@ -366,7 +361,7 @@ const AddProducts = () => {
                     <textarea
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32 resize-none"
                       placeholder="Product description"
-                      {...register('productDescription', { required: 'Product Description Required ', minLength: { value: 10, message: 'Product Details Should be Contain atleast in 10 words ' }, pattern: { value: /^[A-Za-z0-9,:;.\-' \n]+$/, message: 'Specila characters are not allowed ' } })}
+                      {...register('productDescription', { required: 'Product Description Required ', minLength: { value: 10, message: 'Product Details Should be Contain atleast in 10 words ' }, pattern: { value: /^[A-Za-z0-9 ]+$/, message: 'Specila characters are not allowed ' } })}
                     ></textarea>
                     {errors.productDetails && <span className="text-red-500 text-sm mt-1 block">{errors.productDetails.message}</span>}
                   </div>
@@ -403,10 +398,10 @@ const AddProducts = () => {
               </div>
 
               {/* Variants Section */}
-
+              {/* --- VARIANTS SECTION (UPDATED) --- */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-lg mb-4 text-gray-800">Add Variants</h3>
-                <div className="space-y-6">
+                <div className="space-y-6"> {/* Increased spacing for better layout */}
 
                   {/* Color Inputs */}
                   <div className="grid grid-cols-2 gap-4">
@@ -437,6 +432,8 @@ const AddProducts = () => {
                     onUpload={handleVariantImageUpload}
                     onRemove={(index) => handleRemoveImage('variant', index)}
                   />
+
+                  {/* Error handling for the image field specifically */}
                   {errors.variantImages && (
                     <span className="text-red-500 text-sm mt-1 block">
                       {errors.variantImages.message}
@@ -552,7 +549,7 @@ const AddProducts = () => {
               {/* Image Upload */}
 
               <ImageUpload
-                label="Product Cover Image"
+                label="Product Cover Image" 
                 inputId="cover-input"
                 inputName="coverImages"
                 images={coverImages}

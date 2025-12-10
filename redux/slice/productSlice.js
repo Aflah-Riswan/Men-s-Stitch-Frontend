@@ -4,6 +4,7 @@ import axiosInstance from "../../src/utils/axiosInstance"
 export const fetchProducts = createAsyncThunk('products/fetchProducts', async (params, { rejectWithValue }) => {
   try {
     const response = await axiosInstance.get('/products', { params })
+    console.log(response.data)
     if (response.data.success) return response.data
     else return rejectWithValue(response.data.message)
 

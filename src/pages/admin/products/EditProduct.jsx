@@ -7,10 +7,12 @@ import {
   Image as ImageIcon, Loader2, UploadCloud, X
 } from 'lucide-react';
 
-// API & Data
+
 import axiosInstance from '../../../utils/axiosInstance';
 import { fetchCategories } from '../../../../redux/slice/categorySlice';
-import categoryAttributes, { sizes } from '../../../data'; // Ensure this path is correct
+import categoryAttributes, { sizes } from '../../../data';
+
+import ImageCropper from '../../../Components/ImageCropper'; 
 
 const EditProduct = () => {
 
@@ -23,26 +25,33 @@ const EditProduct = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // --- IMAGES STATE ---
+
   const [existingCoverImages, setExistingCoverImages] = useState([]);
   const [newCoverFiles, setNewCoverFiles] = useState([]); 
   const [newCoverPreviews, setNewCoverPreviews] = useState([]);
 
-  // --- VARIANTS STATE ---
+
   const [oldVariants, setOldVariants] = useState([]); 
   const [showVariantDetail, setShowVariantDetail] = useState(false);
   
-  // --- NEW VARIANT STATE (Controlled Inputs) ---
+
   const [newVariantParams, setNewVariantParams] = useState({
     colorName: '',
     colorCode: '#000000',
-    stock: {} // { XS: 0, S: 0 ... }
+    stock: {} 
   });
   const [newVariantFiles, setNewVariantFiles] = useState([]); 
   const [newVariantPreviews, setNewVariantPreviews] = useState([]);
-  const [variantErrors, setVariantErrors] = useState({}); // Local errors for the add section
+  const [variantErrors, setVariantErrors] = useState({});
 
   const [attributesOptions, setAttributesOptions] = useState([]);
+
+  
+  const [imageToCrop, setImageToCrop] = useState(null)
+  const [croppingTarget, setCroppingTarget] = useState(null) 
+  const [cropQueue, setCropQueue] = useState([]); 
+  const [currentCropIndex, setCurrentCropIndex] = useState(0);
+  const [processedVariantFiles, setProcessedVariantFiles] = useState([]); 
 
   const { 
     register, handleSubmit, setValue, getValues, watch, reset, 
@@ -50,7 +59,6 @@ const EditProduct = () => {
   } = useForm();
 
 
-  // --- 1. FETCH DATA ---
   useEffect(() => {
     dispatch(fetchCategories());
     const fetchData = async () => {
@@ -70,15 +78,14 @@ const EditProduct = () => {
             tags: product.tags ? product.tags.join(', ') : '',
           };
 
-          // Populate Attributes
           if (product.attributes) {
             Object.entries(product.attributes).forEach(([key, value]) => {
               setValue(`attributes.${key}`, value);
             });
           }
 
-          // Populate Local State
-          setExistingCoverImages(product.coverImages || []);
+          setExistingCoverImages(product.coverImages ? [product.coverImages] : []);
+          
           setOldVariants(product.variants || []);
           setLoading(false);
 
@@ -92,7 +99,7 @@ const EditProduct = () => {
   }, [id, dispatch, reset]);
 
 
-  // --- 2. DYNAMIC ATTRIBUTES ---
+
   const selectedCategory = watch('mainCategory');
   useEffect(() => {
     if (categories.length > 0 && selectedCategory) {
@@ -102,21 +109,98 @@ const EditProduct = () => {
   }, [selectedCategory, categories]);
 
 
-  // --- 3. COVER IMAGE HANDLERS ---
+
   const handleCoverImagesChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCroppingTarget('cover');
+      setImageToCrop(reader.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; 
+  };
+
+
+  const handleVariantImagesAdd = async (e) => {
     const files = Array.from(e.target.files);
-    const totalImages = existingCoverImages.length + newCoverFiles.length + files.length;
-    
-    if (totalImages > 3) {
-      setError('coverImages', { type: 'manual', message: 'Maximum 3 cover images allowed.' });
+    if (!files.length) return;
+
+    if (newVariantFiles.length + files.length > 3) {
+      setVariantErrors(prev => ({ ...prev, images: 'Max 3 images allowed' }));
       return;
     }
-    clearErrors('coverImages');
+    setVariantErrors(prev => ({ ...prev, images: null }));
 
-    setNewCoverFiles([...newCoverFiles, ...files]);
-    const previews = files.map(file => URL.createObjectURL(file));
-    setNewCoverPreviews([...newCoverPreviews, ...previews]);
-    e.target.value = ''; 
+
+    const fileReaders = files.map(file => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+    });
+
+    const imagesToCrop = await Promise.all(fileReaders);
+
+
+    setCropQueue(imagesToCrop);
+    setProcessedVariantFiles([]); 
+    setCurrentCropIndex(0);
+    setCroppingTarget('variant');
+
+
+    setImageToCrop(imagesToCrop[0]);
+    e.target.value = '';
+  };
+
+  const onCropDone = (croppedFile) => {
+    
+    if (croppingTarget === 'cover') {
+        setExistingCoverImages([]);
+        
+        setNewCoverFiles([croppedFile]);
+        
+        const previewUrl = URL.createObjectURL(croppedFile);
+        setNewCoverPreviews([previewUrl]);
+        
+        clearErrors('coverImages');
+        setImageToCrop(null);
+        setCroppingTarget(null);
+    } 
+    else if (croppingTarget === 'variant') {
+     
+        const updatedProcessed = [...processedVariantFiles, croppedFile];
+        setProcessedVariantFiles(updatedProcessed);
+
+        const nextIndex = currentCropIndex + 1;
+
+        if (nextIndex < cropQueue.length) {
+            setCurrentCropIndex(nextIndex);
+            setImageToCrop(cropQueue[nextIndex]);
+        } else {
+
+            const finalFiles = [...newVariantFiles, ...updatedProcessed];
+            setNewVariantFiles(finalFiles);
+            
+            const newPreviews = updatedProcessed.map(file => URL.createObjectURL(file));
+            setNewVariantPreviews([...newVariantPreviews, ...newPreviews]);
+
+            setImageToCrop(null);
+            setCroppingTarget(null);
+            setCropQueue([]);
+            setProcessedVariantFiles([]);
+        }
+    }
+  };
+
+  const onCropCancel = () => {
+    setImageToCrop(null);
+    setCroppingTarget(null);
+    setCropQueue([]);
+    setProcessedVariantFiles([]);
   };
 
   const removeImage = (type, index) => {
@@ -132,23 +216,6 @@ const EditProduct = () => {
   };
 
 
-  // --- 4. NEW VARIANT LOGIC (Controlled State) ---
-
-  const handleVariantImagesAdd = (e) => {
-    const files = Array.from(e.target.files);
-    if (newVariantFiles.length + files.length > 3) {
-      setVariantErrors(prev => ({ ...prev, images: 'Max 3 images allowed' }));
-      return;
-    }
-    setVariantErrors(prev => ({ ...prev, images: null })); // Clear error
-
-    setNewVariantFiles([...newVariantFiles, ...files]);
-    const previews = files.map(file => URL.createObjectURL(file));
-    setNewVariantPreviews([...newVariantPreviews, ...previews]);
-    e.target.value = '';
-  };
-
-  // Handle manual stock inputs for new variant
   const handleNewStockChange = (size, value) => {
     setNewVariantParams(prev => ({
       ...prev,
@@ -160,12 +227,11 @@ const EditProduct = () => {
   };
 
   const handleSaveNewVariant = async () => {
-    // 1. Manual Validation
     const errors = {};
     if (!newVariantParams.colorName.trim()) errors.name = "Color Name is required";
     if (newVariantFiles.length !== 3) errors.images = "Exactly 3 images required";
     
-    // Check if at least one stock > 0
+    
     const hasStock = Object.values(newVariantParams.stock).some(val => val > 0);
     if (!hasStock) errors.stock = "Add stock for at least one size";
 
@@ -173,23 +239,20 @@ const EditProduct = () => {
       setVariantErrors(errors);
       return;
     }
-    
-    // Clear errors
+
     setVariantErrors({});
 
-    // 2. Create Temp Variant Object
     const newVariant = {
       productColor: newVariantParams.colorName,
       colorCode: newVariantParams.colorCode,
-      variantImages: newVariantPreviews, // Preview URLs for UI
-      filesToUpload: newVariantFiles, // Actual Files for Upload
+      variantImages: newVariantPreviews,
+      filesToUpload: newVariantFiles, 
       stock: newVariantParams.stock,
       isNew: true
     };
 
     setOldVariants([...oldVariants, newVariant]);
 
-    // 3. Reset Local State inputs
     setNewVariantParams({ colorName: '', colorCode: '#000000', stock: {} });
     setNewVariantFiles([]);
     setNewVariantPreviews([]);
@@ -202,33 +265,32 @@ const EditProduct = () => {
   };
 
 
-  // --- 5. FINAL SUBMIT TO DATABASE ---
+
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-      // 1. Cover Image Validation
-      if ((existingCoverImages.length + newCoverFiles.length) !== 3) {
-        setSubmitting(false);
-        return alert("You must have exactly 3 cover images.");
-      }
-
-      // --- UPLOAD PROCESS ---
       
-      // A. Upload New Cover Images
-      let uploadedCoverUrls = [];
-      if (newCoverFiles.length > 0) {
-        const formData = new FormData();
-        newCoverFiles.forEach(file => formData.append('images', file));
-        const res = await axiosInstance.post('/upload-multiple', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        uploadedCoverUrls = res.data.urlCollection;
+      const totalCoverImages = existingCoverImages.length + newCoverFiles.length;
+      if (totalCoverImages !== 1) {
+        setSubmitting(false);
+        return alert("You must have exactly 1 cover image.");
       }
-      const finalCoverImages = [...existingCoverImages, ...uploadedCoverUrls];
+      let finalCoverImageString = "";
+      if (existingCoverImages.length > 0) {
+         finalCoverImageString = existingCoverImages[0];
+      }
+
+      else if (newCoverFiles.length > 0) {
+        const formData = new FormData();
+        formData.append('images', newCoverFiles[0]); 
+        const res = await axiosInstance.post('/upload-multiple', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        finalCoverImageString = res.data.urlCollection[0];
+      }
 
 
-      // B. Process Variants (Upload images for NEW variants)
+      
       const processedVariants = await Promise.all(oldVariants.map(async (variant, index) => {
         
-        // If it's a NEW variant, we must upload its images now
         if (variant.isNew && variant.filesToUpload && variant.filesToUpload.length > 0) {
            const vFormData = new FormData();
            variant.filesToUpload.forEach(file => vFormData.append('images', file));
@@ -238,7 +300,7 @@ const EditProduct = () => {
              productColor: variant.productColor,
              colorCode: variant.colorCode,
              variantImages: vRes.data.urlCollection, 
-             stock: variant.stock // Stock is already an object { XS: 10... }
+             stock: variant.stock 
            };
         }
           
@@ -249,13 +311,12 @@ const EditProduct = () => {
            const fieldName = `variants.${index}.stock.${size}`;
            const formValue = getValues(fieldName);
            if (formValue !== undefined) {
-              updatedStock[size] = Number(formValue);
-              hasChange = true;
+             updatedStock[size] = Number(formValue);
+             hasChange = true;
            } else {
-              updatedStock[size] = Number(variant.stock[size] || 0);
+             updatedStock[size] = Number(variant.stock[size] || 0);
            }
         });
-        
         
         return {
            productColor: variant.productColor,
@@ -267,22 +328,21 @@ const EditProduct = () => {
       }));
       
 
-      // 3. Prepare Payload
       const payload = {
         ...data,
         tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        coverImages: finalCoverImages,
+        coverImages: finalCoverImageString,
         variants: processedVariants,
         attributes: data.attributes || {}
       };
 
-      // Cleanup temp fields (if any remain)
+      
       delete payload.newProductColor;
       delete payload.newColorCode;
       
       console.log("Submitting Payload:", payload);
 
-      // 4. Send PUT Request
+      
       await axiosInstance.put(`/products/${id}/edit`, payload);
       alert("Product Updated Successfully!");
       navigate('/admin/products');
@@ -373,9 +433,9 @@ const EditProduct = () => {
                       <button type="button" onClick={() => removeVariant(i)} className="text-gray-400 hover:text-red-500"><Trash2 size={18}/></button>
                     </div>
 
-                    {/* Stock Inputs (Editable for OLD variants only, New ones use state object) */}
+ 
                     {showVariantDetail && !v.isNew && (
-                       <div className="grid grid-cols-6 gap-2 mt-3 pt-3 border-t">
+                        <div className="grid grid-cols-6 gap-2 mt-3 pt-3 border-t">
                           {sizes.map(size => (
                              <div key={size} className="text-center">
                                 <span className="text-[10px] text-gray-500">{size}</span>
@@ -387,24 +447,23 @@ const EditProduct = () => {
                                 />
                              </div>
                           ))}
-                       </div>
+                        </div>
                     )}
-                    {/* Just display stock for NEW variants (edited via delete/re-add for simplicity in this flow) */}
                     {showVariantDetail && v.isNew && (
-                       <div className="grid grid-cols-6 gap-2 mt-3 pt-3 border-t">
+                        <div className="grid grid-cols-6 gap-2 mt-3 pt-3 border-t">
                           {Object.entries(v.stock).map(([size, qty]) => (
                              <div key={size} className="text-center">
                                 <span className="text-[10px] text-gray-500">{size}</span>
                                 <span className="block text-sm font-bold">{qty}</span>
                              </div>
                           ))}
-                       </div>
+                        </div>
                     )}
                   </div>
                 ))}
               </div>
 
-              {/* Add New Variant Form (CONTROLLED INPUTS) */}
+              {/* Add New Variant Form  */}
               <div className="pt-6 border-t border-gray-100">
                 <h4 className="text-sm font-bold uppercase mb-4 text-gray-700">Add New Variant</h4>
                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -457,11 +516,11 @@ const EditProduct = () => {
                          <div key={size} className="text-center">
                             <span className="text-[10px] font-bold text-gray-400">{size}</span>
                             <input 
-                                type="number" 
-                                placeholder="0" 
-                                value={newVariantParams.stock[size] || ''}
-                                onChange={(e) => handleNewStockChange(size, e.target.value)}
-                                className="w-full text-center p-1 border rounded" 
+                               type="number" 
+                               placeholder="0" 
+                               value={newVariantParams.stock[size] || ''}
+                               onChange={(e) => handleNewStockChange(size, e.target.value)}
+                               className="w-full text-center p-1 border rounded" 
                             />
                          </div>
                       ))}
@@ -495,9 +554,9 @@ const EditProduct = () => {
           {/* RIGHT COLUMN */}
           <div className="space-y-6">
              
-             {/* 5. Cover Images */}
+             {/* 5. Cover Images - UPDATED UI */}
              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold mb-4">Cover Images (3 Max)</h3>
+                <h3 className="text-lg font-bold mb-4">Product Cover Image</h3>
                 <div className="grid grid-cols-2 gap-3 mb-3">
                    {/* Existing */}
                    {existingCoverImages.map((url, i) => (
@@ -516,13 +575,13 @@ const EditProduct = () => {
                 </div>
                 
                 <label className={`flex items-center justify-center w-full h-20 border-2 border-dashed rounded cursor-pointer hover:bg-gray-50 ${errors.coverImages ? 'border-red-500' : ''}`}>
-                   <UploadCloud className="text-gray-400 mr-2"/> <span className="text-xs text-gray-500">Upload</span>
-                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleCoverImagesChange} />
+                   <UploadCloud className="text-gray-400 mr-2"/> <span className="text-xs text-gray-500">Replace Image</span>
+                   <input type="file" accept="image/*" className="hidden" onChange={handleCoverImagesChange} />
                 </label>
                 {errors.coverImages && <span className="text-xs text-red-500 mt-1 block">{errors.coverImages.message}</span>}
              </div>
 
-             {/* 6. Meta */}
+             
              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-6">
                 <h3 className="text-lg font-bold mb-4">Organization</h3>
                 <div className="space-y-4">
@@ -552,6 +611,15 @@ const EditProduct = () => {
           </div>
 
         </form>
+
+       
+        {imageToCrop && (
+          <ImageCropper
+            imageSrc={imageToCrop}
+            onCropDone={onCropDone}
+            onCropCancel={onCropCancel}
+          />
+        )}
       </div>
     </div>
   );

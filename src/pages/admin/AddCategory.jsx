@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -7,6 +5,7 @@ import axios from 'axios';
 import axiosInstance from '../../utils/axiosInstance';
 import Modal from '../../Components/Modal';
 import { useNavigate } from 'react-router-dom';
+import ImageCropper from '../../Components/ImageCropper'; 
 
 const AddCategoryPage = () => {
 
@@ -14,10 +13,14 @@ const AddCategoryPage = () => {
   const [fileName, setFileName] = useState('No file choosen')
   const [preview, setPreview] = useState(null)
   const [listed, setListed] = useState('listed')
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { register, handleSubmit, formState: { errors }, setValue, clearErrors } = useForm() 
   const [showModal, setShowModal] = useState(false);
   const [parentCategories, setParentCategories] = useState([])
+
+  const [imageToCrop, setImageToCrop] = useState(null) 
+  
   const navigate = useNavigate()
+  
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -47,20 +50,40 @@ const AddCategoryPage = () => {
       console.error("Error: Reference to input is null");
     }
   }
-  function handleChangeFileName(e) {
-    console.log("hgello")
-    if (!e.target.files[0]) return
-    const url = URL.createObjectURL(e.target.files[0])
-    setPreview(url)
-    setFileName(e.target.files[0].name)
 
+  function handleFileChange(e) {
+    if (!e.target.files[0]) return
+    
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+        setImageToCrop(reader.result); 
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; 
   }
 
-  const {
-    ref: fileRef,
-    onChange: fileOnChange,
-    ...fileRest
-  } = register('headerImage', { required: true });
+  // --- CROP HANDLERS ---
+  const onCropDone = (croppedFile) => {
+    const url = URL.createObjectURL(croppedFile)
+    setPreview(url)
+    setFileName(croppedFile.name)
+
+   
+    setValue('headerImage', [croppedFile], { shouldValidate: true }) 
+    clearErrors('headerImage')
+    setImageToCrop(null)
+  }
+
+  const onCropCancel = () => {
+    setImageToCrop(null)
+  }
+
+  useEffect(() => {
+      register('headerImage', { required: true });
+  }, [register]);
+
 
   const onSubmit = async (data) => {
     console.log(data)
@@ -68,7 +91,8 @@ const AddCategoryPage = () => {
     console.log("discount type = ", discountType)
     try {
       const formData = new FormData()
-      formData.append('image', data.headerImage[0])
+      formData.append('image', data.headerImage[0]) 
+      
       const uploadresponse = await axiosInstance.post('/upload', formData,
         {
           headers: {
@@ -89,7 +113,14 @@ const AddCategoryPage = () => {
       }
       console.log(categoryData)
       const responseCategory = await axiosInstance.post('/categories', categoryData)
-      if (responseCategory.data.success) setShowModal(true);
+      console.log("response : ",responseCategory)
+      if (responseCategory.data.success) {
+        setShowModal(true);
+      }
+      else {
+        console.log("inside elese")
+        window.alert(responseCategory.data.message)
+      }
     } catch (error) {
       console.log("error in onSubmit : ", error)
     }
@@ -98,8 +129,9 @@ const AddCategoryPage = () => {
 
   const handleModalClose = () => {
     setShowModal(false);
-    navigate('/admin/categories'); // Navigate ONLY when clicked
+    navigate('/admin/categories'); 
   };
+
   return (
 
     <div className="p-8 bg-gray-50 w-full h-full font-sans text-gray-800">
@@ -112,7 +144,7 @@ const AddCategoryPage = () => {
         type="success"
       />
 
-      <div className="w-full"> {/* Container takes full width */}
+      <div className="w-full"> 
 
         {/* --- Header --- */}
         <div className="mb-8">
@@ -121,45 +153,43 @@ const AddCategoryPage = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* FIX 2: Added 'w-full' to the form card so it stretches */}
           <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-8 w-full">
 
             {/* --- Header Image Upload --- */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Header image</label>
+              
+              {/* Hidden Input */}
               <input
                 type="file"
                 className="hidden"
-                {...fileRest}
-                ref={(e) => {
-                  fileRef(e);
-                  inputBoxRef.current = e;
-                }}
-                onChange={(e) => {
-                  fileOnChange(e);
-                  handleChangeFileName(e);
-                }}
                 accept='image/*'
+                ref={inputBoxRef}
+                onChange={handleFileChange}
               />
 
               <div
-                className="border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-xl p-8 flex flex-col items-center justify-center text-center h-64 cursor-pointer hover:bg-blue-50 transition-colors"
+                className="border-2 border-dashed border-blue-100 bg-blue-50/50 rounded-xl p-4 flex flex-col items-center justify-center text-center h-80 cursor-pointer hover:bg-blue-50 transition-colors"
                 onClick={(e) => handleClick(e)}
               >
                 {preview ? (
-                  <>
-                    <img src={preview} className="w-full h-full object-contain rounded-lg" alt="Preview" />
-                    <p className="text-red-500 text-sm mt-2">{fileName}</p>
-                    <p className="text-sm text-gray-500 mb-4">Change the photo</p>
-                  </>
+                  <div className="w-full h-full flex flex-col items-center justify-center">
+                    <div className="h-64 w-full mb-2">
+                        <img src={preview} className="w-full h-full object-contain rounded-lg shadow-sm" alt="Preview" />
+                    </div>
+                    <p className="text-gray-500 text-xs mt-2">{fileName}</p>
+                    <p className="text-xs text-blue-500 font-medium">Click to change</p>
+                  </div>
                 ) : (
                   <>
-                    <p className="text-red-500 text-sm">{fileName}</p>
-                    <p className="text-sm text-gray-500 mb-4">Drag and drop image here, or click add image</p>
-                    {errors.headerImage && <span className="text-red-500 text-sm block mb-2">This field is required</span>}
+                    <div className="mb-4 p-3 bg-white rounded-full shadow-sm">
+                        <ImageIcon className="text-blue-500" size={32} />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-2">Drag and drop image here</p>
+                    {errors.headerImage && <span className="text-red-500 text-xs block mb-2">Image is required</span>}
                     <button
-                      type="button" // Important: Prevents form submission
-                      className="px-6 py-2 bg-blue-100 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
+                      type="button" 
+                      className="px-4 py-2 bg-blue-100 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-200 transition-colors uppercase tracking-wide"
                       onClick={(e) => handleClick(e)}
                     >
                       Add Image
@@ -226,7 +256,7 @@ const AddCategoryPage = () => {
                 type="text"
                 placeholder="Type category name here..."
                 className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
-                {...register('categoryName', { required: 'category name is required', minLength: { value: 3, message: 'name should be with minimum characters of 3' }, pattern: { value: /^[a-zA-Z\s]+$/, message: 'name can contain only letters' } })}
+                {...register('categoryName', { required: 'category name is required', minLength: { value: 3, message: 'name should be with minimum characters of 3' }, pattern: { value: /^[a-zA-Z -\s]+$/, message: 'name can contain only letters' } })}
               />
               {errors.categoryName && <span className="text-red-500 text-sm mt-1 block">{errors.categoryName.message}</span>}
             </div>
@@ -290,12 +320,20 @@ const AddCategoryPage = () => {
 
           </div>
         </form>
+
+        {/* --- CROPPER MODAL --- */}
+        {imageToCrop && (
+          <ImageCropper
+            imageSrc={imageToCrop}
+            onCropDone={onCropDone}
+            onCropCancel={onCropCancel}
+          />
+        )}
+
       </div>
     </div>
   )
 
 };
-
-
 
 export default AddCategoryPage;

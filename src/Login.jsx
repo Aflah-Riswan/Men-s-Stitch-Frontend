@@ -4,24 +4,25 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { loginUser } from '../redux/slice/authSlice';
 import { useEffect, useState } from 'react';
+import { EyeClosed, EyeIcon } from 'lucide-react';
 
 
 
 const Login = () => {
-  
+
   const { register, handleSubmit, formState: { errors } } = useForm()
-  const [reveal,setReveal]=useState(false)
-  const {isError,accessToken,} = useSelector((state)=>state.auth)
-  const dispatch=useDispatch()
-  const navigate=useNavigate()
+  const [reveal, setReveal] = useState(false)
+  const { isError, accessToken, } = useSelector((state) => state.auth)
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const onSubmit = async (data) => {
     try {
       const result = await dispatch(loginUser(data))
       console.log(result)
       navigate('/admin/dashboard')
-      
+
     } catch (err) {
-       console.log("error found: ",err)
+      console.log("error found: ", err)
     }
 
   }
@@ -44,14 +45,14 @@ const Login = () => {
           </svg>
         </button>
 
-        
+
         <div className="flex justify-between items-baseline mt-2 mb-8">
           <h1 className="text-3xl font-semibold text-gray-900">Sign In</h1>
           <a href="#" className="text-sm font-semibold text-gray-800 underline hover:text-black">
             create an account
           </a>
         </div>
-        {isError && <span style={{fontSize:'12px', color:'red'}}>{isError}</span>}
+        {isError && <span style={{ fontSize: '12px', color: 'red' }}>{isError}</span>}
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
 
@@ -74,13 +75,26 @@ const Login = () => {
             <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-2">
               Password
             </label>
-            <input
-              type={reveal ? "text" :'password'}
-              placeholder="Password"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition"
-              {...register("password", { required: "password is required" })}
-            />
-            <span onClick={()=>setReveal(!reveal)}>see</span>
+
+            <div className="relative">
+              <input
+                type={reveal ? "text" : 'password'}
+                placeholder="Password"
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-10 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition"
+                {...register("password", { required: "password is required" })}
+              />
+
+              
+              <button
+                type="button" 
+                onClick={() => setReveal(!reveal)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+               
+                {reveal ? <EyeIcon size={20} /> : <EyeClosed size={20} />}
+              </button>
+            </div>
+
             {errors.password && <span style={{ color: "red" }}>password is required</span>}
           </div>
 

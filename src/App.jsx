@@ -21,6 +21,7 @@ function App() {
            
             <Route element={<PublicRoutes/>}>
                 <Route path='/login' element={<Login/>} />
+                
             </Route>
 
 
@@ -32,7 +33,7 @@ function App() {
                     <Route path ='products/edit/:id' element={<EditProduct/>} />
                     <Route path ='categories' element={<Category/>}/>
                     <Route path ='categories/add' element={<AddCategoryPage/>}/>
-                    <Route path ='categories/edit/:id' element ={<EditCategory/>}/>
+                    <Route path ='categories/edit/:slug' element ={<EditCategory/>}/>
                 </Route>
             </Route>
 

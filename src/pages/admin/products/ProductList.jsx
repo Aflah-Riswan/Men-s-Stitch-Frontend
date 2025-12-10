@@ -26,7 +26,7 @@ export default function ProductList() {
 
   useEffect(() => {
     const filters = {
-      page:currentPage,
+      page: currentPage,
       category,
       search,
       sort,
@@ -34,7 +34,7 @@ export default function ProductList() {
     }
     dispatch(fetchProducts(filters))
     console.log("products : ", products)
-  }, [dispatch, currentPage, category, search, sort, status ])
+  }, [dispatch, currentPage, category, search, sort, status])
 
   useEffect(() => {
     dispatch(fetchCategories())
@@ -45,6 +45,10 @@ export default function ProductList() {
     setStatus('')
     setSort('')
     setCurrentPage(1)
+  }
+  function handleDeleteProduct(id) {
+    alert("are you sure")
+    dispatch(deleteProduct(id))
   }
   return (
     <div className="w-full p-6 md:p-8 font-sans text-gray-800 h-full flex flex-col bg-gray-50 min-h-screen">
@@ -84,7 +88,7 @@ export default function ProductList() {
             </div>
 
             {/* Add Button */}
-            <button className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition text-md font-medium w-full md:w-auto justify-center">
+            <button className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition text-md font-medium w-full md:w-auto justify-center" onClick={() => navigate('/admin/products/add')}>
               <PlusCircle size={18} /> Add Product
             </button>
           </div>
@@ -162,11 +166,20 @@ export default function ProductList() {
                     {/* Product Info */}
                     <td className="py-4 px-6 border-r border-gray-100 align-top">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center shrink-0">
-                          <img src={product.coverImages[0]} />
+
+                        {/* 1. FIXED SIZE CONTAINER: w-12 h-12 enforces strict 48x48px size */}
+                        <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 shrink-0 overflow-hidden">
+                          <img
+                            src={product.coverImages || "https://via.placeholder.com/48"}
+                            alt={product.productName}
+                            // 2. IMAGE SCALING: w-full h-full fills the box
+                            // 3. OBJECT-COVER: Crops the image to fit perfectly without stretching
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        <div>
-                          <p className="font-semibold text-md text-gray-900 leading-tight">{product.productName}</p>
+
+                        <div className="flex flex-col justify-center h-12">
+                          <p className="font-semibold text-md text-gray-900 leading-tight line-clamp-1">{product.productName}</p>
                           <span className="text-xs text-gray-400">ID: #{product._id}</span>
                         </div>
                       </div>
@@ -175,7 +188,7 @@ export default function ProductList() {
                     {/* Category */}
                     <td className="py-4 px-6 border-r border-gray-100 align-top">
                       <span className="inline-block text-[13px] font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded border border-gray-200">
-                        {product.mainCategory.categoryName}
+                        {product.mainCategory?.categoryName}
                       </span>
                     </td>
 
@@ -223,7 +236,7 @@ export default function ProductList() {
                     {/* Status Toggle Button */}
                     <td className="py-4 px-6 border-r border-gray-100 align-middle text-center">
                       <button
-                        className={`relative inline-flex items-center p-2 rounded-full w-16 h-6 px-1 transition-colors focus:outline-none text[9px] ${product.isListed ? 'bg-[#7fad39]' : 'bg-red-500'}`} onClick={()=>dispatch(toggleProductList(product._id))}
+                        className={`relative inline-flex items-center p-2 rounded-full w-16 h-6 px-1 transition-colors focus:outline-none text[9px] ${product.isListed ? 'bg-[#7fad39]' : 'bg-red-500'}`} onClick={() => dispatch(toggleProductList(product._id))}
                       >
                         <span className={`${product.isListed ? 'translate-x-10' : 'translate-x-0'} inline-block w-4 h-4 transform bg-white rounded-full transition-transform shadow-md`} />
                         <span className={`absolute text-[10px] font-bold text-white ${product.isListed ? 'left-1' : 'right-1'}`}>
@@ -235,10 +248,10 @@ export default function ProductList() {
                     {/* Actions */}
                     <td className="py-4 px-6 align-top text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit" onClick={()=>navigate(`edit/${product._id}`)}>
+                        <button className="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition border border-transparent hover:border-blue-100" title="Edit" onClick={() => navigate(`edit/${product._id}`)}>
                           <Edit size={18} />
                         </button>
-                        <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete" onClick={()=>dispatch(deleteProduct(product._id))}>
+                        <button className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition border border-transparent hover:border-red-100" title="Delete" onClick={() => handleDeleteProduct(product._id)}>
                           <Trash2 size={18} />
                         </button>
                       </div>
@@ -263,7 +276,7 @@ export default function ProductList() {
         {/* Pagination */}
         <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
           <Stack spacing={2}>
-            <Pagination page={currentPage} count={pagination.totalPages}  className='custom-pagination' onChange={(e,value)=>setCurrentPage(value)} />
+            <Pagination page={currentPage} count={pagination.totalPages} className='custom-pagination' onChange={(e, value) => setCurrentPage(value)} />
           </Stack>
         </div>
 

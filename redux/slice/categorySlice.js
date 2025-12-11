@@ -2,10 +2,17 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../src/utils/axiosInstance";
 
 
-export const fetchCategories = createAsyncThunk('category/fetchAllCategory', async (_, { rejectWithValue }) => {
+export const fetchCategories = createAsyncThunk('category/fetchAllCategory', async (params, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get('/categories')
-    return response.data.categories
+    const response = await axiosInstance.get('/categories',{params})
+    console.log(response.data)
+    if(response.data.success){
+      
+       return response.data
+    }else{
+      rejectWithValue(response.data.message)
+    }
+    
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || error.message)
   }
@@ -39,6 +46,7 @@ const categorySlice = createSlice({
     items: [],
     parentCategories: [],
     subCategories: [],
+    pagination:{},
     isError: null,
     isLoading: false,
   },
@@ -68,9 +76,12 @@ const categorySlice = createSlice({
         state.isLoading = true
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
+        const { categories,pagination } = action.payload
+        console.log("payload : ",action.payload)
         state.isLoading = false
-        state.items = action.payload
-        console.log(action.payload)
+        state.items =categories
+        state.pagination = pagination
+        
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.isError = action.payload

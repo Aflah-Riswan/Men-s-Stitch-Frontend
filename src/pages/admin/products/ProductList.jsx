@@ -166,14 +166,10 @@ export default function ProductList() {
                     {/* Product Info */}
                     <td className="py-4 px-6 border-r border-gray-100 align-top">
                       <div className="flex items-start gap-3">
-
-                        {/* 1. FIXED SIZE CONTAINER: w-12 h-12 enforces strict 48x48px size */}
                         <div className="w-12 h-12 bg-white rounded-lg border border-gray-200 shrink-0 overflow-hidden">
                           <img
                             src={product.coverImages || "https://via.placeholder.com/48"}
                             alt={product.productName}
-                            // 2. IMAGE SCALING: w-full h-full fills the box
-                            // 3. OBJECT-COVER: Crops the image to fit perfectly without stretching
                             className="w-full h-full object-cover"
                           />
                         </div>

@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import axiosInstance from '../../utils/axiosInstance';
-import Modal from '../../Components/Modal';
+import axiosInstance from '../../../utils/axiosInstance';
+import Modal from '../../../Components/Modal';
 import { useNavigate } from 'react-router-dom';
-import ImageCropper from '../../Components/ImageCropper'; 
+import ImageCropper from '../../../Components/ImageCropper'; 
 
 const AddCategoryPage = () => {
 

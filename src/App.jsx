@@ -1,17 +1,17 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
 import PublicRoutes from './Components/PublicRoutes'
 import UserLayout from './Components/layout/userLayout'
-import  Category from './pages/admin/Category'
 import AdminLayout from './Components/layout/adminLayout'
 import DashboardDesign from './pages/admin/Dashboard'
 import Login from './Login'
 import RequireAuth from './Components/RequireAuth'
 import Home from './Home'
-import AddCategoryPage from './pages/admin/AddCategory'
-import EditCategory from './pages/admin/EditCategory'
 import ProductList from './pages/admin/products/ProductList'
 import AddProducts from './pages/admin/products/AddProducts'
 import EditProduct from './pages/admin/products/EditProduct'
+import Category from './pages/admin/category/Category'
+import EditCategory from './pages/admin/category/EditCategory'
+import AddCategoryPage from './pages/admin/category/AddCategory'
 
 function App() {
   return (

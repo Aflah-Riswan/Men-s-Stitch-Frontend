@@ -2,9 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import axiosInstance from '../../utils/axiosInstance';
-import Modal from '../../Components/Modal';
-import ImageCropper from '../../Components/ImageCropper'; // 1. Import Cropper
+import axiosInstance from '../../../utils/axiosInstance';
+import Modal from '../../../Components/Modal';
+import ImageCropper from '../../../Components/ImageCropper'; // 1. Import Cropper
 
 const EditCategory = () => {
   const [isLoading, setLoading] = useState(true)

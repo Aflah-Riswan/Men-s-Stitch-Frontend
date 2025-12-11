@@ -366,7 +366,7 @@ const AddProducts = () => {
                     <textarea
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32 resize-none"
                       placeholder="Product description"
-                      {...register('productDescription', { required: 'Product Description Required ', minLength: { value: 10, message: 'Product Details Should be Contain atleast in 10 words ' }, pattern: { value: /^[A-Za-z0-9,:;.\-' \n]+$/, message: 'Specila characters are not allowed ' } })}
+                      {...register('productDescription', { required: 'Product Description Required ', minLength: { value: 10, message: 'Product Details Should be Contain atleast in 10 words ' }, pattern: { value: /^[A-Za-z0-9,:;.\-'% \n]+$/, message: 'Specila characters are not allowed ' } })}
                     ></textarea>
                     {errors.productDetails && <span className="text-red-500 text-sm mt-1 block">{errors.productDetails.message}</span>}
                   </div>

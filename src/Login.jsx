@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate()
   const onSubmit = async (data) => {
     try {
-      const result = await dispatch(loginUser(data))
+      const result = dispatch(loginUser(data))
       console.log(result)
       navigate('/admin/dashboard')
 
@@ -100,7 +100,7 @@ const Login = () => {
 
           {/* Forgot Password Link */}
           <div className="pt-1">
-            <a href="#" className="text-sm font-bold text-gray-900 underline">
+            <a href="/forgot-password" className="text-sm font-bold text-gray-900 underline">
               Forgot Password?
             </a>
           </div>

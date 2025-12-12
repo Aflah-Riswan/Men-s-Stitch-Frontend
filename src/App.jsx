@@ -12,6 +12,8 @@ import EditProduct from './pages/admin/products/EditProduct'
 import Category from './pages/admin/category/Category'
 import EditCategory from './pages/admin/category/EditCategory'
 import AddCategoryPage from './pages/admin/category/AddCategory'
+import Signup from './pages/account/Signup'
+import ForgotPassword from './pages/account/ForgotPassword'
 
 function App() {
   return (
@@ -20,8 +22,9 @@ function App() {
 
            
             <Route element={<PublicRoutes/>}>
-                <Route path='/login' element={<Login/>} />
-                
+                <Route path='/login' element={<Login/>} /> 
+                <Route path ='/signup' element={<Signup/>}/>
+                <Route path = 'forgot-password' element={<ForgotPassword/>}/>
             </Route>
 
 

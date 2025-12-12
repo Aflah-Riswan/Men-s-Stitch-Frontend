@@ -14,6 +14,8 @@ import EditCategory from './pages/admin/category/EditCategory'
 import AddCategoryPage from './pages/admin/category/AddCategory'
 import Signup from './pages/account/Signup'
 import ForgotPassword from './pages/account/ForgotPassword'
+import OtpVerification from './pages/account/OtpVerification'
+import ResetPassword from './pages/account/ResetPassword'
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
                 <Route path='/login' element={<Login/>} /> 
                 <Route path ='/signup' element={<Signup/>}/>
                 <Route path = 'forgot-password' element={<ForgotPassword/>}/>
+                <Route path = '/verify-otp' element={<OtpVerification/>}/>
+                <Route path = '/reset-password' element={<ResetPassword/>}/>
             </Route>
 
 

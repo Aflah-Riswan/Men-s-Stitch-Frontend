@@ -17,10 +17,13 @@ const Login = () => {
   const navigate = useNavigate()
   const onSubmit = async (data) => {
     try {
-      const result = dispatch(loginUser(data))
+      const result = await dispatch(loginUser(data))
       console.log(result)
-      navigate('/admin/dashboard')
-
+      if(result.payload.role === 'admin'){
+         navigate('/admin/dashboard')
+      }else{
+         navigate('/admin/dashboard')
+      }
     } catch (err) {
       console.log("error found: ", err)
     }

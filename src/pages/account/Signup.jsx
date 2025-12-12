@@ -12,7 +12,7 @@ export default function Signup() {
   const [showOtp, setShowOtp] = useState(false)
   const [loading ,setLoading] = useState(false)
   const [isOtpVerified, setIsOtpVerified] = useState(false)
-
+  const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors },
     trigger, getValues, setError, clearErrors } = useForm({
       resolver: zodResolver(signupSchema),
@@ -55,6 +55,7 @@ export default function Signup() {
       localStorage.setItem('accessToken',data.accessToken)
       localStorage.setItem('role',data.role)
        alert("created successfully")
+       navigate('/')
     }else{
       console.log(response.data)
       alert(`${response.data.message}`)

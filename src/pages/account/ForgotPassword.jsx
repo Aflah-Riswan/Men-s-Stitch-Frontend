@@ -1,10 +1,11 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { signupSchema } from '../../utils/signupSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axiosInstance from '../../utils/axiosInstance';
+import { email } from 'zod';
 
 const ForgotPasswordSchema = signupSchema.pick({email:true})
 export default function ForgotPassword() {
@@ -15,6 +16,16 @@ export default function ForgotPassword() {
     console.log(data)
     console.log(data.email)
     const response = await axiosInstance.post('/auth/forgot-password',{email:data.email})
+    if(response.data.success){
+      alert(" email send successfully")
+      navigate('/verify-otp',{
+        state:{
+          email:data.email
+        }
+      })
+     
+    }
+    else alert('something found errror')
   }
   return (
     // 1. Full Page Container (Centered Content)

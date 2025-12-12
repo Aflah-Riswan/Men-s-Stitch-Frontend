@@ -16,6 +16,7 @@ import Signup from './pages/account/Signup'
 import ForgotPassword from './pages/account/ForgotPassword'
 import OtpVerification from './pages/account/OtpVerification'
 import ResetPassword from './pages/account/ResetPassword'
+import Customers from './pages/admin/customers/Customers'
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
                     <Route path ='categories' element={<Category/>}/>
                     <Route path ='categories/add' element={<AddCategoryPage/>}/>
                     <Route path ='categories/edit/:slug' element ={<EditCategory/>}/>
+                    <Route path ='customers' element={<Customers/>} />
                 </Route>
             </Route>
 

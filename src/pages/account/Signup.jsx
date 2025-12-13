@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import axiosInstance from "../../utils/axiosInstance"
 import { auth } from "../../../firebase"
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth"
+import { useNavigate } from "react-router-dom"
 
 export default function Signup() {
   const [visible, setVisible] = useState(false)

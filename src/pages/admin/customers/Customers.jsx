@@ -5,13 +5,14 @@ import axiosInstance from '../../../utils/axiosInstance';
 import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
 import Modal from '../../../Components/Modal';
+import CustomerAnalytics from '../../../Components/analytics/CustomerAnalytics';
 
 export default function Customers() {
 
   // --- YOUR STATE & LOGIC ---
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [active, setActive] = useState('active');
+  const [active, setActive] = useState('');
   const [limit, setLimit] = useState(5);
   const [users, setUsers] = useState([])
   const [sort, setSort] = useState('')
@@ -20,10 +21,17 @@ export default function Customers() {
   const [modalMessage, setModalMessage] = useState('')
   const [showFilters, setShowFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(0)
+  const [analytics, setAnalytics] = useState({
+    stats: { total: 0, new: 0, blocked: 0 },
+    chart: []
+  })
   useEffect(() => {
     fetchUsers();
+  }, [search, active, currentPage, sort, showModal]);
 
-  }, [search, active, currentPage, sort,showModal]);
+  useEffect(() => {
+    fetchAnalytics()
+  }, [])
 
   const fetchUsers = async () => {
     const data = { currentPage, search, active, limit, sort };
@@ -42,6 +50,19 @@ export default function Customers() {
       console.log("founde errror  : ", error)
     }
   };
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await axiosInstance.get('/users/analytics')
+      if (response.data.success) {
+        setAnalytics(response.data)
+        console.log(response.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const handleBlockUser = async (id, name) => {
     console.log("clicked")
     const response = await axiosInstance.patch(`users/${id}/block`)
@@ -78,30 +99,55 @@ export default function Customers() {
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Customers</h1>
 
       {/* Top Section: Stats (Preserved) */}
+      {/* Top Section: Chart & Stats Combined */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <StatusCard title={'Total Customers'}
-          value={11040}
-          change={11.43}
-          isPositive={true}
-        />
-        <StatusCard title={'Total Customers'}
-          value={11040}
-          change={11.43}
-          isPositive={true}
-        />
-        <StatusCard title={'Total Customers'}
-          value={11040}
-          change={11.43}
-          isPositive={false}
-        />
-        <StatusCard title={'Total Customers'}
-          value={11040}
-          change={11.43}
-          isPositive={false}
-        />
-        <div className="flex flex-col gap-6 lg:col-span-1"></div>
-      </div>
 
+        {/* 1. Chart Section (Takes 2 Columns) */}
+        {/* I placed this FIRST so it appears on the LEFT. Move it below the stats div to swap sides. */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="mb-4">
+            <h3 className="font-bold text-slate-800 text-lg">Customer Growth</h3>
+          </div>
+          {analytics.chart && analytics.chart.length > 0 ? (
+            <CustomerAnalytics data={analytics.chart} />
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-400 text-sm">
+              Loading chart data...
+            </div>
+          )}
+        </div>
+
+        {/* 2. Stats Section (Takes 1 Column) */}
+        {/* We wrap all cards in a flex column so they stack vertically next to the chart */}
+        <div className="flex flex-col gap-6 lg:col-span-1">
+          <StatusCard
+            title={'Total Customers'}
+            value={analytics.stats.total}
+            change={'+14.4%'}
+            isPositive={true}
+          />
+          <StatusCard
+            title={'New Customers'}
+            value={analytics.stats.new}
+            change={analytics.stats.total - analytics.stats.new}
+            isPositive={true}
+          />
+          <StatusCard
+            title={'Blocked Customers'}
+            value={analytics.stats.blocked}
+            change={12}
+            isPositive={false}
+          />
+          {/* You had a 4th card, adding it here to keep the stack even */}
+          <StatusCard
+            title={'Active Visitors'}
+            value={11040}
+            change={11.43}
+            isPositive={false}
+          />
+        </div>
+
+      </div>
       {/* Bottom Section: Customer List */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
@@ -151,6 +197,7 @@ export default function Customers() {
                     onChange={(e) => setActive(e.target.value)}
                     className="pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 appearance-none cursor-pointer hover:border-gray-300 transition-colors"
                   >
+                    <option value="">default</option>
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
                   </select>
@@ -167,6 +214,7 @@ export default function Customers() {
                     className="pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 appearance-none cursor-pointer hover:border-gray-300 transition-colors"
                     onChange={(e) => setSort(e.target.value)}
                   >
+                    <option value="">default</option>
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
                     <option value="a-z">Name (A-Z)</option>

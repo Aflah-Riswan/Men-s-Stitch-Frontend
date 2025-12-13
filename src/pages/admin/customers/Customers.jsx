@@ -1,101 +1,196 @@
-
-import React, { useEffect } from 'react';
-
-
-
-import { Search, Filter, ArrowUpDown } from 'lucide-react';
-import StatusCard from '../../../Components/StatusCard';
-
-
-// 3. Mock Data
-const tableData = [
-  { id: '#CUST001', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active' },
-  { id: '#CUST002', name: 'Jane Smith', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active' },
-  { id: '#CUST003', name: 'Bob Johnson', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active' },
-  { id: '#CUST004', name: 'Alice Brown', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active' },
-  { id: '#CUST005', name: 'Charlie Davis', phone: '+1234567890', orders: 5, spend: '250.00', status: 'blocked' },
-  { id: '#CUST006', name: 'Emily Davis', phone: '+1234567890', orders: 30, spend: '4,600.00', status: 'blocked' },
-  { id: '#CUST007', name: 'Jane Smith', phone: '+1234567890', orders: 5, spend: '250.00', status: 'blocked' },
-  { id: '#CUST008', name: 'John Doe', phone: '+1234567890', orders: 25, spend: '3,450.00', status: 'Active' },
-];
+import React, { useEffect, useState } from 'react';
+import { Search, Filter, ArrowUpDown, ArrowDownIcon, ChevronDown, RotateCcw, } from 'lucide-react';
+import StatusCard from '../../../Components/StatusCard'; // Assuming you have this
+import axiosInstance from '../../../utils/axiosInstance';
+import Stack from '@mui/material/Stack';
+import Pagination from '@mui/material/Pagination';
+import Modal from '../../../Components/Modal';
 
 export default function Customers() {
 
-  useEffect(()=>{
-    
-  })
+  // --- YOUR STATE & LOGIC ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [active, setActive] = useState('active');
+  const [limit, setLimit] = useState(5);
+  const [users, setUsers] = useState([])
+  const [sort, setSort] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [modalTitle, setModalTitle] = useState('')
+  const [modalMessage, setModalMessage] = useState('')
+  const [showFilters, setShowFilters] = useState(false);
+  const [totalPages, setTotalPages] = useState(0)
+  useEffect(() => {
+    fetchUsers();
+
+  }, [search, active, currentPage, sort,showModal]);
+
+  const fetchUsers = async () => {
+    const data = { currentPage, search, active, limit, sort };
+    try {
+      const response = await axiosInstance.get('/users', { params: data });
+      if (response.data.success) {
+        const { users, currentPage, totalPages } = response.data
+        setCurrentPage(currentPage)
+        setTotalPages(totalPages)
+        setUsers(users)
+      } else {
+        console.log(response.data)
+        console.log(response.data.message)
+      }
+    } catch (error) {
+      console.log("founde errror  : ", error)
+    }
+  };
+  const handleBlockUser = async (id, name) => {
+    console.log("clicked")
+    const response = await axiosInstance.patch(`users/${id}/block`)
+    console.log(response)
+    if (response.data.success) {
+      setShowModal(true)
+      setModalTitle('Block User ', name)
+      setModalMessage(response.data.message)
+    }
+  }
+  function handleModalClose() {
+    setShowModal(false)
+  }
+  function handleReset() {
+    setSort('')
+    setSearch('')
+    setActive('')
+    setCurrentPage(1)
+
+  }
+
   return (
-    // Main Content Area - Assuming this sits next to your sidebar
     <div className="flex-1 bg-[#f8f9fc] min-h-screen p-8 font-sans">
+
+      <Modal
+        isOpen={showModal}
+        title={modalTitle}
+        message={modalMessage}
+        onConfirm={handleModalClose}
+        type="success"
+      />
 
       {/* Page Title */}
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Customers</h1>
 
-      {/* Top Section: Stats & Chart */}
+      {/* Top Section: Stats (Preserved) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-        {/* Left Column: Vertical Stack of Stats Cards */}
-        <div className="flex flex-col justify-between gap-6 lg:col-span-1">
-          {/* Card 1 */}
-          <StatusCard
-            title="Total Customers"
-            value="11,040"
-            change="+14.4%"
-            isPositive={true}
-          />
-          {/* Card 2 */}
-          <StatusCard
-            title="New Customers"
-            value="2,370"
-            change="+20%"
-            isPositive={true}
-          />
-          {/* Card 3 */}
-          <StatusCard
-            title="Visitor"
-            value="250k"
-            change="+20%"
-            isPositive={true}
-          />
-        </div>
-
-        {/* Right Column: Customer Overview Chart Card */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-
-
-          
-
-        </div>
+        <StatusCard title={'Total Customers'}
+          value={11040}
+          change={11.43}
+          isPositive={true}
+        />
+        <StatusCard title={'Total Customers'}
+          value={11040}
+          change={11.43}
+          isPositive={true}
+        />
+        <StatusCard title={'Total Customers'}
+          value={11040}
+          change={11.43}
+          isPositive={false}
+        />
+        <StatusCard title={'Total Customers'}
+          value={11040}
+          change={11.43}
+          isPositive={false}
+        />
+        <div className="flex flex-col gap-6 lg:col-span-1"></div>
       </div>
 
       {/* Bottom Section: Customer List */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-          <h3 className="text-lg font-bold text-slate-800">Customer List</h3>
 
-          <div className="flex items-center gap-3">
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search user"
-                className="pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-1 focus:ring-gray-300 w-64"
-              />
+        {/* Header: Title + Actions */}
+        <div className="flex flex-col gap-4 mb-6">
+
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h3 className="text-lg font-bold text-slate-800">Customer List</h3>
+
+            <div className="flex items-center gap-3">
+
+              {/* 1. Search Bar (Always Visible) */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search user"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 pr-4 py-2 bg-gray-100 rounded-lg text-sm outline-none focus:ring-1 focus:ring-gray-300 w-64 transition-all"
+                />
+              </div>
+
+              {/* 2. Accordion Toggle Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${showFilters ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters & Sort</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <button className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-              <Filter className="w-4 h-4 text-gray-500" />
-            </button>
-            <button className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
-              <ArrowUpDown className="w-4 h-4 text-gray-500" />
-            </button>
+
+          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showFilters ? 'max-h-24 opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex flex-wrap gap-4 items-center">
+
+              {/* Filter Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status:</span>
+                <div className="relative">
+                  <select
+                    value={active}
+                    onChange={(e) => setActive(e.target.value)}
+                    className="pl-3 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 appearance-none cursor-pointer hover:border-gray-300 transition-colors"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sort By:</span>
+                <div className="relative">
+                  <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3 pointer-events-none" />
+                  <select
+                    className="pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 outline-none focus:ring-1 focus:ring-gray-300 appearance-none cursor-pointer hover:border-gray-300 transition-colors"
+                    onChange={(e) => setSort(e.target.value)}
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="a-z">Name (A-Z)</option>
+                    <option value="z-a">Name (Z-A)</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-3 h-3 pointer-events-none" />
+                </div>
+              </div>
+
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Filters</span>
+              </button>
+
+            </div>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
+        {/* Table Container */}
+        {/* ADDED min-h-[600px] to fix the layout shift issue */}
+        <div className="overflow-x-auto min-h-[600px]">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#eafbf2] text-slate-600 text-sm font-semibold">
@@ -108,56 +203,55 @@ export default function Customers() {
                 <th className="py-4 px-4 rounded-r-xl">Action</th>
               </tr>
             </thead>
+
             <tbody className="text-sm text-slate-600">
-              {tableData.map((user, index) => (
-                <tr key={index} className="border-b border-gray-50 last:border-none hover:bg-gray-50 transition-colors">
-                  <td className="py-4 px-4 font-medium text-slate-800">{user.id}</td>
-                  <td className="py-4 px-4">{user.name}</td>
+              {users.map((user) => (
+                <tr key={user._id} className="border-b border-gray-50 last:border-none hover:bg-gray-50 transition-colors">
+                  <td className="py-4 px-4 font-medium text-slate-800">{user._id}</td>
+                  <td className="py-4 px-4">{`${user.firstName} ${user.lastName}`}</td>
                   <td className="py-4 px-4">{user.phone}</td>
-                  <td className="py-4 px-4 text-center">{user.orders}</td>
-                  <td className="py-4 px-4">{user.spend}</td>
+                  <td className="py-4 px-4 text-center">{25}</td>
+                  <td className="py-4 px-4">{1000}</td>
                   <td className="py-4 px-4">
-                    <span className={`flex items-center gap-2 font-medium ${user.status === 'Active' ? 'text-green-600' :
-                        user.status === 'blocked' ? 'text-red-500' : 'text-orange-400'
-                      }`}>
-                      <span className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-green-500' :
-                          user.status === 'blocked' ? 'bg-red-500' : 'bg-orange-400'
+                    {/* Preserved your logic, just cleaned up Tailwind classes */}
+                    <span className={` flex items-center gap-2 font-medium ${user.isBlocked ? 'text-red-500' : 'text-green-600'
+                      }`} >
+                      <span className={`w-2 h-2 rounded-full ${user.isBlocked ? 'bg-red-500' : 'bg-green-500'
                         }`}></span>
-                      {user.status}
+                      {user.isBlocked ? 'Blocked' : 'Active'}
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <ToggleSwitch isBlocked={user.status === 'blocked'} />
+                    <button className={`relative w-16 h-7 rounded-full transition-colors flex items-center px-1 ${user.isBlocked ? 'bg-red-500' : 'bg-gray-200'}`} onClick={() => handleBlockUser(user._id, user.firstName)}>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${user.isBlocked ? 'translate-x-9' : 'translate-x-0'}`}></div>
+                      <span className={`absolute text-[9px] font-bold ${user.isBlocked ? 'left-2 text-white' : 'right-2 text-gray-500'}`}>
+                        {user.isBlocked ? 'Unblock' : 'Block'}
+                      </span>
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
 
+          </table>
+          <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <Stack spacing={2}>
+              <Pagination page={currentPage} count={totalPages} className='custom-pagination' onChange={(e, value) => setCurrentPage(value)} />
+            </Stack>
+          </div>
+          {/* Empty State Message (Optional but good for UX) */}
+          {users.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <p>No customers found.</p>
+            </div>
+          )}
+        </div>
+
+      </div>
     </div>
   );
 }
 
 
 
-
-// 2. Custom Toggle Switch (Matches Image Design)
-function ToggleSwitch({ isBlocked }) {
-  return (
-    <button className={`relative w-16 h-7 rounded-full transition-colors flex items-center px-1 ${isBlocked ? 'bg-red-500' : 'bg-gray-200'
-      }`}>
-      {/* Circle */}
-      <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${isBlocked ? 'translate-x-9' : 'translate-x-0'
-        }`}></div>
-
-      {/* Text Label inside Toggle */}
-      <span className={`absolute text-[9px] font-bold ${isBlocked ? 'left-2 text-white' : 'right-2 text-gray-500'
-        }`}>
-        {isBlocked ? '' : 'BLOCK'}
-      </span>
-    </button>
-  );
-}
 

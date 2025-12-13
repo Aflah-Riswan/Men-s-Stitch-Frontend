@@ -17,49 +17,51 @@ import ForgotPassword from './pages/account/ForgotPassword'
 import OtpVerification from './pages/account/OtpVerification'
 import ResetPassword from './pages/account/ResetPassword'
 import Customers from './pages/admin/customers/Customers'
+import ProductDetails from './pages/shop/productDetails'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-           
-            <Route element={<PublicRoutes/>}>
-                <Route path='/login' element={<Login/>} /> 
-                <Route path ='/signup' element={<Signup/>}/>
-                <Route path = 'forgot-password' element={<ForgotPassword/>}/>
-                <Route path = '/verify-otp' element={<OtpVerification/>}/>
-                <Route path = '/reset-password' element={<ResetPassword/>}/>
-            </Route>
+
+        <Route element={<PublicRoutes />}>
+          <Route path='/login' element={<Login />} />
+          <Route path='/signup' element={<Signup />} />
+          <Route path='forgot-password' element={<ForgotPassword />} />
+          <Route path='/verify-otp' element={<OtpVerification />} />
+          <Route path='/reset-password' element={<ResetPassword />} />
+        </Route>
 
 
-            <Route element={<RequireAuth allowedRoles={['admin']} />}>
-                <Route path='/admin' element={<AdminLayout/>}>
-                    <Route path='dashboard' element={<DashboardDesign/>} />
-                    <Route path='products' element={<ProductList/>} />
-                    <Route path ='products/add' element={<AddProducts/>} />
-                    <Route path ='products/edit/:id' element={<EditProduct/>} />
-                    <Route path ='categories' element={<Category/>}/>
-                    <Route path ='categories/add' element={<AddCategoryPage/>}/>
-                    <Route path ='categories/edit/:slug' element ={<EditCategory/>}/>
-                    <Route path ='customers' element={<Customers/>} />
-                </Route>
-            </Route>
+        <Route element={<RequireAuth allowedRoles={['admin']} />}>
+          <Route path='/admin' element={<AdminLayout />}>
+            <Route path='dashboard' element={<DashboardDesign />} />
+            <Route path='products' element={<ProductList />} />
+            <Route path='products/add' element={<AddProducts />} />
+            <Route path='products/edit/:id' element={<EditProduct />} />
+            <Route path='categories' element={<Category />} />
+            <Route path='categories/add' element={<AddCategoryPage />} />
+            <Route path='categories/edit/:slug' element={<EditCategory />} />
+            <Route path='customers' element={<Customers />} />
+          </Route>
+        </Route>
 
 
-  
-            <Route path='/' element={<UserLayout/>}>
-                
-                <Route index element={<Home/>} />
-               
-                <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
-                    <Route path='profile' element={<h1>user profile</h1>} />
-                    <Route path='orders' element={<h1>My Orders</h1>} />
-                </Route>
 
-            </Route>
+        <Route path='/' element={<UserLayout />}>
 
-       
+          <Route index element={<Home />} />
+
+          <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
+            <Route path='product/:id/details' element={<ProductDetails />} />
+            <Route path='profile' element={<h1>user profile</h1>} />
+            <Route path='orders' element={<h1>My Orders</h1>} />
+          </Route>
+
+        </Route>
+
+
 
       </Routes>
     </BrowserRouter>

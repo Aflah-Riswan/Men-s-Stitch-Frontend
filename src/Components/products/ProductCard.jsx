@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProductCard({product}) {
- 
+
   const navigate = useNavigate()
   if (!product) return null;
 

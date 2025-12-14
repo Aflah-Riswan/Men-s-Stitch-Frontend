@@ -57,9 +57,6 @@ export default function Home() {
       console.log("error in  : ", error)
     }
   }
-
-
-
   console.log("State Check:", { featured, newArrivals, products });
   return (
     <>
@@ -110,7 +107,7 @@ export default function Home() {
             {categories.map((cat, index) => (
               <div key={index} className="flex flex-col items-center min-w-[80px] cursor-pointer group">
 
-                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative" onClick={()=>navigate(`/category/${cat.slug}`)}>
+                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative" onClick={()=>navigate(`/category/${cat.categoryName}`)}>
 
                   <img
                     src={cat.image}

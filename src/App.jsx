@@ -18,6 +18,7 @@ import OtpVerification from './pages/account/OtpVerification'
 import ResetPassword from './pages/account/ResetPassword'
 import Customers from './pages/admin/customers/Customers'
 import ProductDetails from './pages/shop/productDetails'
+import CategoryPage from './pages/shop/CategoryPage'
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
             <Route path='product/:id/details' element={<ProductDetails />} />
             <Route path='profile' element={<h1>user profile</h1>} />
             <Route path='orders' element={<h1>My Orders</h1>} />
+            <Route path = 'category/:slug' element = {<CategoryPage/>} />
           </Route>
 
         </Route>

@@ -2,23 +2,21 @@ import React from 'react';
 import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function ProductCard({ product }) {
+export default function ProductCard({product}) {
  
   const navigate = useNavigate()
   if (!product) return null;
 
-  // 1. Extract Price (JSON uses 'salePrice', NOT 'Saleprice')
-  const price = product.salePrice || product.originalPrice || 0;
-  const originalPrice = product.originalPrice || 0;
   
-  // 2. Calculate Discount
+  const price = product ?.salePrice || 0;
+  const originalPrice = product ?.originalPrice || 0;
+  
+
   const hasDiscount = originalPrice > price;
   const discountPercentage = hasDiscount 
     ? Math.round(((originalPrice - price) / originalPrice) * 100) 
     : 0;
 
-  // 3. Extract Rating (JSON uses 'rating.average', NOT just 'rating')
-  // We use optional chaining (?.) in case rating is undefined
   const ratingValue = product.rating?.average || 0;
   const reviewCount = product.rating?.count || 0;
 

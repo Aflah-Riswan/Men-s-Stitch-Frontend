@@ -110,7 +110,7 @@ export default function Home() {
             {categories.map((cat, index) => (
               <div key={index} className="flex flex-col items-center min-w-[80px] cursor-pointer group">
 
-                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative">
+                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative" onClick={()=>navigate(`/category/${cat.slug}`)}>
 
                   <img
                     src={cat.image}

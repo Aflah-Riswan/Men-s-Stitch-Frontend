@@ -56,7 +56,7 @@ export default function Signup() {
       localStorage.setItem('accessToken',data.accessToken)
       localStorage.setItem('role',data.role)
        alert("created successfully")
-       navigate('/')
+       navigate('/login')
     }else{
       console.log(response.data)
       alert(`${response.data.message}`)

@@ -42,7 +42,7 @@ export default function ProductFAQs({faqs}) {
                   </span>
                 </button>
 
-                {/* Answer Content (Collapsible) */}
+                {/* Answer Content  */}
                 <div 
                   className={`px-6 text-gray-600 text-sm md:text-base leading-relaxed overflow-hidden transition-all duration-300 ease-in-out ${
                     isOpen ? 'max-h-40 pb-6 opacity-100' : 'max-h-0 opacity-0'

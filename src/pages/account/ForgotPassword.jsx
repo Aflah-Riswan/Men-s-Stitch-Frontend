@@ -28,7 +28,7 @@ export default function ForgotPassword() {
     else alert('something found errror')
   }
   return (
-    // 1. Full Page Container (Centered Content)
+    // 1. Full Page Container
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       
       {/* 2. The Card (Centered Box) */}
@@ -72,7 +72,7 @@ export default function ForgotPassword() {
           <div className="flex justify-center mt-6">
             <button 
               type="button"
-              onClick={() => navigate('/login')} // Adjust route as needed
+              onClick={() => navigate('/login')} 
               className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
               <ChevronLeft size={16} />

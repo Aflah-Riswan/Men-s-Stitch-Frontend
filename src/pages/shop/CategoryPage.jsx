@@ -122,9 +122,7 @@ export default function CategoryPage() {
         <div className="flex flex-col lg:flex-row gap-12">
 
           {/* --- LEFT SIDEBAR --- */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            
-             
+          <div className="w-full lg:w-64 flex-shrink-0">            
              
              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
               <h3 className="text-lg font-bold">Filters</h3>

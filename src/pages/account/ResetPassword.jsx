@@ -36,7 +36,7 @@ export default function ResetPassword() {
     console.log(response)
     if(response.data.success){
       alert("updated succesfully")
-      navigate('/')
+      navigate('/login')
     }
     else{ 
       alert("something went wrong")

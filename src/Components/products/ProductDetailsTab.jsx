@@ -35,7 +35,7 @@ export default function ProductDetailsTab({ product }) {
         </ul>
       </div>
 
-      {/* Bottom Border Line - Matches image_b01591.png style */}
+      {/* Bottom Border Line */}
       <div className="mt-12 border-t border-gray-200 w-full"></div>
     </div>
   );

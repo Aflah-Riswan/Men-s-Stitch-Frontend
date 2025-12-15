@@ -26,14 +26,14 @@ export default function ProductCard({product}) {
       {/* Image Container */}
       <div className="relative overflow-hidden rounded-xl bg-gray-100 mb-4 aspect-[3/4]">
         <img
-          // JSON uses 'coverImages' array
+          // JSON uses 'coverImages' 
           src={product.coverImages?.[0] || "https://via.placeholder.com/300?text=No+Image"}
           alt={product.productName}
           className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
         />
       </div>
 
-      {/* Product Name (JSON uses 'productName') */}
+      
       <h3 className="font-bold text-sm mb-1 truncate text-gray-900">
         {product.productName || "Untitled Product"}
       </h3>
@@ -45,7 +45,6 @@ export default function ProductCard({product}) {
             <Star
               key={i}
               size={12}
-              // Use the extracted ratingValue
               fill={i < Math.floor(ratingValue) ? "currentColor" : "none"}
               stroke="currentColor"
             />

@@ -1,25 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
   SlidersHorizontal
 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import axiosInstance from '../../utils/axiosInstance';
 import categoryAttributes, { sizes } from '../../data';
 import ProductCard from '../../Components/products/ProductCard';
 import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
-
+import useDebounce from '../../hooks/useDebounce';
+import productService from '../../services/productService';
 
 export default function CategoryPage() {
   const { slug } = useParams();
   const [attributes, setAttributes] = useState(null);
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); 
-
+  const [totalPages, setTotalPages] = useState(1);
+  const location = useLocation()
   const [selectedFilters, setSelectedFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -27,27 +28,25 @@ export default function CategoryPage() {
     attributes: {}
   });
 
- 
-  const fetchProducts = async (page, currentFilters) => {
+  const debouncedFilters = useDebounce(selectedFilters, 500);
+
+  const fetchProducts = useCallback(async (page, filtersToUse) => {
     try {
       const params = new URLSearchParams();
       params.append('page', page);
       params.append('limit', 10);
 
-      if (currentFilters.minPrice) params.append('minPrice', currentFilters.minPrice);
-      if (currentFilters.maxPrice) params.append('maxPrice', currentFilters.maxPrice);
-      if (currentFilters.sizes.length > 0) params.append('sizes', currentFilters.sizes.join(','));
+      const searchParams = new URLSearchParams(location.search);
+      const searchQuery = searchParams.get('search');
 
-      Object.keys(currentFilters.attributes).forEach((key) => {
-        const values = currentFilters.attributes[key];
-        if (values.length > 0) {
-          params.append(`attr_${key}`, values.join(','));
-        }
+      const response = await productService.getProductsByCategory(slug, {
+        page,
+        limit: 10,
+        search: searchQuery,
+        filters: filtersToUse
       });
+      console.log(response)
 
-      const queryString = params.toString();
-      const response = await axiosInstance.get(`/products/category/${slug}?${queryString}`);
-       console.log(response)
       if (response.data && response.data.products) {
         setProducts(response.data.products);
         if (response.data.pagination) {
@@ -57,15 +56,16 @@ export default function CategoryPage() {
     } catch (error) {
       console.error("Failed to fetch products", error);
     }
-  };
+  }, [slug, location.search]);
 
-  useEffect( () => {
+
+  useEffect(() => {
     if (slug && categoryAttributes[slug]) {
       setAttributes(categoryAttributes[slug]);
     }
     setCurrentPage(1);
-    fetchProducts(1, selectedFilters);
-  }, [slug]);
+    fetchProducts(1, debouncedFilters);
+  }, [debouncedFilters, slug, fetchProducts]);
 
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
@@ -97,15 +97,11 @@ export default function CategoryPage() {
     });
   };
 
-  const handleApplyFilter = () => {
-    setCurrentPage(1); 
-    fetchProducts(1, selectedFilters);
-  };
 
-  
+
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
-    fetchProducts(value, selectedFilters); 
+    fetchProducts(value, debouncedFilters);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -122,16 +118,16 @@ export default function CategoryPage() {
         <div className="flex flex-col lg:flex-row gap-12">
 
           {/* --- LEFT SIDEBAR --- */}
-          <div className="w-full lg:w-64 flex-shrink-0">            
-             
-             <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+          <div className="w-full lg:w-64 flex-shrink-0">
+
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
               <h3 className="text-lg font-bold">Filters</h3>
               <SlidersHorizontal className="w-5 h-5 text-gray-400 rotate-90" />
             </div>
 
             <div className="space-y-6">
-                
-                 <div className="pb-6 border-b border-gray-100">
+
+              <div className="pb-6 border-b border-gray-100">
                 <div className="flex items-center justify-between w-full mb-4">
                   <span className="font-bold text-sm">Price</span>
                   <ChevronUp className="w-4 h-4" />
@@ -183,8 +179,8 @@ export default function CategoryPage() {
                 </div>
               </div>
 
-               {/* ATTRIBUTES */}
-               {attributes && attributes.map((section) => (
+              {/* ATTRIBUTES */}
+              {attributes && attributes.map((section) => (
                 <div key={section.label} className="pb-6 border-b border-gray-100 last:border-0">
                   <div className="flex items-center justify-between w-full mb-4">
                     <span className="font-bold text-sm">{section.label}</span>
@@ -212,12 +208,12 @@ export default function CategoryPage() {
               ))}
 
               {/* APPLY BUTTON */}
-              <button
+              {/* <button
                 onClick={handleApplyFilter}
                 className="w-full bg-black text-white py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors mt-4"
               >
                 Apply Filter
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -241,11 +237,11 @@ export default function CategoryPage() {
         {products.length > 0 && (
           <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-center items-center mt-8">
             <Stack spacing={2}>
-              <Pagination 
-                page={currentPage} 
-                count={totalPages} 
-                onChange={handlePageChange} 
-                className='custom-pagination' 
+              <Pagination
+                page={currentPage}
+                count={totalPages}
+                onChange={handlePageChange}
+                className='custom-pagination'
                 shape="rounded"
               />
             </Stack>

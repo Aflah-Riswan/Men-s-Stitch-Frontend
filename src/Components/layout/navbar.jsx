@@ -2,14 +2,25 @@
 
 import { Search, ShoppingCart, User, Menu, Heart, LogInIcon, LogOutIcon } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { setLogout } from '../../../redux/slice/authSlice';
+import { setLogout } from '../../redux/slice/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const Navbar = () => {
   const { accessToken, role } = useSelector((state) => state.auth)
+  const [search, setSearch] = useState('');
   const dispatch = useDispatch()
   const navigate = useNavigate()
   console.log("accesstoken  : ", accessToken)
+
+  function handleSearch(e) {
+    if (e.key === 'Enter' || e.type === 'click') {
+      if (search.trim()) {
+        navigate(`/products/all?search=${encodeURIComponent(search)}`);
+         setSearch(''); 
+      }
+    }
+  }
   return (
     <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
 
@@ -46,7 +57,9 @@ const Navbar = () => {
             <input
               type="text"
               placeholder="Search for products..."
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-gray-100 rounded-full py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+              onKeyDown={handleSearch}
             />
           </div>
         </div>
@@ -73,7 +86,7 @@ const Navbar = () => {
             <User className="w-6 h-6 text-black stroke-[1.5]" />
           </button>
 
-          <button className="hover:scale-110 transition flex items-center gap-2" onClick={()=>dispatch(setLogout())}>
+          <button className="hover:scale-110 transition flex items-center gap-2" onClick={() => dispatch(setLogout())}>
             {accessToken ? (
               <>
                 <LogOutIcon className="w-6 h-6 text-black stroke-[1.5]" />
@@ -81,7 +94,7 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <LogInIcon className="w-6 h-6 text-black stroke-[1.5]" onClick={()=>navigate('/login')} />
+                <LogInIcon className="w-6 h-6 text-black stroke-[1.5]" onClick={() => navigate('/login')} />
                 <span className="text-sm font-medium">Login</span>
               </>
             )}

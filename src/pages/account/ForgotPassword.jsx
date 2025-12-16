@@ -6,6 +6,7 @@ import { signupSchema } from '../../utils/signupSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axiosInstance from '../../utils/axiosInstance';
 import { email } from 'zod';
+import authService from '../../services/authService';
 
 const ForgotPasswordSchema = signupSchema.pick({email:true})
 export default function ForgotPassword() {
@@ -15,7 +16,8 @@ export default function ForgotPassword() {
   const onSubmit = async (data) =>{
     console.log(data)
     console.log(data.email)
-    const response = await axiosInstance.post('/auth/forgot-password',{email:data.email})
+    const response = await authService.forgotPassword(data.email)
+    console.log(response ,"respone")
     if(response.data.success){
       alert(" email send successfully")
       navigate('/verify-otp',{

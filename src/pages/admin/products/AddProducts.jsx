@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import categoryAttributes, { sizes } from '../../../data';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories, setParentCategories, setSubCategories } from '../../../../redux/slice/categorySlice';
+import { fetchCategories , setParentCategories ,setSubCategories } from '../../../redux/slice/categorySlice';
 import { useForm } from 'react-hook-form';
-import ImageUpload from '../../../Components/ImageUpload';
+import ImageUpload from '../../../Components/ImageUpload'; // fetchCategories, setParentCategories, setSubCategories
 import axiosInstance from '../../../utils/axiosInstance';
 import ImageCropper from '../../../Components/ImageCropper';
 import Modal from '../../../Components/Modal';

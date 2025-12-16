@@ -6,6 +6,7 @@ import axiosInstance from '../../../utils/axiosInstance';
 import Modal from '../../../Components/Modal';
 import { useNavigate } from 'react-router-dom';
 import ImageCropper from '../../../Components/ImageCropper'; 
+import categoryService from '../../../services/categoryService';
 
 const AddCategoryPage = () => {
 
@@ -24,8 +25,8 @@ const AddCategoryPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axiosInstance.get('/categories')
-        const categories = response.data.categories
+        const response = await categoryService.getCategories()
+        const categories = response.categories
         console.log(categories)
         const validParents = categories.filter((cat) => cat.parentCategory === null)
         setParentCategories(validParents)
@@ -93,17 +94,12 @@ const AddCategoryPage = () => {
       const formData = new FormData()
       formData.append('image', data.headerImage[0]) 
       
-      const uploadresponse = await axiosInstance.post('/upload', formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+      const uploadresponse = await categoryService.uploadImage( data.headerImage[0])
       console.log(uploadresponse.data)
 
       const categoryData = {
         categoryName,
-        image: uploadresponse.data.imageUrl,
+        image: uploadresponse.imageUrl,
         parentCategory: parentCategory === 'None' ? null : parentCategory,
         categoryOffer: Number(categoryOffer),
         discountType,
@@ -112,14 +108,14 @@ const AddCategoryPage = () => {
         isFeatured,
       }
       console.log(categoryData)
-      const responseCategory = await axiosInstance.post('/categories', categoryData)
+      const responseCategory = await categoryService.createCategory(categoryData)
       console.log("response : ",responseCategory)
-      if (responseCategory.data.success) {
+      if (responseCategory.success) {
         setShowModal(true);
       }
       else {
         console.log("inside elese")
-        window.alert(responseCategory.data.message)
+        window.alert(responseCategory.message)
       }
     } catch (error) {
       console.log("error in onSubmit : ", error)

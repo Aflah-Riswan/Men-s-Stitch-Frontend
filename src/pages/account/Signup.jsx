@@ -7,6 +7,7 @@ import axiosInstance from "../../utils/axiosInstance"
 import { auth } from "../../../firebase"
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
+import authService from "../../services/authService"
 
 export default function Signup() {
   const [visible, setVisible] = useState(false)
@@ -50,7 +51,7 @@ export default function Signup() {
     }
 
      console.log("data :", userData)
-    const response = await axiosInstance.post('/auth/signup',userData)
+    const response = await authService.signup(userData)
     if(response.data.success){
       const { data } = response
       localStorage.setItem('accessToken',data.accessToken)

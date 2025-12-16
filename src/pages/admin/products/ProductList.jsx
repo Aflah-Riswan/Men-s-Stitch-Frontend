@@ -4,11 +4,12 @@ import {
   Package, RotateCcw
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteProduct, fetchProducts, toggleProductList } from '../../../../redux/slice/productSlice';
-import { fetchCategories } from '../../../../redux/slice/categorySlice';
-import Stack from '@mui/material/Stack';
+import { deleteProduct ,fetchProducts ,toggleProductList } from '../../../redux/slice/productSlice'; 
+import { fetchCategories } from '../../../redux/slice/categorySlice';
+import Stack from '@mui/material/Stack'; //  deleteProduct, fetchProducts, toggleProductList 
 import Pagination from '@mui/material/Pagination';
 import { useNavigate } from 'react-router-dom';
+import useDebounce from '../../../hooks/useDebounce';
 
 export default function ProductList() {
 
@@ -23,18 +24,18 @@ export default function ProductList() {
   const pagination = useSelector((state) => state.product.pagination)
   const dispatch = useDispatch()
   const navigate = useNavigate()
-
+  const debouncedSearch = useDebounce(search, 500);
   useEffect(() => {
     const filters = {
       page: currentPage,
       category,
-      search,
+      search : debouncedSearch,
       sort,
       status
     }
     dispatch(fetchProducts(filters))
     console.log("products : ", products)
-  }, [dispatch, currentPage, category, search, sort, status])
+  }, [dispatch, currentPage, category, debouncedSearch, sort, status])
 
   useEffect(() => {
     dispatch(fetchCategories())
@@ -46,6 +47,11 @@ export default function ProductList() {
     setSort('')
     setCurrentPage(1)
   }
+  
+  useEffect(() => {
+    if(debouncedSearch !== '') setCurrentPage(1);
+  }, [debouncedSearch]);
+
   function handleDeleteProduct(id) {
     alert("are you sure")
     dispatch(deleteProduct(id))

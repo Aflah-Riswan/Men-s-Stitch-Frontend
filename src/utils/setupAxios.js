@@ -1,4 +1,4 @@
-import { updateAccessToken, setLogout } from "../../redux/slice/authSlice" // Make sure to import logoutUser
+import { updateAccessToken, setLogout } from "../redux/slice/authSlice" // Make sure to import logoutUser
 import axiosInstance from "./axiosInstance"
 
 const setupAxios = (store) => {

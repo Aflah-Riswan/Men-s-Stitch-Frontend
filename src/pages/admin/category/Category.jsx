@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Image as ImageIcon, RotateCcw, Search, Filter } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories, toggleListButton, deleteCategory } from '../../../../redux/slice/categorySlice';
+import { fetchCategories ,toggleListButton , deleteCategory } from '../../../redux/slice/categorySlice';  //fetchCategories, toggleListButton, deleteCategory
 import { useNavigate } from 'react-router-dom';
-import { fetchProducts } from '../../../../redux/slice/productSlice';
+import { fetchProducts } from '../../../redux/slice/productSlice';  
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
+import useDebounce from '../../../hooks/useDebounce';
 
 
 const Category = () => {
@@ -17,6 +18,8 @@ const Category = () => {
   const [search, setSearch] = useState('')
   const [discount, setDiscount] = useState('')
   const [category, setCategory] = useState('')
+
+  const debouncedSearch = useDebounce(search, 500);
   const navigate = useNavigate()
   const categories = useSelector((state) => state.category.items)
   const pagination = useSelector((state) => state.category.pagination)
@@ -27,14 +30,14 @@ const Category = () => {
   useEffect(() => {
     const filters = {
       sort,
-      search,
+      search : debouncedSearch,
       currentPage,
       status,
       discount,
       category
     }
     dispatch(fetchCategories(filters))
-  }, [dispatch, sort, search, currentPage, status, discount, category])
+  }, [dispatch, sort, debouncedSearch, currentPage, status, discount, category])
 
   useEffect(() => {
     dispatch(fetchProducts())
@@ -48,6 +51,10 @@ const Category = () => {
     setStatus('')
     setSearch('')
   }
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
   return (
 

@@ -9,11 +9,11 @@ import {
 
 
 import axiosInstance from '../../../utils/axiosInstance';
-import { fetchCategories } from '../../../../redux/slice/categorySlice';
+import { fetchCategories } from '../../../redux/slice/categorySlice'; 
 import categoryAttributes, { sizes } from '../../../data';
 
 import ImageCropper from '../../../Components/ImageCropper'; 
-
+import productService from '../../../services/productService';
 const EditProduct = () => {
 
   const { id } = useParams();
@@ -63,8 +63,8 @@ const EditProduct = () => {
     dispatch(fetchCategories());
     const fetchData = async () => {
       try {
-        const { data } = await axiosInstance.get(`/products/${id}/edit`);
-        const product = data.product;
+        const product = await productService.getProductById(id);
+        
         setProductToEdit(product);
 
         if (product) {
@@ -294,6 +294,7 @@ const EditProduct = () => {
         if (variant.isNew && variant.filesToUpload && variant.filesToUpload.length > 0) {
            const vFormData = new FormData();
            variant.filesToUpload.forEach(file => vFormData.append('images', file));
+
            const vRes = await axiosInstance.post('/upload-multiple', vFormData, { headers: { 'Content-Type': 'multipart/form-data' } });
            
            return {
@@ -343,7 +344,8 @@ const EditProduct = () => {
       console.log("Submitting Payload:", payload);
 
       
-      await axiosInstance.put(`/products/${id}/edit`, payload);
+      const response =await productService.updateProduct(id, payload);
+      console.log(response)
       alert("Product Updated Successfully!");
       navigate('/admin/products');
 

@@ -1,6 +1,6 @@
 
 import { useDispatch, useSelector } from 'react-redux';
-import { setLogout } from '../../../redux/slice/authSlice';
+import { setLogout } from '../../redux/slice/authSlice'; 
 import AdminSidebar from '../../Components/AdminSidebar';
 import { useNavigate } from 'react-router-dom';
 

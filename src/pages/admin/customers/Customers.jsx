@@ -6,10 +6,11 @@ import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
 import Modal from '../../../Components/Modal';
 import CustomerAnalytics from '../../../Components/analytics/CustomerAnalytics';
+import useDebounce from '../../../hooks/useDebounce';
 
 export default function Customers() {
 
-  // --- YOUR STATE & LOGIC ---
+
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [active, setActive] = useState('');
@@ -21,20 +22,21 @@ export default function Customers() {
   const [modalMessage, setModalMessage] = useState('')
   const [showFilters, setShowFilters] = useState(false);
   const [totalPages, setTotalPages] = useState(0)
+  const debouncedSearch = useDebounce(search, 500);
   const [analytics, setAnalytics] = useState({
     stats: { total: 0, new: 0, blocked: 0 },
     chart: []
   })
   useEffect(() => {
     fetchUsers();
-  }, [search, active, currentPage, sort, showModal]);
+  }, [debouncedSearch, active, currentPage, sort, showModal]);
 
   useEffect(() => {
     fetchAnalytics()
   }, [])
 
   const fetchUsers = async () => {
-    const data = { currentPage, search, active, limit, sort };
+    const data = { currentPage, search : debouncedSearch, active, limit, sort };
     try {
       const response = await axiosInstance.get('/users', { params: data });
       if (response.data.success) {

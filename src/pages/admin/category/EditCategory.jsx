@@ -4,7 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import axiosInstance from '../../../utils/axiosInstance';
 import Modal from '../../../Components/Modal';
-import ImageCropper from '../../../Components/ImageCropper'; // 1. Import Cropper
+import ImageCropper from '../../../Components/ImageCropper'; 
+import categoryService from '../../../services/categoryService';
 
 const EditCategory = () => {
   const [isLoading, setLoading] = useState(true)
@@ -23,8 +24,10 @@ const EditCategory = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axiosInstance.get(`/categories/${slug}/edit`)
-        const item = response.data.categoryItem
+        const response = await categoryService.getCategoryBySlug(slug)
+        console.log(response)
+        const item = response.categoryItem
+        console.log(item)
         if (item) {
           reset({
             categoryName: item.categoryName,
@@ -83,12 +86,8 @@ const EditCategory = () => {
     try {
       
       if (selectedFile) {
-        const formData = new FormData()
-        formData.append('image', selectedFile)
-        const uploadResponse = await axiosInstance.post('/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        })
-        finalImage = uploadResponse.data.imageUrl
+        const uploadResponse = await categoryService.uploadImage(selectedFile)
+        finalImage = uploadResponse.imageUrl
       }
 
       const updatedCategory = {
@@ -102,8 +101,8 @@ const EditCategory = () => {
         isFeatured,
       }
       
-      const result = await axiosInstance.put(`categories/${slug}/edit`, updatedCategory)
-      if (result.data.success) setShowModal(true)
+      const result =await categoryService.updateCategory(slug, updatedCategory);
+      if (result.success) setShowModal(true)
       else alert(result.data.message)
     } catch (error) {
       console.log("error in onSubmit : ", error)

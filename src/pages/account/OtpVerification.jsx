@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { signupSchema } from '../../utils/signupSchema';
 import axiosInstance from '../../utils/axiosInstance';
+import authService from '../../services/authService';
 
 export default function OtpVerification() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -42,7 +43,7 @@ export default function OtpVerification() {
       email,
       inputOtp: formData.otp
     }
-    const response = await axiosInstance.post('/auth/verify-otp', data)
+    const response = await authService.verifyOtp(data)
     console.log(response)
     if (response.data.success) {
       alert("completed verification")

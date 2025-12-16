@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from "./Components/layout/navbar";
-// 1. ADDED MISSING IMPORTS HERE
+
 import {
   ArrowRight,
   Star,
 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories } from '../redux/slice/categorySlice';
+import { fetchCategories } from './redux/slice/categorySlice';
 import axiosInstance from './utils/axiosInstance';
 import ProductCard from './Components/products/ProductCard';
 import heroImage from './assets/photo-1552374196-1ab2a1c593e8.avif'
 import Footer from './Components/Footer';
 import { useNavigate } from 'react-router-dom';
+import productService from './services/productService';
+import reviewService from './services/reviewService';
 export default function Home() {
 
   const dispatch = useDispatch()
@@ -20,6 +22,7 @@ export default function Home() {
   const [products, setProducts] = useState([])
   const [newArrivals, setNewArrivals] = useState([])
   const [testimonials, setTestimonials] = useState([])
+  const [search ,setSearch ] = useState()
   const navigate = useNavigate()
   useEffect(() => {
     dispatch(fetchCategories())
@@ -29,10 +32,11 @@ export default function Home() {
     fetchProducts()
     featuredReviews()
   }, [dispatch])
+  
 
   const fetchProducts = async () => {
     try {
-      const response = await axiosInstance.get('/products/products-home')
+      const response = await productService.getHomeProducts();
       if (response.data.success) {
         setFeatured([...response.data.featured])
         setNewArrivals([...response.data.newArrivals])
@@ -47,7 +51,7 @@ export default function Home() {
   }
   const featuredReviews = async () => {
     try {
-      const response = await axiosInstance.get('/reviews/featured')
+      const response = await reviewService.getFeaturedReviews()
       console.log(response)
       if (response.data.success) {
         setTestimonials([...response.data.reviews])

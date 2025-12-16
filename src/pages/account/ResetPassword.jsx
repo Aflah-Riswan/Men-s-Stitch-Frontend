@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { signupSchema } from '../../utils/signupSchema'; // Import your schema
 import axiosInstance from '../../utils/axiosInstance'; // Import your axios
+import authService from '../../services/authService';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function ResetPassword() {
       password: formData.password
     }
     console.log(data)
-    const response = await axiosInstance.patch('/auth/reset-password',data)
+    const response = await authService.resetPassword(data)
     console.log(response)
     if(response.data.success){
       alert("updated succesfully")

@@ -66,20 +66,20 @@ export default function ProductDetails() {
         <span className="text-black ml-1 font-medium">{product?.productName}</span>
       </nav>
 
-      {/* Main Grid Section - Reduced gap and padding */}
+      {/* Main Grid Section -  */}
       <section className="container mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-10">
 
         {/* --- LEFT COLUMN: IMAGES --- */}
         <div className="lg:col-span-5 flex flex-col-reverse md:flex-row gap-3">
 
-          {/* Thumbnails - Reduced Size */}
+          
           <div className="flex md:flex-col space-x-3 md:space-x-0 md:space-y-3 w-full md:w-16 overflow-x-auto md:overflow-visible no-scrollbar">
             {currentImages.map((img, index) => (
               <img
                 key={index}
                 src={img}
                 alt={`Thumbnail ${index}`}
-                // Changed w-20 h-24 -> w-16 h-20
+                
                 className={`w-16 h-20 object-contain cursor-pointer border-2 rounded transition-all ${selectedImage === index ? 'border-black' : 'border-transparent hover:border-gray-300'
                   }`}
                 onClick={() => setSelectedImage(index)}
@@ -87,9 +87,9 @@ export default function ProductDetails() {
             ))}
           </div>
 
-          {/* Main Large Image */}
+          
           <div className="flex-1">
-            {/* Reduced max-height from 600px to 500px */}
+           
             <div className="aspect-[3/4] max-h-[500px] w-full bg-gray-100 rounded-lg overflow-hidden relative flex items-center justify-center">
               <img
                 src={currentImages[selectedImage] || currentImages[0]}
@@ -100,20 +100,20 @@ export default function ProductDetails() {
           </div>
         </div>
 
-        {/* --- RIGHT COLUMN: DETAILS --- */}
+       
         <div className="lg:col-span-7">
-          {/* Smaller Title Font */}
+         
           <h1 className="text-xl md:text-2xl font-bold text-black mb-3 leading-tight">
             {product?.productName}
           </h1>
 
-          {/* Ratings */}
+          
           <div className="flex items-center mb-4 space-x-2">
             <div className="flex text-yellow-400">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  size={16} // Reduced Star Size
+                  size={16} 
                   fill={i < Math.floor(product?.rating?.average || 0) ? "currentColor" : "none"}
                   stroke="currentColor"
                 />
@@ -124,7 +124,7 @@ export default function ProductDetails() {
             </span>
           </div>
 
-          {/* Price - Reduced Size */}
+         
           <div className="flex items-end space-x-3 mb-4">
             <span className="text-2xl font-bold text-black">₹{price}</span>
             {hasDiscount && (
@@ -137,7 +137,7 @@ export default function ProductDetails() {
             )}
           </div>
 
-          {/* Description - Smaller Text */}
+        
           <p className="text-gray-600 text-sm mb-6 leading-relaxed">
             {product?.productDescription}
           </p>
@@ -166,7 +166,7 @@ export default function ProductDetails() {
                 {product.variants.map((variant) => (
                   <button
                     key={variant._id}
-                    // Smaller Color Buttons (w-8 h-8)
+                   
                     className={`w-8 h-8 rounded-full border-2 transition-all relative ${selectedVariant === variant._id
                       ? 'border-black ring-1 ring-offset-1 ring-gray-300'
                       : 'border-gray-200 hover:scale-110'
@@ -207,10 +207,10 @@ export default function ProductDetails() {
       {/* --- TABS SECTION --- */}
       <section>
         <div className="w-full bg-white font-sans">
-          <div className="border-b border-gray-200 mb-8"> {/* Reduced mb-10 to mb-8 */}
+          <div className="border-b border-gray-200 mb-8"> 
             <nav className="flex justify-center space-x-8 md:space-x-12 container mx-auto px-4 md:px-6" aria-label="Tabs">
 
-              {/* Smaller Tab Buttons (px-16 -> px-10, py-4 -> py-3) */}
+             
               <button
                 onClick={() => setActiveTab('details')}
                 className={`py-3 px-8 md:px-10 border-b-2 font-medium text-xs md:text-sm transition-all ${activeTab === 'details'
@@ -244,9 +244,9 @@ export default function ProductDetails() {
             </nav>
           </div>
 
-          {/* TAB CONTENT CONTAINER - Reduced Bottom Margin */}
+        
           <div className="flex justify-center container mx-auto px-4 md:px-6 mb-8">
-            <div className="w-full max-w-4xl"> {/* Changed max-w-5xl to 4xl for compactness */}
+            <div className="w-full max-w-4xl">
               {activeTab === 'details' && <ProductDetailsTab product={product} />}
               {activeTab === 'reviews' && <ProductReviews reviews={product.reviews} />}
               {activeTab === 'faqs' && <ProductFAQs faqs={product.faqs} />}
@@ -257,7 +257,7 @@ export default function ProductDetails() {
       </section>
 
       {/* --- RELATED PRODUCTS --- */}
-      {/* Reduced padding (py-16 -> py-10) */}
+    
       <section className="w-full bg-white py-10">
         <div className="container mx-auto px-6">
 

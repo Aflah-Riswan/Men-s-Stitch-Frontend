@@ -62,11 +62,49 @@ const getProductsByCategory = async (slug, { page = 1, limit = 10, search, filte
   }
 };
 
+const uploadVariantImages = async (imageFiles) => {
+  try {
+    const formData = new FormData();
+    imageFiles.forEach((file) => {
+      formData.append('images', file);
+    });
+
+    const response = await axiosInstance.post('/upload-multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response
+  } catch (error) {
+    throw error.response?.data?.message || "Failed to upload variant images";
+  }
+};
+
+const uploadMultipleImages = async (imageFiles) => {
+  const formData = new FormData();
+  imageFiles.forEach((file) => {
+    formData.append('images', file);
+  });
+
+  const response = await axiosInstance.post('/upload-multiple', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response
+};
+
+const createProduct = async (productData) => {
+  const response = await axiosInstance.post('/products', productData);
+  return response.data;
+};
+
 const productService = {
   getProductById,
   updateProduct,
   getHomeProducts,
   getProductsByCategory,
+  uploadVariantImages,
+  uploadMultipleImages,
+  createProduct,
 };
 
 export default productService;

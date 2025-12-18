@@ -4,6 +4,7 @@ import axiosInstance from '../utils/axiosInstance';
 const getCategories = async () => {
   try {
     const response = await axiosInstance.get('/categories');
+    console.log("response  in serivs page :' ",response.data)
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to load categories";

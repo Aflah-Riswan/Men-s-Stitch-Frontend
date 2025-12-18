@@ -26,6 +26,7 @@ const AddCategoryPage = () => {
     const fetchCategories = async () => {
       try {
         const response = await categoryService.getCategories()
+        console.log(' response from service : ',response)
         const categories = response.categories
         console.log(categories)
         const validParents = categories.filter((cat) => cat.parentCategory === null)
@@ -70,8 +71,6 @@ const AddCategoryPage = () => {
     const url = URL.createObjectURL(croppedFile)
     setPreview(url)
     setFileName(croppedFile.name)
-
-   
     setValue('headerImage', [croppedFile], { shouldValidate: true }) 
     clearErrors('headerImage')
     setImageToCrop(null)
@@ -87,7 +86,7 @@ const AddCategoryPage = () => {
 
 
   const onSubmit = async (data) => {
-    console.log(data)
+
     const { categoryOffer, categoryName, discountType, isFeatured, maxRedeemable, parentCategory, visibility } = data
     console.log("discount type = ", discountType)
     try {
@@ -109,13 +108,9 @@ const AddCategoryPage = () => {
       }
       console.log(categoryData)
       const responseCategory = await categoryService.createCategory(categoryData)
-      console.log("response : ",responseCategory)
+      
       if (responseCategory.success) {
         setShowModal(true);
-      }
-      else {
-        console.log("inside elese")
-        window.alert(responseCategory.message)
       }
     } catch (error) {
       console.log("error in onSubmit : ", error)

@@ -7,17 +7,11 @@ export const loginUser = createAsyncThunk (
   async (userData,{rejectWithValue}) =>{
    try {
     const response = await axiosInstance.post('/auth/login',userData)
-    console.log(response.data)
-    if(response.data.success){
-      return response.data
-    }
-    else{
-      return rejectWithValue(response.data)
-    }
-    
+    return response.data
    } catch (error) {
-    console.log(" error found in thunk : ",error)
-    return rejectWithValue(error)
+    console.log(error)
+   const errorMessage = error.response?.data?.message || "Login failed";
+   return rejectWithValue(errorMessage);
    }
   }
 )
@@ -64,7 +58,7 @@ const authSlice =createSlice({
     })
     .addCase(loginUser.rejected, (state,action)=>{
       state.isLoading=false
-      state.isError=action.payload.message
+      state.isError=action.payload
     })
   }
   })

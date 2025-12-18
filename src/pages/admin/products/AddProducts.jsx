@@ -5,10 +5,11 @@ import categoryAttributes, { sizes } from '../../../data';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchCategories , setParentCategories ,setSubCategories } from '../../../redux/slice/categorySlice';
 import { useForm } from 'react-hook-form';
-import ImageUpload from '../../../Components/ImageUpload'; // fetchCategories, setParentCategories, setSubCategories
+import ImageUpload from '../../../Components/ImageUpload';
 import axiosInstance from '../../../utils/axiosInstance';
 import ImageCropper from '../../../Components/ImageCropper';
 import Modal from '../../../Components/Modal';
+import productService from '../../../services/productService';
 
 const AddProducts = () => {
   const [selectedCategory, setCategory] = useState('')
@@ -23,6 +24,7 @@ const AddProducts = () => {
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState("")
   const [showModal, setShowModal] = useState(false)
+  const [submitting , setSubmitting] = useState(false)
   const dispatch = useDispatch()
 
 
@@ -203,18 +205,7 @@ const AddProducts = () => {
     }
     if (!isValid) return
     try {
-      const formData = new FormData()
-      console.log(variantsCollection)
-
-      currentValues.variantImages.forEach((file) => {
-        formData.append('images', file)
-      })
-
-      const response = await axiosInstance.post('/upload-multiple', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await productService.uploadVariantImages(currentValues.variantImages)
       console.log("response ", response.data)
       const urlCollections = response.data.urlCollection
       const stock = structuredClone(currentValues.stock)
@@ -243,8 +234,6 @@ const AddProducts = () => {
     } catch (error) {
       console.log("error")
     }
-
-
   }
   function handleRemoveVariant(i) {
     const filtered = variantsCollection.filter((_, index) => i !== index)
@@ -260,15 +249,7 @@ const AddProducts = () => {
       if (!data) return false
       const { productName, productDescription, salePrice, coverImages, mainCategory, subCategory = null, tags, originalPrice } = data
       if (coverImages.length > 0) {
-        const formData = new FormData()
-        coverImages.forEach((file) => {
-          formData.append('images', file)
-        })
-        const response = await axiosInstance.post('/upload-multiple', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
+        const response = await productService.uploadMultipleImages(data.coverImages);
         console.log('product image response : ', response.data)
         const urlCollections = response.data.urlCollection
 
@@ -291,12 +272,8 @@ const AddProducts = () => {
           subCategory: subCategory === '' ? null : subCategory,
           tags
         }
-        const result = await axiosInstance.post('/products', finalData)
-        if (result.data.success) {
-          setShowModal(true)
-        } else {
-          alert("found error ", `${result.data.message}`)
-        }
+        const result = await productService.createProduct(finalData)
+          setShowModal(true)  
       }
 
     } catch (error) {

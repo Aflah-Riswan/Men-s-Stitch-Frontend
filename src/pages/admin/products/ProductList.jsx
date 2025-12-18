@@ -4,12 +4,13 @@ import {
   Package, RotateCcw
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteProduct ,fetchProducts ,toggleProductList } from '../../../redux/slice/productSlice'; 
+import { deleteProduct, fetchProducts, toggleProductList } from '../../../redux/slice/productSlice';
 import { fetchCategories } from '../../../redux/slice/categorySlice';
 import Stack from '@mui/material/Stack'; //  deleteProduct, fetchProducts, toggleProductList 
 import Pagination from '@mui/material/Pagination';
 import { useNavigate } from 'react-router-dom';
 import useDebounce from '../../../hooks/useDebounce';
+import Modal from '../../../Components/Modal';
 
 export default function ProductList() {
 
@@ -19,6 +20,8 @@ export default function ProductList() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('')
   const [status, setStatus] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [productToDelete, setProductToDelete] = useState(null)
   const products = useSelector((state) => state.product.items)
   const categories = useSelector((state) => state.category.items)
   const pagination = useSelector((state) => state.product.pagination)
@@ -29,7 +32,7 @@ export default function ProductList() {
     const filters = {
       page: currentPage,
       category,
-      search : debouncedSearch,
+      search: debouncedSearch,
       sort,
       status
     }
@@ -47,17 +50,35 @@ export default function ProductList() {
     setSort('')
     setCurrentPage(1)
   }
-  
+
   useEffect(() => {
-    if(debouncedSearch !== '') setCurrentPage(1);
+    if (debouncedSearch !== '') setCurrentPage(1);
   }, [debouncedSearch]);
 
   function handleDeleteProduct(id) {
-    alert("are you sure")
-    dispatch(deleteProduct(id))
+    setProductToDelete(id)
+    setShowModal(true)
+  }
+  function handleConfirmDelete() {
+    if (setProductToDelete) {
+      dispatch(deleteProduct(productToDelete))
+      setShowModal(false)
+    }
   }
   return (
     <div className="w-full p-6 md:p-8 font-sans text-gray-800 h-full flex flex-col bg-gray-50 min-h-screen">
+
+     
+
+     <Modal
+        isOpen={showModal}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        onConfirm={handleConfirmDelete} 
+        onCancel={() => setShowModal(false)} 
+        type="danger" 
+      />
+     
 
       {/* Header */}
       <div className="flex flex-col gap-1 mb-6">

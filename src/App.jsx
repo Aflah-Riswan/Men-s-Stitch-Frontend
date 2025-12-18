@@ -20,11 +20,25 @@ import Customers from './pages/admin/customers/Customers'
 import ProductDetails from './pages/shop/productDetails'
 import CategoryPage from './pages/shop/CategoryPage'
 import Bomb from './Components/Bomb'
+import { Toaster } from 'react-hot-toast'
+import NotFound from './Components/NotFound'
 
 function App() {
   const myTestVariable = "hello";
   return (
     <BrowserRouter>
+
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+        }}
+      />
       <Routes>
 
 
@@ -60,14 +74,14 @@ function App() {
             <Route path='product/:id/details' element={<ProductDetails />} />
             <Route path='profile' element={<h1>user profile</h1>} />
             <Route path='orders' element={<h1>My Orders</h1>} />
-            <Route path = 'category/:slug' element = {<CategoryPage/>} />
+            <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
           </Route>
 
         </Route>
 
-
-
+      
+      <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

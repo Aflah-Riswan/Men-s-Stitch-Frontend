@@ -74,6 +74,28 @@
     { label: "Type", options: ["Sneakers", "Loafers", "Formal Oxfords", "Boots", "Running Shoes", "Slides/Slippers"] },
     { label: "Material", options: ["Leather", "Suede", "Canvas", "Mesh", "Synthetic"] },
     { label: "Fastening", options: ["Lace-Up", "Slip-On", "Velcro"] }
+  ],
+  Sports: [
+    { 
+      label: "Fabric Technology", 
+      options: ["Moisture-Wicking Polyester", "Nylon Spandex (Compressive)", "Recycled Mesh", "Anti-Odor Treated Knit", "Interlock Jersey"] 
+    },
+    { 
+      label: "Activity Type", 
+      options: ["Gym & Training", "Running", "Basketball", "Football/Soccer", "Yoga & Recovery", "Outdoor/Hiking"] 
+    },
+    { 
+      label: "Fit Type", 
+      options: ["Compression (Second Skin)", "Athletic Fit", "Standard Fit", "Oversized/Pump Cover"] 
+    },
+    { 
+      label: "Performance Features", 
+      options: ["4-Way Stretch", "Breathable Mesh Panels", "Reflective Detailing", "Quick-Dry", "Water-Resistant (DWR)"] 
+    },
+    { 
+      label: "Waist & Support", 
+      options: ["Drawstring Elastic", "High-Compression Waist", "Internal Liner (2-in-1)", "Side-Split Hem"] 
+    }
   ]
 };
 

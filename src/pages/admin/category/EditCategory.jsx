@@ -101,9 +101,8 @@ const EditCategory = () => {
         isFeatured,
       }
       
-      const result =await categoryService.updateCategory(slug, updatedCategory);
-      if (result.success) setShowModal(true)
-      else alert(result.data.message)
+      const result = await categoryService.updateCategory(slug, updatedCategory);
+      setShowModal(true)
     } catch (error) {
       console.log("error in onSubmit : ", error)
     }

@@ -4,8 +4,9 @@ import axiosInstance from "../../utils/axiosInstance";
 
 export const fetchCategories = createAsyncThunk('category/fetchAllCategory', async (params, { rejectWithValue }) => {
   try {
+    console.log("params : ",params)
     const response = await axiosInstance.get('/categories',{params})
-    console.log(response.data)
+    console.log( " response : in thunk : " ,response.data)
     if(response.data.success){
       
        return response.data

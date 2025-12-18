@@ -31,6 +31,7 @@ export default function Home() {
   useEffect(() => {
     fetchProducts()
     featuredReviews()
+    console.log("categories : ",categories)
   }, [dispatch])
   
 

@@ -207,13 +207,6 @@ export default function CategoryPage() {
                 </div>
               ))}
 
-              {/* APPLY BUTTON */}
-              {/* <button
-                onClick={handleApplyFilter}
-                className="w-full bg-black text-white py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors mt-4"
-              >
-                Apply Filter
-              </button> */}
             </div>
           </div>
 

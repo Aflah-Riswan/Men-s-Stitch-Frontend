@@ -22,6 +22,7 @@ import CategoryPage from './pages/shop/CategoryPage'
 import Bomb from './Components/Bomb'
 import { Toaster } from 'react-hot-toast'
 import NotFound from './Components/NotFound'
+import AddCoupon from './pages/admin/coupon/AddCoupon'
 
 function App() {
   const myTestVariable = "hello";
@@ -61,6 +62,7 @@ function App() {
             <Route path='categories/add' element={<AddCategoryPage />} />
             <Route path='categories/edit/:slug' element={<EditCategory />} />
             <Route path='customers' element={<Customers />} />
+            <Route path="coupons" element={<AddCoupon/>} />
           </Route>
         </Route>
 
@@ -76,6 +78,7 @@ function App() {
             <Route path='orders' element={<h1>My Orders</h1>} />
             <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
+            
           </Route>
 
         </Route>

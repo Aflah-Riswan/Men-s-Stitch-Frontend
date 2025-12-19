@@ -14,6 +14,7 @@ import categoryAttributes, { sizes } from '../../../data';
 
 import ImageCropper from '../../../Components/ImageCropper';
 import productService from '../../../services/productService';
+import Modal from '../../../Components/Modal';
 const EditProduct = () => {
 
   const { id } = useParams();
@@ -52,7 +53,7 @@ const EditProduct = () => {
   const [cropQueue, setCropQueue] = useState([]);
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
   const [processedVariantFiles, setProcessedVariantFiles] = useState([]);
-
+  const [showModal , setShowModal] = useState(false)
   const {
     register, handleSubmit, setValue, getValues, watch, reset,
     formState: { errors }, setError, clearErrors
@@ -348,15 +349,8 @@ const EditProduct = () => {
 
       const response = await productService.updateProduct(id, payload);
       console.log(response)
-      toast.success("Product updated successfully!", {
-        duration: 3000,
-        style: {
-          background: '#333',
-          color: '#fff',
-          borderRadius: '10px',
-        },
-      });
-      navigate('/admin/products');
+       setShowModal(true)
+      
 
     } catch (error) {
       console.log(error)
@@ -365,11 +359,24 @@ const EditProduct = () => {
     }
   };
 
+  function handleModalClose (){
+    setShowModal(false)
+    navigate('/admin/products');
+  }
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={32} /></div>;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 font-sans text-gray-800">
+
+       <Modal
+        isOpen={showModal}
+        title="Success!"
+        message="Product updated Succefully."
+        onConfirm={handleModalClose}
+        type="success"
+      />
 
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">

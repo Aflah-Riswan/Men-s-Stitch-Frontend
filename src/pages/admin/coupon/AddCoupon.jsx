@@ -3,34 +3,58 @@ import { ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { couponSchema } from '../../../utils/couponSchema';
+import { couponService } from '../../../services/couponService';
+import Modal from '../../../Components/Modal';
+import { useNavigate } from 'react-router-dom';
 
 
 
 const AddCoupon = () => {
-  
-  const [isUnlimited, setIsUnlimited] = useState(false);
 
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const [showModal , setShowModal] = useState(false)
+  const navigate = useNavigate()
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(couponSchema),
-    defaultValues: { 
-        discountType: "Flat",
-        isUnlimited: false 
+    defaultValues: {
+      discountType: "Flat",
+      isUnlimited: false
     }
   });
 
   const handleToggle = () => {
     const newValue = !isUnlimited;
     setIsUnlimited(newValue);
-    setValue('isUnlimited', newValue); 
+    setValue('isUnlimited', newValue);
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
+    console.log("clicked")
     console.log("Database Ready Data:", data);
+    await couponService.addCoupon(data)
+    setShowModal(true)
+
   };
+
+  function handleModalClose (){
+    setShowModal(false)
+    navigate('/admin/coupons')
+  }
+
+  const onError = (errors) => {
+  console.log("Validation Errors:", errors);
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-sans text-gray-700">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <Modal
+        isOpen={showModal}
+        title="Success!"
+        message="Coupon added successfully."
+        onConfirm={handleModalClose}
+        type="success"
+      />
+      <form onSubmit={handleSubmit(onSubmit , onError)}>
         <h1 className="text-xl font-bold mb-8 text-gray-800">Coupon</h1>
 
         <div className="max-w-6xl mx-auto">
@@ -38,14 +62,14 @@ const AddCoupon = () => {
             <h2 className="text-2xl font-bold text-center mb-12 text-gray-900">Add coupons</h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-10">
-              
+
               {/* Left Column */}
               <div className="space-y-10">
                 <div className="flex items-center relative">
                   <label className="w-40 font-semibold shrink-0">Coupon Code</label>
                   <span className="mr-4">:</span>
-                  <input type="text" {...register('code')} className="flex-1 border border-gray-300 rounded-lg p-2 outline-none focus:ring-1 focus:ring-gray-400" />
-                  {errors.code && <span className="absolute left-48 -bottom-6 text-red-500 text-xs">{errors.code.message}</span>}
+                  <input type="text" {...register('couponCode')} className="flex-1 border border-gray-300 rounded-lg p-2 outline-none focus:ring-1 focus:ring-gray-400" />
+                  {errors.couponCode && <span className="absolute left-48 -bottom-6 text-red-500 text-xs">{errors.couponCode.message}</span>}
                 </div>
 
                 <div className="flex items-center relative">
@@ -59,18 +83,18 @@ const AddCoupon = () => {
                   <div className="flex items-center relative">
                     <label className="w-40 font-semibold shrink-0">Usage Limit</label>
                     <span className="mr-4">:</span>
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       disabled={isUnlimited}
-                      placeholder={isUnlimited ? "No limit" : "Enter limit"} 
-                      {...register('usageLimit')} 
-                      className="flex-1 border border-gray-300 rounded-lg p-2 outline-none disabled:bg-gray-100" 
+                      placeholder={isUnlimited ? "No limit" : "Enter limit"}
+                      {...register('usageLimit')}
+                      className="flex-1 border border-gray-300 rounded-lg p-2 outline-none disabled:bg-gray-100"
                     />
                   </div>
                   <div className="flex items-center ml-48">
                     <input type="checkbox" {...register('isUnlimited')} className="hidden" />
-                    <div 
-                      onClick={handleToggle} 
+                    <div
+                      onClick={handleToggle}
                       className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${isUnlimited ? 'bg-emerald-500' : 'bg-gray-300'}`}
                     >
                       <div className={`absolute top-1 bg-white w-4 h-4 rounded-full transition-all ${isUnlimited ? 'right-1' : 'left-1'}`}></div>
@@ -93,8 +117,8 @@ const AddCoupon = () => {
                     <span className="mr-2">:</span>
                     <div className="relative">
                       <select {...register('discountType')} className="appearance-none border border-gray-300 rounded-lg py-2 pl-4 pr-10 outline-none bg-white min-w-[100px]">
-                        <option value="Flat">Flat</option>
-                        <option value="Percentage">Percentage</option>
+                        <option value="flat">Flat</option>
+                        <option value="percentage">Percentage</option>
                       </select>
                       <ChevronDown className="absolute right-3 top-2.5 w-4 h-4 text-gray-500 pointer-events-none" />
                     </div>

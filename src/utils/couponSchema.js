@@ -4,7 +4,7 @@ import { z } from "zod";
 
 
 export const couponSchema = z.object({
-  code: z
+  couponCode: z
     .string()
     .min(3, "Code must be at least 3 characters")
     .toUpperCase()
@@ -15,7 +15,7 @@ export const couponSchema = z.object({
     .min(10, "Please provide a detailed description")
     .max(200),
 
-  discountType: z.enum(["Flat", "Percentage"]),
+  discountType: z.enum(["flat", "percentage"]),
 
   discountValue: z.coerce
     .number()
@@ -48,7 +48,6 @@ export const couponSchema = z.object({
 
   isActive: z.boolean().default(true),
 })
-
 .superRefine((data, ctx) => {
 
   if (data.discountType === "Percentage" && data.discountValue > 100) {

@@ -11,10 +11,19 @@ import axiosInstance from "../utils/axiosInstance.js";
   }
 }
 
-const getCoupons = async () =>{
+const getCoupons = async (filters) =>{
   try {
-    const response = await axiosInstance.get('/coupons')
-    return response . data
+    const { data } = await axiosInstance.get('/coupons', { params : filters } )
+    console.log("response : ",data)
+    return data.coupons
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const updateisActive = async (couponId) => {
+  try {
+    await axiosInstance.patch(`coupons/${couponId}/edit`)
   } catch (error) {
     console.log(error)
   }
@@ -22,5 +31,6 @@ const getCoupons = async () =>{
 
 export const couponService = {
   addCoupon,
-  getCoupons
+  getCoupons,
+  updateisActive
 }

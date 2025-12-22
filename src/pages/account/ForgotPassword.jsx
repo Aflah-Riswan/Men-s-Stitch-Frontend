@@ -5,10 +5,12 @@ import { useForm } from 'react-hook-form';
 import { signupSchema } from '../../utils/signupSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axiosInstance from '../../utils/axiosInstance';
-import { email } from 'zod';
+import { z } from 'zod';
 import authService from '../../services/authService';
 
-const ForgotPasswordSchema = signupSchema.pick({email:true})
+const ForgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address").min(1, "Email is required"),
+});
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const {register,handleSubmit ,formState:{errors}} = useForm({resolver:zodResolver(ForgotPasswordSchema)})

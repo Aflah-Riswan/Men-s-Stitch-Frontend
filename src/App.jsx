@@ -24,6 +24,7 @@ import { Toaster } from 'react-hot-toast'
 import NotFound from './Components/NotFound'
 import AddCoupon from './pages/admin/coupon/AddCoupon'
 import Coupon from './pages/admin/coupon/Coupon'
+import EditCoupon from './pages/admin/coupon/EditCoupon'
 
 function App() {
   const myTestVariable = "hello";
@@ -64,6 +65,7 @@ function App() {
             <Route path='categories/edit/:slug' element={<EditCategory />} />
             <Route path='customers' element={<Customers />} />
             <Route path="coupons/add" element={<AddCoupon/>} />
+            <Route path ='coupons/:id/edit' element={<EditCoupon/>} />
             <Route path = 'coupons' element={<Coupon/>} />
           </Route>
         </Route>

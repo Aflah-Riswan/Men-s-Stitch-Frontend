@@ -3,6 +3,7 @@ import { Search, Filter, Edit, Trash2, ChevronDown, ArrowUpDown } from 'lucide-r
 import { couponService } from '../../../services/couponService';
 import { useNavigate } from 'react-router-dom';
 import useDebounce from '../../../hooks/useDebounce';
+import toast from 'react-hot-toast';
 
 const Coupon = () => {
   const [coupons, setCoupons] = useState([]);
@@ -64,10 +65,10 @@ const Coupon = () => {
     
   }
 
-  async function handleApplyFilters() {
-
-  
-  }
+ async function handleDelete (couponId) {
+  await couponService.deleteCoupon(couponId)
+  toast.success('Delete Successfully...')
+ }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -205,12 +206,7 @@ const Coupon = () => {
             >
               Reset
             </button>
-            <button 
-              className="text-sm bg-black text-white px-4 py-1.5 rounded-lg font-medium hover:bg-gray-800" 
-              onClick={handleApplyFilters}
-            >
-              Apply Filters
-            </button>
+
           </div>
         </div>
         {/* --- END Accordion --- */}
@@ -243,7 +239,7 @@ const Coupon = () => {
                       <td className="px-6 py-4 text-gray-700">{coupon.maxDiscountAmount}</td>
                       <td className="px-6 py-4 text-center">
                         <div
-                          className={`inline-flex items-center rounded-full p-1 cursor-pointer w-20 transition-colors duration-300 ${coupon.isActive ? 'bg-green-500' : 'bg-red-500'}`}
+                          className={`relative inline-flex items-center rounded-full p-1 cursor-pointer w-20 transition-colors duration-300 ${coupon.isActive ? 'bg-green-500' : 'bg-red-500'}`}
                           onClick={() => toggleisActive(coupon._id)}
                         >
                           <div
@@ -259,10 +255,10 @@ const Coupon = () => {
                       <td className="px-6 py-4 text-gray-700">{new Date(coupon.expiryDate).toLocaleDateString()}</td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
-                          <button className="p-1 text-red-500 hover:bg-red-100 rounded">
+                          <button className="p-1 text-red-500 hover:bg-red-100 rounded" onClick={()=>navigate(`${coupon._id}/edit`)}>
                             <Edit className="w-5 h-5" />
                           </button>
-                          <button className="p-1 text-red-500 hover:bg-red-100 rounded">
+                          <button className="p-1 text-red-500 hover:bg-red-100 rounded" onClick={()=>handleDelete(coupon._id)}>
                             <Trash2 className="w-5 h-5" />
                           </button>
                         </div>

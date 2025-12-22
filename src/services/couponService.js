@@ -1,5 +1,5 @@
 
-import axiosInstance from "../utils/axiosInstance.js";
+import axiosInstance from "../utils/axiosInstance";
 
  const addCoupon = async (data) =>{
   try {
@@ -28,9 +28,36 @@ const updateisActive = async (couponId) => {
     console.log(error)
   }
 }
+const getCouponById = async (couponId) =>{
+  try {
+    const { data } = await axiosInstance.get(`coupons/${couponId}/edit`)
+    return data
+  } catch (error) {
+    console.log(error)
+  }
+}
 
+const updateCoupon = async (couponId , payload) => {
+  console.log(" payload : ",payload)
+  try {
+    await axiosInstance.put(`coupons/${couponId}/edit` , payload)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+const deleteCoupon = async (couponId) =>{
+  try {
+    await axiosInstance.patch(`coupons/${couponId}/delete`)
+  } catch (error) {
+    console.log(error)
+  }
+}
 export const couponService = {
   addCoupon,
   getCoupons,
-  updateisActive
+  updateisActive ,
+  getCouponById,
+  updateCoupon,
+  deleteCoupon,
 }

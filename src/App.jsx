@@ -25,6 +25,10 @@ import NotFound from './Components/NotFound'
 import AddCoupon from './pages/admin/coupon/AddCoupon'
 import Coupon from './pages/admin/coupon/Coupon'
 import EditCoupon from './pages/admin/coupon/EditCoupon'
+import UserInfo from './pages/shop/user-account/UserInfo'
+import Wishlist from './pages/shop/user-account/WishList'
+import Address from './pages/shop/user-account/Address'
+import AddNewAddress from './pages/shop/user-account/AddNewAddress'
 
 function App() {
   const myTestVariable = "hello";
@@ -78,8 +82,11 @@ function App() {
 
           <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
             <Route path='product/:id/details' element={<ProductDetails />} />
-            <Route path='profile' element={<h1>user profile</h1>} />
+            <Route path='profile' element={<UserInfo/>} />
             <Route path='orders' element={<h1>My Orders</h1>} />
+            <Route path ='wishlist' element={<Wishlist/>} />
+            <Route path ='address' element={<Address/>} />
+             <Route path ='address/add' element={<AddNewAddress/>} />
             <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
             

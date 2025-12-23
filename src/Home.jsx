@@ -3,6 +3,7 @@ import Navbar from "./Components/layout/navbar";
 
 import {
   ArrowRight,
+  Mail,
   Star,
 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,6 +15,7 @@ import Footer from './Components/Footer';
 import { useNavigate } from 'react-router-dom';
 import productService from './services/productService';
 import reviewService from './services/reviewService';
+import NewsLetter from './Components/NewsLetter';
 export default function Home() {
 
   const dispatch = useDispatch()
@@ -22,7 +24,7 @@ export default function Home() {
   const [products, setProducts] = useState([])
   const [newArrivals, setNewArrivals] = useState([])
   const [testimonials, setTestimonials] = useState([])
-  const [search ,setSearch ] = useState()
+  const [search, setSearch] = useState()
   const navigate = useNavigate()
   useEffect(() => {
     dispatch(fetchCategories())
@@ -31,9 +33,9 @@ export default function Home() {
   useEffect(() => {
     fetchProducts()
     featuredReviews()
-    console.log("categories : ",categories)
+    console.log("categories : ", categories)
   }, [dispatch])
-  
+
 
   const fetchProducts = async () => {
     try {
@@ -112,7 +114,7 @@ export default function Home() {
             {categories.map((cat, index) => (
               <div key={index} className="flex flex-col items-center min-w-[80px] cursor-pointer group">
 
-                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative" onClick={()=>navigate(`/category/${cat.categoryName}`)}>
+                <div className="w-16 h-16 rounded-full border border-gray-300 flex items-center justify-center mb-2 group-hover:border-black transition-all overflow-hidden relative" onClick={() => navigate(`/category/${cat.categoryName}`)}>
 
                   <img
                     src={cat.image}
@@ -145,9 +147,9 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featured.map((product) => (
-             
+
               <ProductCard key={product._id} product={product} />
-             
+
             ))}
           </div>
         </section>
@@ -199,9 +201,19 @@ export default function Home() {
           </div>
         </section>
 
+        <section> {/* newsletter section */}
+          <div className="container mx-auto px-4 md:px-8 mt-16 mb-12">
+            <NewsLetter/>
+          </div>
+        </section>
+
         {/* 5. Footer Section */}
 
-        <Footer />
+        <div className="bg-[#f2f2f2] pt-16 pb-8 px-4 md:px-8">
+          <div className="max-w-7xl mx-auto">
+            <Footer />
+          </div>
+        </div>
 
       </div>
     </>

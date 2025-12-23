@@ -28,11 +28,11 @@ export const couponSchema = z.object({
 
   minPurchaseAmount: z.coerce
     .number()
-    .min(0, "Amount cannot be negative"),
+    .min(1, "Amount cannot be negative"),
 
   maxDiscountAmount: z.coerce
     .number()
-    .min(0, "Amount cannot be negative"),
+    .min(1, "Amount cannot be negative"),
 
   usageLimit: z.coerce
     .number()

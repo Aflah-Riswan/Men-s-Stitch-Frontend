@@ -29,13 +29,14 @@ import UserInfo from './pages/shop/user-account/UserInfo'
 import Wishlist from './pages/shop/user-account/WishList'
 import Address from './pages/shop/user-account/Address'
 import AddNewAddress from './pages/shop/user-account/AddNewAddress'
+import { EditAddress } from './pages/shop/user-account/EditAddress'
 
 function App() {
   const myTestVariable = "hello";
   return (
     <BrowserRouter>
 
-      <Toaster 
+      <Toaster
         position="top-right"
         reverseOrder={false}
         toastOptions={{
@@ -68,9 +69,9 @@ function App() {
             <Route path='categories/add' element={<AddCategoryPage />} />
             <Route path='categories/edit/:slug' element={<EditCategory />} />
             <Route path='customers' element={<Customers />} />
-            <Route path="coupons/add" element={<AddCoupon/>} />
-            <Route path ='coupons/:id/edit' element={<EditCoupon/>} />
-            <Route path = 'coupons' element={<Coupon/>} />
+            <Route path="coupons/add" element={<AddCoupon />} />
+            <Route path='coupons/:id/edit' element={<EditCoupon />} />
+            <Route path='coupons' element={<Coupon />} />
           </Route>
         </Route>
 
@@ -82,20 +83,21 @@ function App() {
 
           <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
             <Route path='product/:id/details' element={<ProductDetails />} />
-            <Route path='profile' element={<UserInfo/>} />
+            <Route path='profile' element={<UserInfo />} />
             <Route path='orders' element={<h1>My Orders</h1>} />
-            <Route path ='wishlist' element={<Wishlist/>} />
-            <Route path ='address' element={<Address/>} />
-             <Route path ='address/add' element={<AddNewAddress/>} />
+            <Route path='wishlist' element={<Wishlist />} />
+            <Route path='addresses' element={<Address />} />
+            <Route path='addresses/add' element={<AddNewAddress />} />
+            <Route path ='address/:addressId/edit' element={<EditAddress/>} />
             <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
-            
+          
           </Route>
 
         </Route>
 
-      
-      <Route path="*" element={<NotFound />} />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

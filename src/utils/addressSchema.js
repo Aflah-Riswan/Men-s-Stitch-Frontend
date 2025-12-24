@@ -4,7 +4,7 @@ import { z } from 'zod'
    export const addressSchema = z.object({
       firstName: z.string().trim().min(1).max(50),
       lastName: z.string().trim().min(1).max(50),
-      phone: z.string().trim().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
+      phoneNumber: z.string().trim().regex(/^[0-9]{10}$/, "Phone number must be 10 digits"),
       
       addressLine1: z.string().trim().min(3),
       addressLine2: z.string().trim().optional(), 

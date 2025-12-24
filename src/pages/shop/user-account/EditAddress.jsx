@@ -1,23 +1,29 @@
-import React, { useMemo } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { City, State } from 'country-state-city';
-import { addressSchema } from '../../../utils/addressSchema';
-import NewsLetter from '../../../Components/NewsLetter';
-import Footer from '../../../Components/Footer';
-import UserSidebar from '../../../Components/user-account-components/UserSidebar';
-import * as addressService from '../../../services/addressService'
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
-export default function AddNewAddress() {
+import React, { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams, useNavigate } from "react-router-dom";
+import { City, State } from "country-state-city";
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch
-  } = useForm({
+import Footer from "../../../Components/Footer";
+import NewsLetter from "../../../Components/NewsLetter";
+import UserSidebar from "../../../Components/user-account-components/UserSidebar";
+import { addressSchema } from "../../../utils/addressSchema";
+import * as addressService from "../../../services/addressService";
+import toast from "react-hot-toast";
+
+export const EditAddress = () => {
+  const { addressId } = useParams(); 
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  const { 
+    register, 
+    handleSubmit, 
+    watch, 
+    reset,
+    formState: { errors } 
+  } = useForm({ 
     resolver: zodResolver(addressSchema),
     defaultValues: {
       country: 'IN', 
@@ -25,30 +31,79 @@ export default function AddNewAddress() {
     }
   });
 
-  const selectedState = watch('state');
+  // Watch state to update city dropdown dynamically
+  const selectedStateCode = watch('state'); 
+
+  // Get Lists
   const states = useMemo(() => State.getStatesOfCountry('IN'), []);
   const cities = useMemo(() => {
-    return selectedState ? City.getCitiesOfState('IN', selectedState) : [];
-  }, [selectedState]);
+    return selectedStateCode ? City.getCitiesOfState('IN', selectedStateCode) : [];
+  }, [selectedStateCode])
 
-  const navigate = useNavigate()
+  useEffect(() => {
+    const fetchAddressDetails = async () => {
+      try {
+        const { data } = await addressService.getAddress();
+        
+        const addresses = data.addresses || []; 
+        
+        const addressToEdit = addresses.find(addr => addr._id === addressId);
+
+        if (addressToEdit) {
+          const stateObj = State.getStatesOfCountry('IN').find(s => s.name === addressToEdit.state);
+          const stateCode = stateObj ? stateObj.isoCode : '';
+
+          reset({
+            firstName: addressToEdit.firstName,
+            lastName: addressToEdit.lastName,
+            phoneNumber: addressToEdit.phoneNumber || addressToEdit.phoneNumber, 
+            pincode: addressToEdit.pincode,
+            addressLine1: addressToEdit.addressLine1,
+            addressLine2: addressToEdit.addressLine2,
+            country: 'India',
+            state: stateCode,
+            city: addressToEdit.city,
+            label: addressToEdit.label,
+            isDefault: addressToEdit.isDefault,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching address:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (addressId) fetchAddressDetails();
+  }, [addressId, reset]);
+
+
 
   const onSubmit = async (data) => {
-    const stateObj = State.getStateByCodeAndCountry(data.state, 'IN');
-  
-    const finalData = {
+    try {
+      console.log("clickedf")
+      const stateName = State.getStateByCodeAndCountry(data.state, 'IN')?.name;
+
+      const finalData = {
         ...data,
-        state: stateObj ? stateObj.name : data.state, 
-        country: "India" 
-    };
-    await addressService.addNewAddress(finalData)
-    toast.success('address added succesfully')
-    navigate('/address')
-    console.log("Form Data:", finalData);
+        state: stateName || data.state,
+        country: 'India'
+      };
+      
+      await addressService.updateAddress(addressId, finalData);
+      toast.success("updated succesfully")
+      navigate('/addresses')
+    } catch (error) {
+      console.error("Failed to update address", error);
+    
+    }
   };
-const onError = (errors)=>{
-  console.log(errors)
-}
+  const onError = (err)=>{
+    console.log(err)
+  }
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
   return (
     <div className="min-h-screen bg-white font-sans text-gray-800 flex flex-col">
 
@@ -63,7 +118,7 @@ const onError = (errors)=>{
           <main className="flex-1 min-h-[400px]">
             <div className="w-full max-w-3xl">
 
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Address</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Address</h1>
 
               <form className="space-y-4" onSubmit={handleSubmit(onSubmit , onError)}>
 
@@ -100,30 +155,30 @@ const onError = (errors)=>{
                 {/* 2. Contact Info & Pin Code */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="phoneNumber" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
+                    <label htmlFor="phone" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                       PHONE NUMBER*
                     </label>
                     <input
                       type="tel"
-                      id="phoneNumber"
+                      id="phone"
                       placeholder="e.g. 7034109821"
-                      {...register('phoneNumber')}
-                      className={`w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-black ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'}`}
+                      {...register('phoneNumber')} 
+                      className={`w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-black ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                     />
-                    {errors.phoneNumber && <span className="text-red-500 text-xs mt-1 block">{errors.phoneNumber.message}</span>}
+                    {errors.phone && <span className="text-red-500 text-xs mt-1 block">{errors.phone.message}</span>}
                   </div>
                   <div>
-                    <label htmlFor="pinCode" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
+                    <label htmlFor="pincode" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                       PIN CODE *
                     </label>
                     <input
                       type="text"
                       id="pincode"
                       placeholder="e.g. 682304"
-                      {...register('pincode')}
-                      className={`w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-black ${errors.pinCode ? 'border-red-500' : 'border-gray-300'}`}
+                      {...register('pincode')} 
+                      className={`w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-black ${errors.pincode ? 'border-red-500' : 'border-gray-300'}`}
                     />
-                    {errors.pinCode && <span className="text-red-500 text-xs mt-1 block">{errors.pinCode.message}</span>}
+                    {errors.pincode && <span className="text-red-500 text-xs mt-1 block">{errors.pincode.message}</span>}
                   </div>
                 </div>
 
@@ -155,10 +210,9 @@ const onError = (errors)=>{
                   />
                 </div>
 
-                {/* 4. Location Details (REORDERED: Country -> State -> City) */}
+                {/* 4. Location Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  
-                  {/* 1. Country (First) */}
+                  {/* Country */}
                   <div>
                     <label htmlFor="country" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                       COUNTRY
@@ -167,15 +221,13 @@ const onError = (errors)=>{
                       type="text"
                       id="country"
                       readOnly
-                      value="India" // Display logic
+                      value="India"
                       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-gray-50 cursor-not-allowed focus:outline-none"
                     />
-                    {/* Hidden input to ensure 'IN' is submitted */}
                     <input type="hidden" {...register('country')} />
-                    {errors.country && <span className="text-red-500 text-xs mt-1 block">{errors.country.message}</span>}
                   </div>
 
-                  {/* 2. State (Middle) */}
+                  {/* State */}
                   <div>
                     <label htmlFor="state" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                       STATE*
@@ -198,7 +250,7 @@ const onError = (errors)=>{
                     {errors.state && <span className="text-red-500 text-xs mt-1 block">{errors.state.message}</span>}
                   </div>
 
-                  {/* 3. City (Last) */}
+                  {/* City */}
                   <div>
                     <label htmlFor="city" className="block text-xs font-bold text-gray-700 mb-1 uppercase">
                       CITY*
@@ -207,10 +259,10 @@ const onError = (errors)=>{
                       <select
                         id="city"
                         {...register('city')}
-                        disabled={!selectedState} // Disable if no state selected
+                        disabled={!selectedStateCode}
                         className={`w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-black appearance-none bg-white 
                           ${errors.city ? 'border-red-500' : 'border-gray-300'}
-                          ${!selectedState ? 'bg-gray-100 cursor-not-allowed' : ''}
+                          ${!selectedStateCode ? 'bg-gray-100 cursor-not-allowed' : ''}
                         `}
                       >
                         <option value="">Select City</option>
@@ -224,7 +276,6 @@ const onError = (errors)=>{
                     </div>
                     {errors.city && <span className="text-red-500 text-xs mt-1 block">{errors.city.message}</span>}
                   </div>
-
                 </div>
 
                 {/* 5. Settings & Save */}
@@ -260,7 +311,7 @@ const onError = (errors)=>{
                     type="submit"
                     className="w-full bg-black text-white font-bold py-3 rounded-md text-sm hover:bg-gray-800 transition-colors shadow-lg"
                   >
-                    Save Address
+                    Update Address
                   </button>
                 </div>
 
@@ -284,7 +335,6 @@ const onError = (errors)=>{
           </div>
         </div>
       </div>
-
     </div>
   );
-}
+};

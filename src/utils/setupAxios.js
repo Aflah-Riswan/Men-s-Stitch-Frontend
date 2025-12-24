@@ -28,9 +28,10 @@ const setupAxios = (store) => {
     async (error) => {
       const originalRequest = error.config;
       const { response } = error;
-
+      
       if (response?.status === 404) {
         window.location.href = '/404';
+        console.log(response)
         return Promise.reject(error);
       }
 

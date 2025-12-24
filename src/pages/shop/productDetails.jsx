@@ -8,7 +8,8 @@ import ProductReviews from "../../Components/products/ProductReviews";
 import ProductFAQs from "../../Components/products/productFaq";
 import ProductCard from "../../Components/products/ProductCard";
 import Footer from "../../Components/Footer";
-
+import *as cartService from '../../services/cartService'
+import toast from "react-hot-toast";
 export default function ProductDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
@@ -19,7 +20,7 @@ export default function ProductDetails() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState('details')
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [count, setCount] = useState(0)
+  const [quantity, setQuantity] = useState(0)
   const [selectedSize, setSelectedSize] = useState(false)
   useEffect(() => {
     if (id) {
@@ -61,24 +62,26 @@ export default function ProductDetails() {
 
   const handleCount = (action) => {
     if (action === 'add') {
-      setCount((prev) => prev + 1)
+      setQuantity((prev) => prev + 1)
     } else if (action === 'minus') {
-      if (count === 0) return
-      setCount((prev) => prev - 1)
+      if (quantity === 0) return
+      setQuantity((prev) => prev - 1)
     }
   }
 
 
-  function handleCartButton() {
+  const handleCartButton = async () =>{
 
     const color = selectedVariant
-    const sizes = selectedSize
+    const size = selectedSize
     const productId = product._id
     const price = product.salePrice
-    const totalPrice = count * price
-     const data = { color , sizes ,productId , price , count , totalPrice}
+    const totalPrice = quantity * price
+    
+     const data = { color , size ,productId , price , quantity , totalPrice}
      console.log(data)
-     
+     await cartService.addToCart(data)
+     toast.success('added item into cart')  
   }
 
 
@@ -244,7 +247,7 @@ export default function ProductDetails() {
               <button className="px-3 py-4 text-gray-600 hover:text-black" onClick={() => handleCount('minus')}>
                 <Minus size={14} />
               </button>
-              <span className="px-3 font-medium w-6 text-sm text-center">{count}</span>
+              <span className="px-3 font-medium w-6 text-sm text-center">{quantity}</span>
               <button className="px-3 py-4 text-gray-600 hover:text-black" onClick={() => handleCount('add')}>
                 <Plus size={14} />
               </button>

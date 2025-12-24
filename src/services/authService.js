@@ -41,10 +41,13 @@ const signup = async (userData) => {
   }
 };
 
+
+
 const authService = {
   forgotPassword,
   verifyOtp,
   resetPassword,
-  signup
+  signup,
+ 
 };
 export default authService

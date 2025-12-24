@@ -30,6 +30,7 @@ import Wishlist from './pages/shop/user-account/WishList'
 import Address from './pages/shop/user-account/Address'
 import AddNewAddress from './pages/shop/user-account/AddNewAddress'
 import { EditAddress } from './pages/shop/user-account/EditAddress'
+import CartPage from './pages/shop/CartPage'
 
 function App() {
   const myTestVariable = "hello";
@@ -91,6 +92,7 @@ function App() {
             <Route path ='address/:addressId/edit' element={<EditAddress/>} />
             <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
+            <Route path ='cart' element={<CartPage/>} />
           
           </Route>
 

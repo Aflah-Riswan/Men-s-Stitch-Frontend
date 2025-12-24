@@ -9,3 +9,11 @@ export const addToCart = async (cartData)=>{
     console.log(error)
   }
 }
+export const getCartItems = async()=>{
+  try {
+    const response = await axiosInstance.get('/cart')
+    return response
+  } catch (error) {
+    console.log(error)
+  }
+}

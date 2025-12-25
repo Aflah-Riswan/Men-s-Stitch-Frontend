@@ -22,6 +22,7 @@ export default function ProductDetails() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [quantity, setQuantity] = useState(0)
   const [selectedSize, setSelectedSize] = useState(false)
+  const [ selectedColorCode ,setSelectedColorCode] =  useState(null)
   useEffect(() => {
     if (id) {
       handleProductFetch(id);
@@ -72,13 +73,14 @@ export default function ProductDetails() {
 
   const handleCartButton = async () =>{
 
-    const color = selectedVariant
+    const variantId = selectedVariant
     const size = selectedSize
     const productId = product._id
     const price = product.salePrice
     const totalPrice = quantity * price
+    const colorCode = selectedColorCode
     
-     const data = { color , size ,productId , price , quantity , totalPrice}
+     const data = { variantId , size ,productId , price , quantity , totalPrice , colorCode}
      console.log(data)
      await cartService.addToCart(data)
      toast.success('added item into cart')  
@@ -233,6 +235,7 @@ export default function ProductDetails() {
                     title={variant.productColor}
                     onClick={() => {
                       setSelectedVariant(variant._id);
+                      setSelectedColorCode(variant.colorCode)
                       setSelectedImage(0);
                     }}
                   />

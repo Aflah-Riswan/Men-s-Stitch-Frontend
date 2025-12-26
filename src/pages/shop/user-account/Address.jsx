@@ -27,7 +27,7 @@ const AddressContent = () => {
     <div className="w-full">
       <h1 className="text-3xl font-bold text-gray-900 mb-6 tracking-tight">Saved Addresses</h1>
 
-      <button className="w-full group bg-gray-50 hover:bg-white text-gray-500 hover:text-black font-bold py-4 px-4 rounded-xl flex flex-row items-center justify-center gap-3 mb-6 transition-all border-2 border-dashed border-gray-300 hover:border-black">
+      <button className="w-full group bg-gray-50 hover:bg-white text-gray-500 hover:text-black font-bold py-4 px-4 rounded-xl flex flex-row items-center justify-center gap-3 mb-6 transition-all border-2 border-dashed border-gray-300 hover:border-black" onClick={()=>navigate('add')}>
 
         <div className="bg-white group-hover:bg-black group-hover:text-white text-gray-400 p-2 rounded-full shadow-sm transition-colors">
           <Plus size={20} strokeWidth={3} />

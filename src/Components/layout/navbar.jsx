@@ -76,11 +76,11 @@ const Navbar = () => {
           </button>
 
         
-          <button className="hover:scale-110 transition">
+          <button className="hover:scale-110 transition" onClick={()=>navigate('/cart')}>
             <ShoppingCart className="w-6 h-6 text-black stroke-[1.5]" />
           </button>
 
-          <button className="hover:scale-110 transition">
+          <button className="hover:scale-110 transition" onClick={()=>navigate('/profile')}>
             <User className="w-6 h-6 text-black stroke-[1.5]" />
           </button>
 

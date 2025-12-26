@@ -31,6 +31,10 @@ import Address from './pages/shop/user-account/Address'
 import AddNewAddress from './pages/shop/user-account/AddNewAddress'
 import { EditAddress } from './pages/shop/user-account/EditAddress'
 import CartPage from './pages/shop/CartPage'
+import Checkout from './pages/shop/Checkout'
+import Payment from './pages/shop/Payment'
+import OrderSuccess from './pages/shop/OrderSuccess'
+import OrderHistory from './pages/shop/OrderHistory'
 
 function App() {
   const myTestVariable = "hello";
@@ -85,15 +89,19 @@ function App() {
           <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
             <Route path='product/:id/details' element={<ProductDetails />} />
             <Route path='profile' element={<UserInfo />} />
-            <Route path='orders' element={<h1>My Orders</h1>} />
+            <Route path='orders' element={<OrderHistory/>} />
             <Route path='wishlist' element={<Wishlist />} />
             <Route path='addresses' element={<Address />} />
             <Route path='addresses/add' element={<AddNewAddress />} />
-            <Route path ='address/:addressId/edit' element={<EditAddress/>} />
+            <Route path='address/:addressId/edit' element={<EditAddress />} />
             <Route path='category/:slug' element={<CategoryPage />} />
             <Route path="/products/:slug" element={<CategoryPage />} />
-            <Route path ='cart' element={<CartPage/>} />
-          
+            <Route path='cart' element={<CartPage />} />
+            <Route path='checkout' element={<Checkout />} />
+
+            <Route path='payment' element={<Payment />} />   
+            <Route path='order-success' element={<OrderSuccess />} />
+
           </Route>
 
         </Route>

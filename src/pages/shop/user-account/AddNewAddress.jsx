@@ -43,7 +43,7 @@ export default function AddNewAddress() {
     };
     await addressService.addNewAddress(finalData)
     toast.success('address added succesfully')
-    navigate('/address')
+    navigate('/addresses')
     console.log("Form Data:", finalData);
   };
 const onError = (errors)=>{

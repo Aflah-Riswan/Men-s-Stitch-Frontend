@@ -36,6 +36,8 @@ import Payment from './pages/shop/Payment'
 import OrderSuccess from './pages/shop/OrderSuccess'
 import OrderHistory from './pages/shop/OrderHistory'
 import OrderDetails from './pages/shop/OrderDetails'
+import OrderDetailsAdmin from './pages/admin/orders/OrderDetails'
+import OrderList from './pages/admin/orders/OrdersList'
 
 function App() {
   const myTestVariable = "hello";
@@ -78,6 +80,8 @@ function App() {
             <Route path="coupons/add" element={<AddCoupon />} />
             <Route path='coupons/:id/edit' element={<EditCoupon />} />
             <Route path='coupons' element={<Coupon />} />
+            <Route path='orders' element={<OrderList/>} />
+            <Route path='orders/:id' element={<OrderDetailsAdmin/>} />
           </Route>
         </Route>
 

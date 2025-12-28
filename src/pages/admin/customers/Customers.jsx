@@ -36,7 +36,7 @@ export default function Customers() {
   }, [])
 
   const fetchUsers = async () => {
-    const data = { currentPage, search : debouncedSearch, active, limit, sort };
+    const data = { page : currentPage, search : debouncedSearch, active, limit, sort };
     try {
       const response = await axiosInstance.get('/users', { params: data });
       if (response.data.success) {

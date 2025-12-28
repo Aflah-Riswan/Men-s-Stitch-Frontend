@@ -14,3 +14,6 @@ export const getMyOrders = async () => {
 export const cancelOrder = async (orderId , reason , itemId) => {
   return await axiosInstance.put(`/orders/${orderId}/cancel`,{reason , itemId});
 };
+export const orderDetails = async (orderId) =>{
+  return await axiosInstance.get(`/orders/${orderId}`)
+}

@@ -1,199 +1,238 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Download, CreditCard, ArrowLeft } from 'lucide-react';
+import * as orderService from '../../services/orderService';
+import { toast } from 'react-hot-toast';
 
-import React from 'react';
-import { Download, Check, CreditCard } from 'lucide-react';
-
-// Import your existing components
-import UserSidebar from './UserSidebar'; 
-import Footer from './Footer';
-import NewsLetter from './NewsLetter';
+import UserSidebar from '../../Components/user-account-components/UserSidebar';
+import Footer from '../../Components/Footer';
+import NewsLetter from '../../Components/NewsLetter';
 
 const OrderDetails = () => {
-  // Dummy data based on the screenshot
-  const orderData = {
-    orderId: "3354654654526",
-    orderDate: "Feb 16, 2022",
-    estimatedDelivery: "May 16, 2022",
-    statusSteps: [
-      { label: "Order Confirmed", date: "Wed, 11th Jan", completed: true },
-      { label: "Shipped", date: "Wed, 11th Jan", completed: true },
-      { label: "Out For Delivery", date: "Wed, 11th Jan", completed: true },
-      { label: "Delivered", date: "Expected by, Mon 16th", completed: false }, // Current/Next step
-    ],
-    product: {
-      name: "Men's formal trousers -relaxed fit",
-      itemId: "565333-33211",
-      price: 399,
-      quantity: 1,
-      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80", // Placeholder
-    },
-    payment: {
-      method: "Visa **56",
-      icon: <CreditCard size={16} className="text-blue-600" />,
-    },
-    deliveryAddress: {
-      line1: "847 Jewess Bridge Apt.",
-      line2: "174 London, UK",
-      line3: "474-769-3919",
-    },
-    summary: {
-      subtotal: 399,
-      discount: 60,
-      deliveryFee: "Free",
-      total: 319,
-    },
+  const { orderId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const highlightedItemId = location.state?.highlightedItemId;
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const response = await orderService.orderDetails(orderId);
+        if (response.data.success) {
+          setOrder(response.data.order);
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+        toast.error("Failed to load order details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (orderId) fetchOrder();
+  }, [orderId]);
+
+  // --- HELPER: Calculate Progress Logic ---
+  const getProgressStats = (status) => {
+    const steps = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
+    
+    if (status === 'Cancelled') return { currentIndex: -1, isCancelled: true, color: 'bg-red-500' };
+    if (status === 'Returned') return { currentIndex: 4, isCancelled: false, color: 'bg-orange-500' }; // All complete
+
+    const index = steps.indexOf(status);
+    return { 
+        currentIndex: index === -1 ? 0 : index, 
+        isCancelled: false, 
+        color: 'bg-green-500' 
+    };
   };
+
+  const stepsList = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (!order) return <div className="min-h-screen flex items-center justify-center">Order not found</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      
-      {/* Main Layout: Sidebar (Left) + Content (Right) */}
+
       <div className="flex-1 flex flex-col md:flex-row w-full max-w-7xl mx-auto">
-        
-        {/* Sidebar Component */}
         <UserSidebar activeTab="My orders" />
 
-        {/* Main Content Area */}
         <div className="flex-1 min-w-0 p-4 sm:p-8">
-          
+
+          {/* Back Button */}
+          <button onClick={() => navigate('/account/orders')} className="flex items-center text-gray-500 hover:text-black mb-4 transition">
+            <ArrowLeft size={18} className="mr-1" /> Back to Orders
+          </button>
+
           <h1 className="text-2xl font-bold text-gray-900 mb-8">Order Details</h1>
 
-          {/* Details Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
-            
-            {/* Header: ID & Invoice */}
+
+            {/* Main Order Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Order ID: {orderData.orderId}</h2>
+                <h2 className="text-xl font-bold text-gray-900">Order ID: {order.orderId}</h2>
                 <div className="flex flex-wrap gap-4 text-sm mt-2 text-gray-500">
-                  <span>Order date: <span className="text-gray-900 font-medium">{orderData.orderDate}</span></span>
-                  <span className="flex items-center text-green-600 font-medium">
-                    <span className="mr-1">🚚</span> Estimated delivery: {orderData.estimatedDelivery}
-                  </span>
+                  <span>Placed on: <span className="text-gray-900 font-medium">{new Date(order.createdAt).toDateString()}</span></span>
                 </div>
               </div>
               <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                <Download size={16} />
-                Invoice
+                <Download size={16} /> Invoice
               </button>
             </div>
 
             <hr className="border-gray-100 mb-8" />
 
-            {/* Progress Tracker (Stepper) */}
-            <div className="relative mb-12 px-4">
-              {/* Progress Bar Background */}
-              <div className="absolute top-3 left-4 right-4 h-1 bg-gray-200 -z-10 rounded-full"></div>
-              
-              {/* Active Progress Bar (Calculated width roughly based on completed steps) */}
-              <div 
-                className="absolute top-3 left-4 h-1 bg-green-500 -z-10 rounded-full transition-all duration-500" 
-                style={{ width: '66%' }} // Adjust based on logic (3/4 steps = ~75%, visualized as 66% between dots)
-              ></div>
+            {/* --- PRODUCTS LIST --- */}
+            <div className="space-y-8">
+              {order.items.map((item) => {
+                const isHighlighted = item._id === highlightedItemId;
+                const { currentIndex, isCancelled } = getProgressStats(item.itemStatus);
 
-              <div className="flex justify-between w-full">
-                {orderData.statusSteps.map((step, index) => (
-                  <div key={index} className="flex flex-col items-center">
-                    {/* Circle */}
-                    <div 
-                      className={`w-7 h-7 rounded-full flex items-center justify-center border-2 bg-white z-10 
-                        ${step.completed ? 'border-green-500 text-green-500' : 'border-gray-300 text-gray-300'}`}
-                    >
-                      {step.completed ? (
-                        <div className="w-3 h-3 bg-green-500 rounded-full" />
-                      ) : (
-                        <div className="w-3 h-3 bg-gray-300 rounded-full" />
-                      )}
+                return (
+                  <div 
+                    key={item._id} 
+                    className={`flex flex-col gap-6 p-6 rounded-xl border transition-all duration-500
+                      ${isHighlighted ? 'border-blue-300 bg-blue-50/30 shadow-md ring-1 ring-blue-300' : 'border-gray-100 bg-white'}`}
+                  >
+                    {/* Top Row: Product Info */}
+                    <div className="flex gap-4 sm:gap-6">
+                      <div className="w-24 h-32 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 border border-gray-200">
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                            <div className="flex justify-between items-start">
+                                <h3 className="text-base font-bold text-gray-900 line-clamp-2 pr-4">{item.name}</h3>
+                                <p className="text-lg font-bold text-gray-900 whitespace-nowrap">₹{item.price}</p>
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1">Size: {item.size} • Color: {item.color}</p>
+                            <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        </div>
+                        
+                        {/* Simple Status Badge (Mobile View mostly) */}
+                        <div className="mt-2 sm:hidden">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold 
+                                ${isCancelled ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                {item.itemStatus}
+                            </span>
+                        </div>
+                      </div>
                     </div>
-                    
-                    {/* Text Labels */}
-                    <div className="text-center mt-3">
-                      <p className={`text-sm font-bold ${step.completed ? 'text-green-500' : 'text-gray-400'}`}>
-                        {step.label}
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">{step.date}</p>
-                    </div>
+
+                    {/* Bottom Row: Stepper (Only show if NOT Cancelled) */}
+                    {isCancelled ? (
+                         <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm font-bold text-center mt-2">
+                            This item has been Cancelled.
+                         </div>
+                    ) : (
+                        <div className="relative w-full px-2 sm:px-4 mt-6">
+                             {/* Background Gray Line */}
+                             <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full -translate-y-1/2"></div>
+                             
+                             {/* Active Green Line */}
+                             <div 
+                                className="absolute top-1/2 left-0 h-1 bg-green-500 rounded-full -translate-y-1/2 transition-all duration-700"
+                                style={{ width: `${(currentIndex / (stepsList.length - 1)) * 100}%` }}
+                             ></div>
+
+                             {/* Steps Row */}
+                             <div className="relative flex justify-between w-full z-10">
+                                {stepsList.map((step, index) => {
+                                    const isCompleted = index <= currentIndex;
+                                    const isCurrent = index === currentIndex;
+                                    
+                                    return (
+                                        <div key={step} className="flex flex-col items-center group">
+                                            {/* Dot */}
+                                            <div 
+                                                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center bg-white transition-colors duration-300 z-10
+                                                ${isCompleted ? 'border-green-500' : 'border-gray-300'}
+                                                ${isCurrent ? 'ring-4 ring-green-100' : ''}
+                                                `}
+                                            >
+                                                {isCompleted && <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />}
+                                            </div>
+
+                                            {/* Label */}
+                                            <span 
+                                                className={`absolute top-8 text-[10px] sm:text-xs font-medium transition-colors duration-300 w-20 text-center
+                                                ${isCompleted ? 'text-green-600 font-bold' : 'text-gray-400'}`}
+                                            >
+                                                {step}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                             </div>
+                             {/* Spacer for labels */}
+                             <div className="h-6"></div>
+                        </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
 
-            <hr className="border-gray-100 mb-8" />
+            <hr className="border-gray-100 my-8" />
 
-            {/* Product Item */}
-            <div className="flex flex-col sm:flex-row gap-6 mb-8">
-              <div className="w-24 h-28 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                <img 
-                  src={orderData.product.image} 
-                  alt={orderData.product.name} 
-                  className="w-full h-full object-cover" 
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-bold text-gray-900">{orderData.product.name}</h3>
-                <p className="text-sm text-gray-500 mt-1">Order Id : {orderData.product.itemId}</p>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-lg font-bold text-gray-900">₹{orderData.product.price}</p>
-                <p className="text-sm text-gray-500">Qty: {orderData.product.quantity}</p>
-              </div>
-            </div>
-
-            <hr className="border-gray-100 mb-8" />
-
-            {/* Info Grid: Payment, Delivery, Summary */}
+            {/* Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              
               {/* Payment */}
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Payment</h4>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="font-medium">Visa **56</span>
-                  {orderData.payment.icon}
+                  <span className="capitalize">{order.payment.method}</span>
+                  {order.payment.method === 'card' && <CreditCard size={16} className="text-blue-600" />}
                 </div>
+                <p className={`text-xs mt-1 font-medium ${order.payment.status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
+                    Status: {order.payment.status.toUpperCase()}
+                </p>
               </div>
 
               {/* Delivery */}
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Delivery</h4>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p className="font-medium text-gray-400">Address</p>
-                  <p>{orderData.deliveryAddress.line1}</p>
-                  <p>{orderData.deliveryAddress.line2}</p>
-                  <p>{orderData.deliveryAddress.line3}</p>
+                  <p className="font-medium text-gray-900">{order.shippingAddress.fullName}</p>
+                  <p>{order.shippingAddress.street}</p>
+                  <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                  <p>{order.shippingAddress.pincode}</p>
+                  <p className="mt-2 text-gray-500">Phone: {order.shippingAddress.phone}</p>
                 </div>
               </div>
 
-              {/* Order Summary */}
+              {/* Summary */}
               <div>
                 <h4 className="font-bold text-gray-900 mb-3">Order Summary</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
-                    <span className="font-bold text-gray-900">₹{orderData.summary.subtotal}</span>
+                    <span className="font-bold text-gray-900">₹{order.subtotal}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>Discount (-20%)</span>
-                    <span className="font-bold text-red-500">-₹{orderData.summary.discount}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Delivery Fee</span>
-                    <span className="font-bold text-green-500">{orderData.summary.deliveryFee}</span>
+                    <span>Shipping Fee</span>
+                    <span className="font-bold text-green-500">{order.shippingFee === 0 ? 'Free' : `₹${order.shippingFee}`}</span>
                   </div>
                   <hr className="border-gray-100 my-2" />
                   <div className="flex justify-between text-gray-900 text-base font-bold">
                     <span>Total</span>
-                    <span>₹{orderData.summary.total}</span>
+                    <span>₹{order.totalAmount}</span>
                   </div>
                 </div>
               </div>
-
             </div>
 
           </div>
         </div>
       </div>
 
-      {/* Footer Section */}
       <div className="w-full mt-12 px-4 sm:px-10">
         <div className="max-w-7xl mx-auto mb-12">
           <NewsLetter />

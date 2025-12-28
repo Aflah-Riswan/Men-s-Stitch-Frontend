@@ -81,7 +81,7 @@ function App() {
             <Route path='coupons/:id/edit' element={<EditCoupon />} />
             <Route path='coupons' element={<Coupon />} />
             <Route path='orders' element={<OrderList/>} />
-            <Route path='orders/:id' element={<OrderDetailsAdmin/>} />
+            <Route path='orders/:orderId' element={<OrderDetailsAdmin/>} />
           </Route>
         </Route>
 

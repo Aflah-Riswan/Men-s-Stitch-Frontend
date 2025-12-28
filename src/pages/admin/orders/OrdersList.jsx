@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 
 // Import the service we just created
 import * as orderService from '../../../services/orderService'; 
+import { useNavigate } from 'react-router-dom';
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
@@ -17,7 +18,7 @@ export default function OrderList() {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+  const navigate = useNavigate()
   const ITEMS_PER_PAGE = 10;
 
   // --- 1. Fetch Stats (On Mount) ---
@@ -236,7 +237,7 @@ export default function OrderList() {
                     
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
-                          <button className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition text-gray-500 hover:text-blue-600">
+                          <button className="p-1.5 hover:bg-white hover:shadow-sm rounded-md transition text-gray-500 hover:text-blue-600" onClick={()=>navigate(`${order._id}`)}>
                               <Eye size={16} />
                           </button>
                       </div>

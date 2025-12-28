@@ -34,3 +34,8 @@ export const getOrderStats = async () => {
   const response = await axiosInstance.get('/orders/stats');
   return response.data;
 };
+export const getOrderDetails = async (orderId) =>{
+  console.log("orderId : ",orderId)
+  const response = await axiosInstance.get(`orders/admin/${orderId}`)
+  return response.data
+}

@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast';
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
 import NewsLetter from '../../Components/NewsLetter';
+import { fabClasses } from '@mui/material/Fab';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
@@ -14,7 +15,7 @@ const OrderDetails = () => {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const highlightedItemId = location.state?.highlightedItemId;
 
@@ -22,6 +23,7 @@ const OrderDetails = () => {
     const fetchOrder = async () => {
       try {
         const response = await orderService.orderDetails(orderId);
+        console.log(response.data)
         if (response.data.success) {
           setOrder(response.data.order);
         }

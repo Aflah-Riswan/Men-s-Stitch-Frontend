@@ -11,6 +11,6 @@ export const getMyOrders = async () => {
 };
 
 // 3. Cancel an order
-export const cancelOrder = async (orderId) => {
-  return await axiosInstance.put(`/orders/${orderId}/cancel`);
+export const cancelOrder = async (orderId , reason , itemId) => {
+  return await axiosInstance.put(`/orders/${orderId}/cancel`,{reason , itemId});
 };

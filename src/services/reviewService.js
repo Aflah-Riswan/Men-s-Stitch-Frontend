@@ -10,8 +10,17 @@ const getFeaturedReviews = async () => {
   }
 };
 
+const postReview = async (orderId , productId , rating , comment) =>{
+  try {
+    const response = await axiosInstance.post('/reviews',{orderId ,productId , rating , comment})
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 const reviewService = {
-  getFeaturedReviews
+  getFeaturedReviews,
+  postReview
 };
 
 export default reviewService;

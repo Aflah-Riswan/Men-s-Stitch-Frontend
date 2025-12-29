@@ -7,12 +7,12 @@ import { toast } from 'react-hot-toast';
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addressId } = location.state || {}; // Get passed addressId
+  const { addressId } = location.state || {};
 
   const [selectedMethod, setSelectedMethod] = useState('cod');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if no address selected
+  
   if (!addressId) {
     React.useEffect(() => { navigate('/checkout'); }, []);
     return null;

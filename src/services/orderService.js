@@ -2,7 +2,6 @@
 import axiosInstance from "../utils/axiosInstance";
 
 export const placeOrder = async (orderData) => {
-  // orderData = { addressId, paymentMethod }
   return await axiosInstance.post('/orders/place-order', orderData);
 };
 
@@ -10,11 +9,11 @@ export const getMyOrders = async () => {
   return await axiosInstance.get('/orders/my-orders');
 };
 
-// 3. Cancel an order
-export const cancelOrder = async (orderId , reason , itemId) => {
-  return await axiosInstance.put(`/orders/${orderId}/cancel`,{reason , itemId});
+
+export const cancelOrder = async (orderId, reason, itemId) => {
+  return await axiosInstance.put(`/orders/${orderId}/cancel`, { reason, itemId });
 };
-export const orderDetails = async (orderId) =>{
+export const orderDetails = async (orderId) => {
   return await axiosInstance.get(`/orders/${orderId}`)
 }
 export const getAllOrders = async (page = 1, limit = 10, status = '', search = '') => {
@@ -29,13 +28,23 @@ export const getAllOrders = async (page = 1, limit = 10, status = '', search = '
   return response.data;
 };
 
-// 2. Get Stats
+
 export const getOrderStats = async () => {
   const response = await axiosInstance.get('/orders/stats');
   return response.data;
 };
-export const getOrderDetails = async (orderId) =>{
-  console.log("orderId : ",orderId)
+export const getOrderDetails = async (orderId) => {
+  console.log("orderId : ", orderId)
   const response = await axiosInstance.get(`orders/admin/${orderId}`)
   return response.data
 }
+
+export const updateOrderStatus = async (orderId, status) => {
+  const response = await axiosInstance.put(`/orders/update-status/${orderId}`, { status });
+  return response.data;
+};
+
+export const updateOrderItemStatus = async (orderId, itemId, status) => {
+  const response = await axiosInstance.put(`/orders/update-item-status/${orderId}`, { itemId, status });
+  return response.data;
+};

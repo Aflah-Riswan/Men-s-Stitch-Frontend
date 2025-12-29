@@ -6,7 +6,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { deleteProduct, fetchProducts, toggleProductList } from '../../../redux/slice/productSlice';
 import { fetchCategories } from '../../../redux/slice/categorySlice';
-import Stack from '@mui/material/Stack'; //  deleteProduct, fetchProducts, toggleProductList 
+import Stack from '@mui/material/Stack'; 
 import Pagination from '@mui/material/Pagination';
 import { useNavigate } from 'react-router-dom';
 import useDebounce from '../../../hooks/useDebounce';

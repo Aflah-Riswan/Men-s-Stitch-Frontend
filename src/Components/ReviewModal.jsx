@@ -9,16 +9,10 @@ const ReviewModal = ({ isOpen, onClose, onSubmit, product }) => {
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    // 1. Validation
     if (rating === 0) {
-      // You can add a toast here if you passed toast as a prop, or just ignore
       return;
     }
-
-    // 2. Pass data back to OrderHistory
     onSubmit({ rating, comment });
-    
-    // 3. Reset
     setRating(0);
     setComment('');
     onClose();

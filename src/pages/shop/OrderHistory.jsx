@@ -3,7 +3,7 @@ import { Download, Truck, MessageSquare } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import * as orderService from '../../services/orderService';
 
-// Import your components
+
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
 import NewsLetter from '../../Components/NewsLetter';
@@ -16,11 +16,11 @@ const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate()
-  // --- Modal State ---
+
   const [activeModal, setActiveModal] = useState('none');
   const [selectedData, setSelectedData] = useState(null);
 
-  // --- 1. Fetch Orders ---
+
   const fetchOrders = async () => {
     try {
       const response = await orderService.getMyOrders();
@@ -39,7 +39,7 @@ const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  // --- 2. Cancel Logic (UPDATED) ---
+  
   const handleCancelClick = (orderId, itemId = null) => {
 
     setSelectedData({ orderId, itemId });
@@ -47,9 +47,9 @@ const OrderHistory = () => {
   };
 
   const handleConfirmCancel = async (reason) => {
-    const { orderId, itemId } = selectedData; // Extract IDs
+    const { orderId, itemId } = selectedData; 
     try {
-      // Pass itemId to the backend. If null, backend cancels full order.
+  
       await orderService.cancelOrder(orderId, reason, itemId);
 
       toast.success(itemId ? "Item cancelled successfully" : "Order cancelled successfully");
@@ -62,7 +62,6 @@ const OrderHistory = () => {
     }
   };
 
-  // --- 3. Review Logic ---
   const handleReviewClick = (item, orderId) => {
 
     setSelectedData({ ...item, orderId: orderId });
@@ -78,7 +77,6 @@ const OrderHistory = () => {
     setSelectedData(null);
   };
 
-  // --- 4. Helper: Get Styles (UPDATED) ---
   const getStatusConfig = (status, deliveryDate) => {
     const safeStatus = status || 'Processing';
     const normalizedStatus = safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1).toLowerCase();
@@ -112,7 +110,7 @@ const OrderHistory = () => {
           showTruck: true,
           actions: ['track', 'view']
         };
-      default: // Pending, Processing, Ordered
+      default: 
         return {
           color: 'text-lime-600',
           bg: 'bg-lime-50',
@@ -124,7 +122,7 @@ const OrderHistory = () => {
     }
   };
 
-  // --- RENDER ---
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
 
@@ -196,7 +194,7 @@ const OrderHistory = () => {
                             <div className="flex flex-wrap justify-start sm:justify-end gap-2 mb-4">
                               {config.actions.includes('cancel') && (
                                 <button
-                                  // --- FIX: Pass item._id to cancel specific item ---
+                               
                                   onClick={() => handleCancelClick(order._id, item._id)}
                                   className="flex items-center justify-center border border-red-200 text-red-600 bg-white text-xs font-medium px-4 py-2 rounded-md hover:bg-red-50 transition"
                                 >

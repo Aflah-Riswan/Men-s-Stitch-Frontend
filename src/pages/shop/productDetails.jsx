@@ -18,12 +18,12 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
   
-  // State for selections
+
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedColorCode, setSelectedColorCode] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1); // Default to 1
+  const [quantity, setQuantity] = useState(1); 
   
   const [activeTab, setActiveTab] = useState('details');
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -40,8 +40,7 @@ export default function ProductDetails() {
       if (response.data.success) {
         setProduct(response.data.product);
         setRelatedProducts(response.data.relatedProducts || []);
-        
-        // OPTIONAL: Auto-select the first variant if available
+ 
         if (response.data.product.variants && response.data.product.variants.length > 0) {
            const firstVar = response.data.product.variants[0];
            setSelectedVariant(firstVar._id);
@@ -58,33 +57,32 @@ export default function ProductDetails() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
 
-  // --- Derived Values ---
+
   const price = product?.salePrice || 0;
   const originalPrice = product?.originalPrice || 0;
   const hasDiscount = price < originalPrice;
   const discountPercentage = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
-  // Find the currently active variant object to get its stock/images
   const activeVariant = product?.variants?.find((variant) => variant._id === selectedVariant);
 
-  // Determine images to show: Variant images > Product Cover images > Placeholder
+
   const rawImages = activeVariant?.variantImages?.length > 0
     ? activeVariant.variantImages
     : product?.coverImages;
   const currentImages = Array.isArray(rawImages) ? rawImages : ["https://via.placeholder.com/400?text=No+Image"];
 
-  // --- Handlers ---
+
 
   const handleCount = (action) => {
     if (action === 'add') {
-      // UX Improvement: Check stock limit before increasing
+   
       if (activeVariant && selectedSize) {
          const currentStock = activeVariant.stock[selectedSize];
          if (quantity >= currentStock) {
             return toast.error(`Only ${currentStock} items available`);
          }
       }
-      // Hard limit (Backend also enforces 5)
+     
       if (quantity >= 5) return toast.error("Max limit 5 per item");
       
       setQuantity((prev) => prev + 1);
@@ -96,7 +94,7 @@ export default function ProductDetails() {
   };
 
   const handleCartButton = async () => {
-    // 1. Validation: Must select Variant & Size
+    
     if (!selectedVariant) {
       return toast.error("Please select a color");
     }
@@ -107,7 +105,7 @@ export default function ProductDetails() {
       return toast.error("Quantity must be at least 1");
     }
 
-    // 2. Client-side Stock Validation
+
     if (activeVariant) {
         const stockAvailable = activeVariant.stock[selectedSize];
         if (stockAvailable < quantity) {
@@ -115,7 +113,7 @@ export default function ProductDetails() {
         }
     }
 
-    // 3. Prepare Data (Backend calculates price/totals for security)
+ 
     const data = {
       productId: product._id,
       variantId: selectedVariant,
@@ -127,10 +125,10 @@ export default function ProductDetails() {
     try {
       await cartService.addToCart(data);
       toast.success('Added item to cart successfully!');
-      setQuantity(1); // Reset quantity after adding
+      setQuantity(1);  
     } catch (error) {
       console.error(error);
-      // Show specific error from backend (e.g. "Max limit reached")
+    
       toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
@@ -216,12 +214,11 @@ export default function ProductDetails() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-bold text-black uppercase tracking-wider">Choose Size</h3>
-              {/* Optional: Add Size Guide Link here */}
+             
             </div>
             <div className="flex flex-wrap gap-2">
               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-                // Check stock for this size in the ACTIVE variant
-                // If no variant selected, we assume stock is 0 or disable interaction
+          
                 const stock = activeVariant ? activeVariant.stock[size] : 0;
                 const isOutOfStock = stock <= 0;
                 const isSelected = selectedSize === size;
@@ -229,7 +226,7 @@ export default function ProductDetails() {
                 return (
                   <button
                     key={size}
-                    disabled={isOutOfStock || !activeVariant} // Disable if no variant selected yet
+                    disabled={isOutOfStock || !activeVariant} 
                     className={`
                       relative px-4 py-2 text-xs font-medium border rounded-full transition-all
                       ${(isOutOfStock || !activeVariant)
@@ -267,7 +264,7 @@ export default function ProductDetails() {
                     onClick={() => {
                       setSelectedVariant(null);
                       setSelectedColorCode(null);
-                      setSelectedSize(null); // Reset size when color changes
+                      setSelectedSize(null); 
                       setSelectedImage(0);
                     }}
                   >
@@ -286,7 +283,7 @@ export default function ProductDetails() {
                     onClick={() => {
                       setSelectedVariant(variant._id);
                       setSelectedColorCode(variant.colorCode);
-                      setSelectedSize(null); // Important: Reset size because stock depends on color
+                      setSelectedSize(null); 
                       setSelectedImage(0);
                     }}
                   />

@@ -38,12 +38,12 @@ const OrderDetails = () => {
     if (orderId) fetchOrder();
   }, [orderId]);
 
-  // --- HELPER: Calculate Progress Logic ---
+
   const getProgressStats = (status) => {
     const steps = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
     
     if (status === 'Cancelled') return { currentIndex: -1, isCancelled: true, color: 'bg-red-500' };
-    if (status === 'Returned') return { currentIndex: 4, isCancelled: false, color: 'bg-orange-500' }; // All complete
+    if (status === 'Returned') return { currentIndex: 4, isCancelled: false, color: 'bg-orange-500' };
 
     const index = steps.indexOf(status);
     return { 

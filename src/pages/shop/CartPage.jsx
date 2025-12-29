@@ -8,17 +8,15 @@ const CartPage = () => {
   const navigate = useNavigate(); 
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Coupon State
+
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState([]); 
   const [showCoupons, setShowCoupons] = useState(false); 
 
-  // --- Helper: Get Image URL ---
 
 
-  // --- 1. Fetch Data ---
+
   const fetchCart = async () => {
     try {
       const response = await cartService.getCartItems();
@@ -34,7 +32,7 @@ const CartPage = () => {
 
   const fetchCoupons = async () => {
     try {
-      // Ensure backend has a route: GET /api/coupons
+ 
       const response = await cartService.getCoupons();
       const coupons = response.data.coupons || response.data || [];
       setAvailableCoupons(coupons);
@@ -48,7 +46,7 @@ const CartPage = () => {
     fetchCoupons(); 
   }, []);
 
-  // --- 2. Handlers ---
+  
   const handleQuantity = async (itemId, action, currentQty) => {
     if (action === 'decrement' && currentQty === 1) return; 
 
@@ -107,7 +105,7 @@ const CartPage = () => {
     }
   };
 
-  // --- 3. Render Logic ---
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading cart...</div>;
 
   if (!cart || !cart.items || cart.items.length === 0) {

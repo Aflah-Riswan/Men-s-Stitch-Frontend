@@ -12,7 +12,7 @@ const Checkout = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Modal State
+  
   const [showModal, setShowModal] = useState(false);
   const [newAddress, setNewAddress] = useState({
     firstName: '', lastName: '', phoneNumber: '', 
@@ -20,7 +20,7 @@ const Checkout = () => {
     state: '', country: '', pincode: '', label: 'Home', isDefault: false
   });
 
-  // --- 1. Fetch Data ---
+
   useEffect(() => {
     const init = async () => {
       try {
@@ -32,7 +32,6 @@ const Checkout = () => {
         const addrList = addrRes.data.addresses || [];
         setAddresses(addrList);
         
-        // Auto-select default address
         const defaultAddr = addrList.find(a => a.isDefault);
         if (defaultAddr) setSelectedAddress(defaultAddr._id);
         else if (addrList.length > 0) setSelectedAddress(addrList[0]._id);
@@ -48,16 +47,16 @@ const Checkout = () => {
     init();
   }, []);
 
-  // --- 2. Handlers ---
+  
   const handleAddAddress = async (e) => {
     e.preventDefault();
     try {
       const res = await addressService.addAddress(newAddress);
       if (res.data.success) {
         toast.success("Address Added");
-        setAddresses(res.data.data); // Assuming backend returns updated list
+        setAddresses(res.data.data); 
         setShowModal(false);
-        // Reset form
+        
         setNewAddress({ firstName: '', lastName: '', phoneNumber: '', addressLine1: '', addressLine2: '', city: '', state: '', country: '', pincode: '', label: 'Home', isDefault: false });
       }
     } catch (error) {
@@ -67,11 +66,11 @@ const Checkout = () => {
 
   const handleProceed = () => {
     if (!selectedAddress) return toast.error("Please select a shipping address");
-    // Navigate to Payment Page with state
+   
     navigate('/payment', { state: { addressId: selectedAddress } });
   };
 
-  // --- 3. Render ---
+
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (!cart || !cart.items.length) return <div className="p-10 text-center">Your cart is empty</div>;
 

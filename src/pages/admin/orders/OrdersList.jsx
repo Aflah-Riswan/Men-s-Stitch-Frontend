@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-// Import the service we just created
+
 import * as orderService from '../../../services/orderService'; 
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +13,7 @@ export default function OrderList() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, newOrders: 0, delivered: 0, cancelled: 0 });
 
-  // Filters
+  
   const [activeTab, setActiveTab] = useState('All');
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +21,7 @@ export default function OrderList() {
   const navigate = useNavigate()
   const ITEMS_PER_PAGE = 10;
 
-  // --- 1. Fetch Stats (On Mount) ---
+  
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -29,13 +29,12 @@ export default function OrderList() {
         if(data.success) setStats(data.stats);
       } catch (error) {
         console.error("Stats Error", error);
-        // Optional: toast.error("Failed to load stats");
+       
       }
     };
     fetchStats();
   }, []);
 
-  // --- 2. Fetch Orders (When filters change) ---
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -54,7 +53,7 @@ export default function OrderList() {
       }
     };
 
-    // Debounce: Wait 500ms after user stops typing to call API
+
     const timeoutId = setTimeout(() => {
       fetchOrders();
     }, 500);
@@ -62,10 +61,10 @@ export default function OrderList() {
     return () => clearTimeout(timeoutId);
   }, [activeTab, search, currentPage]);
 
-  // --- Helpers ---
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setCurrentPage(1); // Reset to page 1
+    setCurrentPage(1);
   };
 
   const getStatusStyle = (status) => {

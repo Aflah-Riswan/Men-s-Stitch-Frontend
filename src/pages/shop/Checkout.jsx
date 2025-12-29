@@ -11,15 +11,12 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  
-  const [showModal, setShowModal] = useState(false);
-  const [newAddress, setNewAddress] = useState({
-    firstName: '', lastName: '', phoneNumber: '', 
-    addressLine1: '', addressLine2: '', city: '', 
-    state: '', country: '', pincode: '', label: 'Home', isDefault: false
+  const [paymentSummary, setPaymentSummary] = useState({
+    subTotal: 0,
+    discount: 0,
+    shippingFee: 0,
+    grandTotal: 0
   });
-
 
   useEffect(() => {
     const init = async () => {
@@ -36,7 +33,13 @@ const Checkout = () => {
         if (defaultAddr) setSelectedAddress(defaultAddr._id);
         else if (addrList.length > 0) setSelectedAddress(addrList[0]._id);
 
-        setCart(cartRes.data.data || cartRes.data);
+        setCart(cartRes.data);
+        setPaymentSummary ({
+          subTotal : cartRes.data.subTotal,
+          discount : cartRes.data.discount,
+          shippingFee : cartRes.data.shippingFee === 0 ? 'Free' : cartRes.data.shippingFee,
+          grandTotal : cartRes.data.grandTotal
+        })
       } catch (error) {
         console.error(error);
         toast.error("Failed to load checkout data");
@@ -47,27 +50,10 @@ const Checkout = () => {
     init();
   }, []);
 
-  
-  const handleAddAddress = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await addressService.addAddress(newAddress);
-      if (res.data.success) {
-        toast.success("Address Added");
-        setAddresses(res.data.data); 
-        setShowModal(false);
-        
-        setNewAddress({ firstName: '', lastName: '', phoneNumber: '', addressLine1: '', addressLine2: '', city: '', state: '', country: '', pincode: '', label: 'Home', isDefault: false });
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to add address");
-    }
-  };
 
   const handleProceed = () => {
-    if (!selectedAddress) return toast.error("Please select a shipping address");
-   
-    navigate('/payment', { state: { addressId: selectedAddress } });
+    if (!selectedAddress) return toast.error("Please select a shipping address");   
+    navigate('/payment', { state: { addressId: selectedAddress , paymentSummary} });
   };
 
 
@@ -106,7 +92,7 @@ const Checkout = () => {
               ))}
 
               <button 
-                onClick={() => setShowModal(true)}
+                onClick={() => navigate('/addresses/add')}
                 className="w-full flex items-center justify-center p-4 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-black hover:border-black transition"
               >
                 <Plus size={20} className="mr-2" /> Add New Address
@@ -148,36 +134,6 @@ const Checkout = () => {
           </div>
         </div>
       </main>
-
-      {/* --- ADD ADDRESS MODAL --- */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between mb-4">
-               <h3 className="text-lg font-bold">Add New Address</h3>
-               <button onClick={() => setShowModal(false)}><X size={20} /></button>
-            </div>
-            <form onSubmit={handleAddAddress} className="space-y-3">
-               <div className="grid grid-cols-2 gap-3">
-                 <input placeholder="First Name" required className="border p-2 rounded" value={newAddress.firstName} onChange={e=>setNewAddress({...newAddress, firstName:e.target.value})} />
-                 <input placeholder="Last Name" required className="border p-2 rounded" value={newAddress.lastName} onChange={e=>setNewAddress({...newAddress, lastName:e.target.value})} />
-               </div>
-               <input placeholder="Phone Number" required className="w-full border p-2 rounded" value={newAddress.phoneNumber} onChange={e=>setNewAddress({...newAddress, phoneNumber:e.target.value})} />
-               <input placeholder="Address Line 1" required className="w-full border p-2 rounded" value={newAddress.addressLine1} onChange={e=>setNewAddress({...newAddress, addressLine1:e.target.value})} />
-               <input placeholder="Address Line 2" className="w-full border p-2 rounded" value={newAddress.addressLine2} onChange={e=>setNewAddress({...newAddress, addressLine2:e.target.value})} />
-               <div className="grid grid-cols-2 gap-3">
-                 <input placeholder="City" required className="border p-2 rounded" value={newAddress.city} onChange={e=>setNewAddress({...newAddress, city:e.target.value})} />
-                 <input placeholder="State" required className="border p-2 rounded" value={newAddress.state} onChange={e=>setNewAddress({...newAddress, state:e.target.value})} />
-               </div>
-               <div className="grid grid-cols-2 gap-3">
-                 <input placeholder="Country" required className="border p-2 rounded" value={newAddress.country} onChange={e=>setNewAddress({...newAddress, country:e.target.value})} />
-                 <input placeholder="Pincode" required className="border p-2 rounded" value={newAddress.pincode} onChange={e=>setNewAddress({...newAddress, pincode:e.target.value})} />
-               </div>
-               <button type="submit" className="w-full bg-black text-white py-3 rounded-lg font-medium mt-4">Save Address</button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

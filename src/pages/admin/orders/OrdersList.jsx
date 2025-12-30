@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, Filter, CheckCircle, Clock, XCircle, Eye, Loader2, ChevronLeft, ChevronRight 
+  Search, Filter, CheckCircle, Clock, XCircle, Eye, Loader2, ChevronLeft, ChevronRight, RotateCcw 
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-
-
 import * as orderService from '../../../services/orderService'; 
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +11,7 @@ export default function OrderList() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, newOrders: 0, delivered: 0, cancelled: 0 });
 
-  
+  // UPDATED: Added 'Return Requested' to tabs
   const [activeTab, setActiveTab] = useState('All');
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +19,6 @@ export default function OrderList() {
   const navigate = useNavigate()
   const ITEMS_PER_PAGE = 10;
 
-  
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -29,7 +26,6 @@ export default function OrderList() {
         if(data.success) setStats(data.stats);
       } catch (error) {
         console.error("Stats Error", error);
-       
       }
     };
     fetchStats();
@@ -40,7 +36,6 @@ export default function OrderList() {
       setLoading(true);
       try {
         const data = await orderService.getAllOrders(currentPage, ITEMS_PER_PAGE, activeTab, search);
-        console.log(data)
         if (data.success) {
           setOrders(data.orders);
           setTotalPages(data.totalPages);
@@ -52,7 +47,6 @@ export default function OrderList() {
         setLoading(false);
       }
     };
-
 
     const timeoutId = setTimeout(() => {
       fetchOrders();
@@ -67,21 +61,27 @@ export default function OrderList() {
     setCurrentPage(1);
   };
 
+  // UPDATED: Added styles for Return statuses
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Delivered': return 'text-green-600 bg-green-50 border border-green-100';
       case 'Pending': return 'text-orange-500 bg-orange-50 border border-orange-100';
       case 'Processing': return 'text-blue-500 bg-blue-50 border border-blue-100';
       case 'Cancelled': return 'text-red-500 bg-red-50 border border-red-100';
+      case 'Return Requested': return 'text-purple-600 bg-purple-50 border border-purple-100';
+      case 'Returned': return 'text-gray-600 bg-gray-200 border border-gray-300';
       default: return 'text-gray-600 bg-gray-50';
     }
   };
 
+  // UPDATED: Added Icon for Return
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Delivered': return <CheckCircle size={14} className="mr-1.5" />;
       case 'Pending': return <Clock size={14} className="mr-1.5" />;
       case 'Cancelled': return <XCircle size={14} className="mr-1.5" />;
+      case 'Return Requested': 
+      case 'Returned': return <RotateCcw size={14} className="mr-1.5" />;
       default: return null;
     }
   };
@@ -124,9 +124,9 @@ export default function OrderList() {
         {/* Controls Row */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           
-          {/* Tabs */}
-          <div className="flex bg-gray-100/50 p-1 rounded-lg overflow-x-auto">
-            {['All', 'Delivered', 'Pending', 'Cancelled'].map((tab) => (
+          {/* Tabs - UPDATED to include Return Requested */}
+          <div className="flex bg-gray-100/50 p-1 rounded-lg overflow-x-auto max-w-full">
+            {['All', 'Delivered', 'Pending', 'Cancelled', 'Return Requested'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => handleTabChange(tab)}
@@ -136,7 +136,7 @@ export default function OrderList() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {tab}
+                {tab === 'Return Requested' ? 'Returns' : tab}
               </button>
             ))}
           </div>

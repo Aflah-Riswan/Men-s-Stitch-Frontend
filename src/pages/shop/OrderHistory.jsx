@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Truck, MessageSquare } from 'lucide-react';
+import { Download, Truck, MessageSquare, RotateCcw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import * as orderService from '../../services/orderService';
-
 
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
@@ -15,11 +14,11 @@ import { useNavigate } from 'react-router-dom';
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
+  // activeModal can be: 'none', 'review', 'cancel', 'return'
   const [activeModal, setActiveModal] = useState('none');
   const [selectedData, setSelectedData] = useState(null);
-
 
   const fetchOrders = async () => {
     try {
@@ -39,19 +38,22 @@ const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  
-  const handleCancelClick = (orderId, itemId = null) => {
+  // --- HANDLERS ---
 
+  const handleCancelClick = (orderId, itemId = null) => {
     setSelectedData({ orderId, itemId });
     setActiveModal('cancel');
   };
 
-  const handleConfirmCancel = async (reason) => {
-    const { orderId, itemId } = selectedData; 
-    try {
-  
-      await orderService.cancelOrder(orderId, reason, itemId);
+  const handleReturnClick = (orderId, itemId) => {
+    setSelectedData({ orderId, itemId });
+    setActiveModal('return');
+  };
 
+  const handleConfirmCancel = async (reason) => {
+    const { orderId, itemId } = selectedData;
+    try {
+      await orderService.cancelOrder(orderId, reason, itemId);
       toast.success(itemId ? "Item cancelled successfully" : "Order cancelled successfully");
       fetchOrders();
     } catch (error) {
@@ -62,20 +64,38 @@ const OrderHistory = () => {
     }
   };
 
-  const handleReviewClick = (item, orderId) => {
+  const handleConfirmReturn = async (reason) => {
+    const { orderId, itemId } = selectedData;
+    try {
+     
+      await orderService.returnOrder(orderId, itemId, reason); 
+      console.log(`Return requested for Order: ${orderId}, Item: ${itemId}, Reason: ${reason}`);
+      toast.success("Return request submitted successfully");
+      
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit return");
+    } finally {
+      setActiveModal('none');
+      setSelectedData(null);
+    }
+  };
 
+  const handleReviewClick = (item, orderId) => {
     setSelectedData({ ...item, orderId: orderId });
     setActiveModal('review');
   };
 
   const handleConfirmReview = async ({ rating, comment }) => {
-    const { productId, orderId } = selectedData
-    await reviewService.postReview(orderId, productId, rating, comment)
+    const { productId, orderId } = selectedData;
+    await reviewService.postReview(orderId, productId, rating, comment);
     fetchOrders();
     toast.success("Review submitted successfully!");
     setActiveModal('none');
     setSelectedData(null);
   };
+
+  // --- CONFIGURATION ---
 
   const getStatusConfig = (status, deliveryDate) => {
     const safeStatus = status || 'Processing';
@@ -89,7 +109,8 @@ const OrderHistory = () => {
           dateLabel: `Delivered on ${new Date(deliveryDate).toLocaleDateString()}`,
           dateColor: 'text-green-600',
           showTruck: false,
-          actions: ['invoice', 'review', 'view']
+          // Added 'return' here
+          actions: ['invoice', 'review', 'view', 'return'] 
         };
       case 'Cancelled':
       case 'Canceled':
@@ -110,7 +131,7 @@ const OrderHistory = () => {
           showTruck: true,
           actions: ['track', 'view']
         };
-      default: 
+      default:
         return {
           color: 'text-lime-600',
           bg: 'bg-lime-50',
@@ -122,10 +143,12 @@ const OrderHistory = () => {
     }
   };
 
+  // Check if current modal is a return type
+  const isReturnModal = activeModal === 'return';
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-
+      
       <ReviewModal
         isOpen={activeModal === 'review'}
         onClose={() => setActiveModal('none')}
@@ -133,16 +156,18 @@ const OrderHistory = () => {
         onSubmit={handleConfirmReview}
       />
 
+      {/* Unified Cancel/Return Modal */}
       <CancelModal
-        isOpen={activeModal === 'cancel'}
+        isOpen={activeModal === 'cancel' || activeModal === 'return'}
         onClose={() => setActiveModal('none')}
-        onSubmit={handleConfirmCancel}
+        onSubmit={isReturnModal ? handleConfirmReturn : handleConfirmCancel}
+        title={isReturnModal ? "Return Item" : "Cancel Item"}
+        type={isReturnModal ? 'return' : 'cancel'}
       />
 
       <div className="flex-1 flex flex-col md:flex-row w-full max-w-7xl mx-auto">
         <UserSidebar activeTab="My orders" />
         <div className="flex-1 flex flex-col min-w-0">
-
           {loading ? (
             <div className="flex-1 flex items-center justify-center">Loading orders...</div>
           ) : orders.length === 0 ? (
@@ -157,11 +182,9 @@ const OrderHistory = () => {
                 <div className="divide-y divide-gray-100">
                   {orders.map((order) => {
                     return order.items.map((item, index) => {
-
                       const displayStatus = (item.itemStatus === 'Cancelled')
                         ? 'Cancelled'
                         : item.itemStatus;
-
                       const config = getStatusConfig(displayStatus, order.updatedAt);
 
                       return (
@@ -185,22 +208,35 @@ const OrderHistory = () => {
                             </div>
                           </div>
                           <div className="flex flex-col justify-between items-start sm:items-end w-full sm:w-auto mt-4 sm:mt-0">
-
+                            
                             {/* STATUS BADGE */}
                             <div className={`text-sm font-bold mb-4 px-3 py-1 rounded-full ${config.bg} ${config.color} inline-flex items-center gap-2`}>
                               {displayStatus.toUpperCase()}
                             </div>
 
                             <div className="flex flex-wrap justify-start sm:justify-end gap-2 mb-4">
+                              
+                              {/* --- EXISTING CANCEL BUTTON --- */}
                               {config.actions.includes('cancel') && (
                                 <button
-                               
                                   onClick={() => handleCancelClick(order._id, item._id)}
                                   className="flex items-center justify-center border border-red-200 text-red-600 bg-white text-xs font-medium px-4 py-2 rounded-md hover:bg-red-50 transition"
                                 >
                                   Cancel Item
                                 </button>
                               )}
+
+                              {/* --- NEW RETURN BUTTON --- */}
+                              {config.actions.includes('return') && (
+                                <button
+                                  onClick={() => handleReturnClick(order._id, item._id)}
+                                  className="flex items-center justify-center border border-orange-200 text-orange-600 bg-white text-xs font-medium px-4 py-2 rounded-md hover:bg-orange-50 transition"
+                                >
+                                   <RotateCcw size={14} className="mr-1" /> Return
+                                </button>
+                              )}
+
+                              {/* --- EXISTING REVIEW BUTTON --- */}
                               {config.actions.includes('review') && (
                                 <button
                                   onClick={() => handleReviewClick(item, order._id)}
@@ -209,17 +245,21 @@ const OrderHistory = () => {
                                   <MessageSquare size={14} className="mr-1" /> Review
                                 </button>
                               )}
+
+                              {/* --- EXISTING INVOICE BUTTON --- */}
                               {config.actions.includes('invoice') && (
                                 <button className="flex items-center justify-center border border-gray-300 text-gray-700 bg-white text-xs font-medium px-4 py-2 rounded-md hover:bg-gray-50 transition">
                                   <Download size={14} className="mr-1" /> Invoice
                                 </button>
                               )}
+
                               <button className="flex items-center justify-center border border-gray-300 text-gray-700 bg-white text-xs font-medium px-4 py-2 rounded-md hover:bg-gray-50 transition" onClick={() => navigate(`${order._id}`, {
                                 state: { highlightedItemId: item._id }
                               })}>
                                 View Details
                               </button>
                             </div>
+                            
                             {config.dateLabel && (
                               <div className={`flex items-center text-xs font-medium ${config.dateColor}`}>
                                 {config.showTruck && <Truck size={14} className="mr-1.5" />}

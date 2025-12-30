@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Download, CreditCard, ArrowLeft } from 'lucide-react';
+import { Download, CreditCard, ArrowLeft, RotateCcw, CheckCircle, XCircle, Clock } from 'lucide-react';
 import * as orderService from '../../services/orderService';
 import { toast } from 'react-hot-toast';
 
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
 import NewsLetter from '../../Components/NewsLetter';
-import { fabClasses } from '@mui/material/Fab';
 
 const OrderDetails = () => {
   const { orderId } = useParams();
@@ -15,7 +14,7 @@ const OrderDetails = () => {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const highlightedItemId = location.state?.highlightedItemId;
 
@@ -23,7 +22,6 @@ const OrderDetails = () => {
     const fetchOrder = async () => {
       try {
         const response = await orderService.orderDetails(orderId);
-        console.log(response.data)
         if (response.data.success) {
           setOrder(response.data.order);
         }
@@ -42,13 +40,25 @@ const OrderDetails = () => {
   const getProgressStats = (status) => {
     const steps = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
     
-    if (status === 'Cancelled') return { currentIndex: -1, isCancelled: true, color: 'bg-red-500' };
-    if (status === 'Returned') return { currentIndex: 4, isCancelled: false, color: 'bg-orange-500' };
+    if (status === 'Cancelled') {
+        return { currentIndex: -1, isCancelled: true, color: 'bg-red-500' };
+    }
+
+    if (['Return Requested', 'Return Approved', 'Return Rejected', 'Returned'].includes(status)) {
+        return { 
+            currentIndex: 3, 
+            isCancelled: false, 
+            isReturn: true, 
+            returnStatus: status,
+            color: 'bg-green-500' 
+        };
+    }
 
     const index = steps.indexOf(status);
     return { 
         currentIndex: index === -1 ? 0 : index, 
         isCancelled: false, 
+        isReturn: false,
         color: 'bg-green-500' 
     };
   };
@@ -94,7 +104,7 @@ const OrderDetails = () => {
             <div className="space-y-8">
               {order.items.map((item) => {
                 const isHighlighted = item._id === highlightedItemId;
-                const { currentIndex, isCancelled } = getProgressStats(item.itemStatus);
+                const { currentIndex, isCancelled, isReturn, returnStatus } = getProgressStats(item.itemStatus);
 
                 return (
                   <div 
@@ -118,60 +128,92 @@ const OrderDetails = () => {
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                         </div>
                         
-                        {/* Simple Status Badge (Mobile View mostly) */}
+                        {/* Simple Status Badge  */}
                         <div className="mt-2 sm:hidden">
                             <span className={`px-3 py-1 rounded-full text-xs font-bold 
-                                ${isCancelled ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                ${isCancelled ? 'bg-red-100 text-red-700' : 
+                                  isReturn ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
                                 {item.itemStatus}
                             </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom Row: Stepper (Only show if NOT Cancelled) */}
-                    {isCancelled ? (
-                         <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm font-bold text-center mt-2">
-                            This item has been Cancelled.
-                         </div>
-                    ) : (
+                    {/* Middle Row: Return/Cancel Status Banners */}
+                    {isCancelled && (
+                        <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm font-bold flex items-center gap-2">
+                           <XCircle size={16}/> This item has been Cancelled.
+                        </div>
+                    )}
+
+                    {isReturn && (
+                        <div className={`px-4 py-3 rounded-lg text-sm font-bold flex items-start gap-3 border
+                             ${returnStatus === 'Return Requested' ? 'bg-purple-50 border-purple-100 text-purple-700' : 
+                               returnStatus === 'Return Approved' ? 'bg-blue-50 border-blue-100 text-blue-700' :
+                               returnStatus === 'Return Rejected' ? 'bg-red-50 border-red-100 text-red-700' : 
+                               'bg-gray-100 border-gray-200 text-gray-700' // Returned
+                             }`}>
+                             
+                             {returnStatus === 'Return Requested' && <Clock size={18} className="mt-0.5"/>}
+                             {returnStatus === 'Return Approved' && <CheckCircle size={18} className="mt-0.5"/>}
+                             {returnStatus === 'Return Rejected' && <XCircle size={18} className="mt-0.5"/>}
+                             {returnStatus === 'Returned' && <RotateCcw size={18} className="mt-0.5"/>}
+
+                             <div>
+                                <p className="uppercase text-xs font-extrabold opacity-70 mb-0.5">Return Status: {returnStatus}</p>
+                                <p className="font-normal">
+                                    {returnStatus === 'Return Requested' && "Your return request has been sent. Waiting for approval."}
+                                    {returnStatus === 'Return Approved' && "Your return is approved. Our courier partner will contact you shortly for pickup."}
+                                    {returnStatus === 'Return Rejected' && "Sorry, your return request was rejected by the admin."}
+                                    {returnStatus === 'Returned' && "Item has been successfully returned and processed."}
+                                </p>
+                                {item.returnReason && (
+                                    <p className="text-xs mt-2 opacity-80 font-normal italic">Reason: "{item.returnReason}"</p>
+                                )}
+                             </div>
+                        </div>
+                    )}
+
+                    {/* Bottom Row: Stepper (Show for Normal + Return, Hide for Cancelled) */}
+                    {!isCancelled && (
                         <div className="relative w-full px-2 sm:px-4 mt-6">
                              {/* Background Gray Line */}
                              <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full -translate-y-1/2"></div>
                              
                              {/* Active Green Line */}
                              <div 
-                                className="absolute top-1/2 left-0 h-1 bg-green-500 rounded-full -translate-y-1/2 transition-all duration-700"
-                                style={{ width: `${(currentIndex / (stepsList.length - 1)) * 100}%` }}
+                                 className="absolute top-1/2 left-0 h-1 bg-green-500 rounded-full -translate-y-1/2 transition-all duration-700"
+                                 style={{ width: `${(currentIndex / (stepsList.length - 1)) * 100}%` }}
                              ></div>
 
                              {/* Steps Row */}
                              <div className="relative flex justify-between w-full z-10">
-                                {stepsList.map((step, index) => {
-                                    const isCompleted = index <= currentIndex;
-                                    const isCurrent = index === currentIndex;
-                                    
-                                    return (
-                                        <div key={step} className="flex flex-col items-center group">
-                                            {/* Dot */}
-                                            <div 
-                                                className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center bg-white transition-colors duration-300 z-10
-                                                ${isCompleted ? 'border-green-500' : 'border-gray-300'}
-                                                ${isCurrent ? 'ring-4 ring-green-100' : ''}
-                                                `}
-                                            >
-                                                {isCompleted && <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />}
-                                            </div>
+                                 {stepsList.map((step, index) => {
+                                     const isCompleted = index <= currentIndex;
+                                     const isCurrent = index === currentIndex;
+                                     
+                                     return (
+                                         <div key={step} className="flex flex-col items-center group">
+                                             {/* Dot */}
+                                             <div 
+                                                 className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center bg-white transition-colors duration-300 z-10
+                                                 ${isCompleted ? 'border-green-500' : 'border-gray-300'}
+                                                 ${isCurrent ? 'ring-4 ring-green-100' : ''}
+                                                 `}
+                                             >
+                                                 {isCompleted && <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />}
+                                             </div>
 
-                                            {/* Label */}
-                                            <span 
-                                                className={`absolute top-8 text-[10px] sm:text-xs font-medium transition-colors duration-300 w-20 text-center
-                                                ${isCompleted ? 'text-green-600 font-bold' : 'text-gray-400'}`}
-                                            >
-                                                {step}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
+                                             {/* Label */}
+                                             <span 
+                                                 className={`absolute top-8 text-[10px] sm:text-xs font-medium transition-colors duration-300 w-20 text-center
+                                                 ${isCompleted ? 'text-green-600 font-bold' : 'text-gray-400'}`}
+                                             >
+                                                 {step}
+                                             </span>
+                                         </div>
+                                     );
+                                 })}
                              </div>
                              {/* Spacer for labels */}
                              <div className="h-6"></div>

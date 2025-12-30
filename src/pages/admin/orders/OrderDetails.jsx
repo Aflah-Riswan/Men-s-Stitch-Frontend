@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Calendar, CreditCard, User, Mail, Phone, MapPin,
-  Package, Truck, CheckCircle, ChevronLeft, Loader2, AlertCircle, X, Edit2
+  Package, Truck, CheckCircle, ChevronLeft, Loader2, AlertCircle, X, Edit2, RotateCcw, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import * as orderService from '../../../services/orderService';
@@ -14,16 +14,15 @@ const OrderDetails = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [targetType, setTargetType] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [newStatus, setNewStatus] = useState('');
   const [updating, setUpdating] = useState(false);
 
-
+  // UPDATED: Added Return statuses
   const ORDER_STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-  const ITEM_STATUSES = ['Ordered', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+  const ITEM_STATUSES = ['Ordered', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Return Requested', 'Return Approved', 'Return Rejected', 'Returned'];
 
   useEffect(() => {
     if (orderId) {
@@ -47,7 +46,6 @@ const OrderDetails = () => {
     }
   };
 
-
   const openOrderModal = () => {
     setTargetType('order');
     setNewStatus(order.status);
@@ -61,6 +59,23 @@ const OrderDetails = () => {
     setIsModalOpen(true);
   };
 
+  // --- NEW: Helper for Quick Return Actions ---
+  const handleQuickStatusUpdate = async (itemId, status) => {
+    if(!window.confirm(`Are you sure you want to set status to: ${status}?`)) return;
+    
+    try {
+        setLoading(true); // Small local loading effect could be better, but this works
+        const response = await orderService.updateOrderItemStatus(order._id, itemId, status);
+        if (response.success) {
+            toast.success(`Status updated to ${status}`);
+            fetchOrder();
+        }
+    } catch (error) {
+        console.error(error);
+        toast.error("Failed to update status");
+        setLoading(false);
+    }
+  };
 
   const handleStatusUpdate = async () => {
     try {
@@ -86,13 +101,15 @@ const OrderDetails = () => {
     }
   };
 
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Delivered': return 'text-green-700 bg-green-100 border-green-200';
       case 'Cancelled': return 'text-red-700 bg-red-100 border-red-200';
       case 'Shipped': return 'text-blue-700 bg-blue-100 border-blue-200';
       case 'Processing': return 'text-orange-700 bg-orange-100 border-orange-200';
+      case 'Return Requested': return 'text-purple-700 bg-purple-100 border-purple-200';
+      case 'Return Approved': return 'text-teal-700 bg-teal-100 border-teal-200';
+      case 'Return Rejected': return 'text-gray-700 bg-gray-200 border-gray-300';
       default: return 'text-gray-700 bg-gray-100 border-gray-200';
     }
   };
@@ -101,7 +118,6 @@ const OrderDetails = () => {
   const currentStepIndex = steps.indexOf(order?.status) === -1 ? 0 : steps.indexOf(order?.status);
   const isCancelled = order?.status === 'Cancelled';
 
-
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 text-gray-500 gap-2">
@@ -109,7 +125,6 @@ const OrderDetails = () => {
       </div>
     );
   }
-
 
   if (!order) {
     return (
@@ -136,13 +151,10 @@ const OrderDetails = () => {
 
       {/* Top Info Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
         {/* Card 1: Order Info */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative group">
           <div className="flex justify-between items-start mb-4">
             <h3 className="font-bold text-gray-800">Order #{order.orderId}</h3>
-
-            {/* CLICKABLE STATUS BADGE */}
             <button
               onClick={openOrderModal}
               className={`px-3 py-1 text-xs font-bold rounded-full border cursor-pointer hover:opacity-80 transition flex items-center gap-1 ${getStatusColor(order.status)}`}
@@ -226,7 +238,7 @@ const OrderDetails = () => {
         </div>
       </div>
 
-      {/* Main Content Grid (Products + Summary vs Status) */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left Column (Span 2) - Products List */}
@@ -235,7 +247,7 @@ const OrderDetails = () => {
           {/* Products Loop */}
           <div className="space-y-4">
             {order.items?.map((item, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <div key={index} className={`bg-white p-6 rounded-xl shadow-sm border transition ${item.itemStatus === 'Return Requested' ? 'border-purple-200 bg-purple-50/30' : 'border-gray-100'} flex flex-col sm:flex-row items-center sm:items-start gap-6`}>
                 <div className="w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden border border-gray-200">
                   <img
                     src={item.image || "/api/placeholder/100/100"}
@@ -250,6 +262,29 @@ const OrderDetails = () => {
                     {item.color && <span>Color: <span className="text-gray-700 font-medium">{item.color}</span></span>}
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">₹{item.price}</h3>
+                  
+                  {/* --- RETURN REASON DISPLAY --- */}
+                  {item.itemStatus === 'Return Requested' && (
+                    <div className="mt-3 p-3 bg-white border border-purple-100 rounded-lg shadow-sm text-left">
+                        <p className="text-xs text-purple-600 font-bold mb-1 flex items-center gap-1"><RotateCcw size={12}/> Customer Request: Return</p>
+                        <p className="text-sm text-gray-700 italic">" {item.returnReason || 'No reason provided'} "</p>
+                        
+                        <div className="flex gap-2 mt-3">
+                            <button 
+                                onClick={() => handleQuickStatusUpdate(item._id, 'Return Approved')}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded hover:bg-green-700"
+                            >
+                                <ThumbsUp size={12} /> Approve
+                            </button>
+                            <button 
+                                onClick={() => handleQuickStatusUpdate(item._id, 'Return Rejected')}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 text-white text-xs font-bold rounded hover:bg-gray-700"
+                            >
+                                <ThumbsDown size={12} /> Reject
+                            </button>
+                        </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* CLICKABLE ITEM STATUS */}
@@ -258,7 +293,10 @@ const OrderDetails = () => {
 
                   <button
                     onClick={() => openItemModal(item)}
-                    className={`text-xs px-3 py-1.5 rounded border font-medium cursor-pointer hover:opacity-80 flex items-center gap-1 transition ${item.itemStatus === 'Cancelled' ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100'
+                    className={`text-xs px-3 py-1.5 rounded border font-medium cursor-pointer hover:opacity-80 flex items-center gap-1 transition ${
+                        item.itemStatus === 'Cancelled' ? 'bg-red-50 text-red-600 border-red-100' : 
+                        item.itemStatus === 'Return Requested' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                        'bg-green-50 text-green-600 border-green-100'
                       }`}
                   >
                     {item.itemStatus || 'Ordered'}
@@ -295,7 +333,6 @@ const OrderDetails = () => {
 
         {/* Right Column (Span 1) - Status Timeline */}
         <div className="lg:col-span-1 space-y-6">
-
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
             <h3 className="font-bold text-lg mb-6 text-gray-800">Order Status</h3>
 

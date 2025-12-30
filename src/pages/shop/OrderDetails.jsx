@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Download, CreditCard, ArrowLeft, RotateCcw, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Download, CreditCard, ArrowLeft, RotateCcw, CheckCircle, XCircle, Clock, Loader2, AlertCircle, MapPin, User, Mail, Phone, Calendar } from 'lucide-react';
 import * as orderService from '../../services/orderService';
 import { toast } from 'react-hot-toast';
+
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import InvoiceDocument from '../../Components/InvoiceDocument';
 
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
@@ -65,7 +68,7 @@ const OrderDetails = () => {
 
   const stepsList = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!order) return <div className="min-h-screen flex items-center justify-center">Order not found</div>;
 
   return (
@@ -93,9 +96,25 @@ const OrderDetails = () => {
                   <span>Placed on: <span className="text-gray-900 font-medium">{new Date(order.createdAt).toDateString()}</span></span>
                 </div>
               </div>
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
-                <Download size={16} /> Invoice
-              </button>
+
+              {/* 2. REPLACED DUMMY BUTTON WITH PDF DOWNLOAD LINK */}
+              {order && (
+                <PDFDownloadLink 
+                  document={<InvoiceDocument order={order} />} 
+                  fileName={`Invoice_${order.orderId}.pdf`}
+                  className="text-decoration-none"
+                >
+                  {({ loading }) => (
+                    <button 
+                      disabled={loading}
+                      className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <Download size={16} /> 
+                      {loading ? 'Generating...' : 'Invoice'}
+                    </button>
+                  )}
+                </PDFDownloadLink>
+              )}
             </div>
 
             <hr className="border-gray-100 mb-8" />
@@ -128,7 +147,6 @@ const OrderDetails = () => {
                             <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
                         </div>
                         
-                        {/* Simple Status Badge  */}
                         <div className="mt-2 sm:hidden">
                             <span className={`px-3 py-1 rounded-full text-xs font-bold 
                                 ${isCancelled ? 'bg-red-100 text-red-700' : 
@@ -151,7 +169,7 @@ const OrderDetails = () => {
                              ${returnStatus === 'Return Requested' ? 'bg-purple-50 border-purple-100 text-purple-700' : 
                                returnStatus === 'Return Approved' ? 'bg-blue-50 border-blue-100 text-blue-700' :
                                returnStatus === 'Return Rejected' ? 'bg-red-50 border-red-100 text-red-700' : 
-                               'bg-gray-100 border-gray-200 text-gray-700' // Returned
+                               'bg-gray-100 border-gray-200 text-gray-700'
                              }`}>
                              
                              {returnStatus === 'Return Requested' && <Clock size={18} className="mt-0.5"/>}
@@ -167,26 +185,20 @@ const OrderDetails = () => {
                                     {returnStatus === 'Return Rejected' && "Sorry, your return request was rejected by the admin."}
                                     {returnStatus === 'Returned' && "Item has been successfully returned and processed."}
                                 </p>
-                                {item.returnReason && (
-                                    <p className="text-xs mt-2 opacity-80 font-normal italic">Reason: "{item.returnReason}"</p>
-                                )}
                              </div>
                         </div>
                     )}
 
-                    {/* Bottom Row: Stepper (Show for Normal + Return, Hide for Cancelled) */}
+                    {/* Bottom Row: Stepper */}
                     {!isCancelled && (
                         <div className="relative w-full px-2 sm:px-4 mt-6">
-                             {/* Background Gray Line */}
                              <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 rounded-full -translate-y-1/2"></div>
                              
-                             {/* Active Green Line */}
                              <div 
                                  className="absolute top-1/2 left-0 h-1 bg-green-500 rounded-full -translate-y-1/2 transition-all duration-700"
                                  style={{ width: `${(currentIndex / (stepsList.length - 1)) * 100}%` }}
                              ></div>
 
-                             {/* Steps Row */}
                              <div className="relative flex justify-between w-full z-10">
                                  {stepsList.map((step, index) => {
                                      const isCompleted = index <= currentIndex;
@@ -194,7 +206,6 @@ const OrderDetails = () => {
                                      
                                      return (
                                          <div key={step} className="flex flex-col items-center group">
-                                             {/* Dot */}
                                              <div 
                                                  className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 flex items-center justify-center bg-white transition-colors duration-300 z-10
                                                  ${isCompleted ? 'border-green-500' : 'border-gray-300'}
@@ -204,7 +215,6 @@ const OrderDetails = () => {
                                                  {isCompleted && <div className="w-2.5 h-2.5 bg-green-500 rounded-full" />}
                                              </div>
 
-                                             {/* Label */}
                                              <span 
                                                  className={`absolute top-8 text-[10px] sm:text-xs font-medium transition-colors duration-300 w-20 text-center
                                                  ${isCompleted ? 'text-green-600 font-bold' : 'text-gray-400'}`}
@@ -215,7 +225,6 @@ const OrderDetails = () => {
                                      );
                                  })}
                              </div>
-                             {/* Spacer for labels */}
                              <div className="h-6"></div>
                         </div>
                     )}

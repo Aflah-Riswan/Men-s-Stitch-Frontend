@@ -31,10 +31,8 @@ export const EditAddress = () => {
     }
   });
 
-  // Watch state to update city dropdown dynamically
   const selectedStateCode = watch('state'); 
-
-  // Get Lists
+  
   const states = useMemo(() => State.getStatesOfCountry('IN'), []);
   const cities = useMemo(() => {
     return selectedStateCode ? City.getCitiesOfState('IN', selectedStateCode) : [];

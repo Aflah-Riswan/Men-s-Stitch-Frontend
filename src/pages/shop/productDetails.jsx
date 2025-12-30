@@ -9,6 +9,7 @@ import ProductFAQs from "../../Components/products/productFaq";
 import ProductCard from "../../Components/products/ProductCard";
 import Footer from "../../Components/Footer";
 import * as cartService from '../../services/cartService';
+import * as wishlistService  from '../../services/wishlistService';
 import toast from "react-hot-toast";
 
 export default function ProductDetails() {
@@ -17,14 +18,14 @@ export default function ProductDetails() {
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
-  
+
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedColorCode, setSelectedColorCode] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1); 
-  
+  const [quantity, setQuantity] = useState(1);
+
   const [activeTab, setActiveTab] = useState('details');
   const [relatedProducts, setRelatedProducts] = useState([]);
 
@@ -40,11 +41,11 @@ export default function ProductDetails() {
       if (response.data.success) {
         setProduct(response.data.product);
         setRelatedProducts(response.data.relatedProducts || []);
- 
+
         if (response.data.product.variants && response.data.product.variants.length > 0) {
-           const firstVar = response.data.product.variants[0];
-           setSelectedVariant(firstVar._id);
-           setSelectedColorCode(firstVar.colorCode);
+          const firstVar = response.data.product.variants[0];
+          setSelectedVariant(firstVar._id);
+          setSelectedColorCode(firstVar.colorCode);
         }
       }
     } catch (error) {
@@ -53,6 +54,21 @@ export default function ProductDetails() {
       setLoading(false);
     }
   };
+
+  const handleWishlistButton = async () => {
+    if (!product?._id) return;
+    try {
+      await wishlistService.addToWishlist(product._id);
+      toast.success("Added to your wishlist!");
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to add to wishlist";
+      if (message.includes("already")) {
+        toast('This item is already in your wishlist', { icon: 'ℹ️' });
+      } else {
+        toast.error(message);
+      }
+    }
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
@@ -75,16 +91,16 @@ export default function ProductDetails() {
 
   const handleCount = (action) => {
     if (action === 'add') {
-   
+
       if (activeVariant && selectedSize) {
-         const currentStock = activeVariant.stock[selectedSize];
-         if (quantity >= currentStock) {
-            return toast.error(`Only ${currentStock} items available`);
-         }
+        const currentStock = activeVariant.stock[selectedSize];
+        if (quantity >= currentStock) {
+          return toast.error(`Only ${currentStock} items available`);
+        }
       }
-     
+
       if (quantity >= 5) return toast.error("Max limit 5 per item");
-      
+
       setQuantity((prev) => prev + 1);
     } else if (action === 'minus') {
       if (quantity > 1) {
@@ -94,7 +110,7 @@ export default function ProductDetails() {
   };
 
   const handleCartButton = async () => {
-    
+
     if (!selectedVariant) {
       return toast.error("Please select a color");
     }
@@ -107,13 +123,13 @@ export default function ProductDetails() {
 
 
     if (activeVariant) {
-        const stockAvailable = activeVariant.stock[selectedSize];
-        if (stockAvailable < quantity) {
-            return toast.error(`Out of stock! Only ${stockAvailable} left.`);
-        }
+      const stockAvailable = activeVariant.stock[selectedSize];
+      if (stockAvailable < quantity) {
+        return toast.error(`Out of stock! Only ${stockAvailable} left.`);
+      }
     }
 
- 
+
     const data = {
       productId: product._id,
       variantId: selectedVariant,
@@ -125,10 +141,10 @@ export default function ProductDetails() {
     try {
       await cartService.addToCart(data);
       toast.success('Added item to cart successfully!');
-      setQuantity(1);  
+      setQuantity(1);
     } catch (error) {
       console.error(error);
-    
+
       toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
@@ -214,11 +230,11 @@ export default function ProductDetails() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-bold text-black uppercase tracking-wider">Choose Size</h3>
-             
+
             </div>
             <div className="flex flex-wrap gap-2">
               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-          
+
                 const stock = activeVariant ? activeVariant.stock[size] : 0;
                 const isOutOfStock = stock <= 0;
                 const isSelected = selectedSize === size;
@@ -226,7 +242,7 @@ export default function ProductDetails() {
                 return (
                   <button
                     key={size}
-                    disabled={isOutOfStock || !activeVariant} 
+                    disabled={isOutOfStock || !activeVariant}
                     className={`
                       relative px-4 py-2 text-xs font-medium border rounded-full transition-all
                       ${(isOutOfStock || !activeVariant)
@@ -264,7 +280,7 @@ export default function ProductDetails() {
                     onClick={() => {
                       setSelectedVariant(null);
                       setSelectedColorCode(null);
-                      setSelectedSize(null); 
+                      setSelectedSize(null);
                       setSelectedImage(0);
                     }}
                   >
@@ -283,7 +299,7 @@ export default function ProductDetails() {
                     onClick={() => {
                       setSelectedVariant(variant._id);
                       setSelectedColorCode(variant.colorCode);
-                      setSelectedSize(null); 
+                      setSelectedSize(null);
                       setSelectedImage(0);
                     }}
                   />
@@ -306,7 +322,7 @@ export default function ProductDetails() {
             </div>
 
             {/* Add To Cart */}
-            <button 
+            <button
               onClick={handleCartButton}
               className="flex-1 bg-black text-white py-4 rounded-full text-sm font-bold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
             >
@@ -315,7 +331,7 @@ export default function ProductDetails() {
             </button>
 
             {/* Wishlist Button */}
-            <button className="p-4 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+            <button className="p-4 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors" onClick={handleWishlistButton}>
               <Heart size={20} className="text-gray-400 hover:text-red-500" />
             </button>
           </div>

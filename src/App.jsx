@@ -38,6 +38,7 @@ import OrderHistory from './pages/shop/OrderHistory'
 import OrderDetails from './pages/shop/OrderDetails'
 import OrderDetailsAdmin from './pages/admin/orders/OrderDetails'
 import OrderList from './pages/admin/orders/OrdersList'
+import AccountSettings from './pages/shop/user-account/AccountSettings'
 
 function App() {
   const myTestVariable = "hello";
@@ -107,6 +108,7 @@ function App() {
 
             <Route path='payment' element={<Payment />} />   
             <Route path='order-success' element={<OrderSuccess />} />
+            <Route path ='settings' element={<AccountSettings/>}/>
 
           </Route>
 

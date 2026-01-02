@@ -39,12 +39,13 @@ import OrderDetails from './pages/shop/OrderDetails'
 import OrderDetailsAdmin from './pages/admin/orders/OrderDetails'
 import OrderList from './pages/admin/orders/OrdersList'
 import AccountSettings from './pages/shop/user-account/AccountSettings'
+import PhoneVerificationModal from './Components/PhoneVerifyModal'
 
 function App() {
   const myTestVariable = "hello";
   return (
     <BrowserRouter>
-
+    
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -65,6 +66,7 @@ function App() {
           <Route path='forgot-password' element={<ForgotPassword />} />
           <Route path='/verify-otp' element={<OtpVerification />} />
           <Route path='/reset-password' element={<ResetPassword />} />
+          <Route path='/phone' element={<PhoneVerificationModal/>} />
         </Route>
 
 

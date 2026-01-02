@@ -40,6 +40,15 @@ const signup = async (userData) => {
     throw error.response?.data?.message || "Signup failed. Please try again.";
   }
 };
+const googleLogin = async (token) =>{
+  try {
+    const response = await axiosInstance.post('/auth/google/login',{token})
+    return response.data
+  } catch (error) {
+    console.log(error)
+    throw error.response?.data?.message || "Google signin failed. Please try again.";
+  }
+}
 
 
 
@@ -48,6 +57,7 @@ const authService = {
   verifyOtp,
   resetPassword,
   signup,
+  googleLogin,
  
 };
 export default authService

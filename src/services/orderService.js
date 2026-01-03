@@ -9,15 +9,15 @@ export const getMyOrders = async () => {
 };
 
 export const cancelOrder = async (orderId, reason, itemId) => {
+  console.log("itemid : ",itemId)
   return await axiosInstance.put(`/orders/${orderId}/cancel`, { reason, itemId });
 };
 
-// --- NEW FUNCTION: Return Order ---
 export const returnOrder = async (orderId, itemId, reason) => {
-  // This matches the route structure we discussed: /api/orders/:orderId/items/:itemId/return
+ 
   return await axiosInstance.put(`/orders/${orderId}/items/${itemId}/return`, { reason });
 };
-// ----------------------------------
+
 
 export const orderDetails = async (orderId) => {
   return await axiosInstance.get(`/orders/${orderId}`)

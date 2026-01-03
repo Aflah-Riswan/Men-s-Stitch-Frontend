@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, ArrowRight, Circle, CheckCircle, X } from 'lucide-react';
 import * as addressService from '../../services/addressService';
 import * as cartService from '../../services/cartService';
@@ -11,6 +11,7 @@ const Checkout = () => {
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
+  const location = useLocation()
   const [paymentSummary, setPaymentSummary] = useState({
     subTotal: 0,
     discount: 0,
@@ -92,7 +93,9 @@ const Checkout = () => {
               ))}
 
               <button 
-                onClick={() => navigate('/addresses/add')}
+                onClick={() => navigate('/addresses/add',{
+                  state : { from : location.pathname}
+                })}
                 className="w-full flex items-center justify-center p-4 border border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-black hover:border-black transition"
               >
                 <Plus size={20} className="mr-2" /> Add New Address

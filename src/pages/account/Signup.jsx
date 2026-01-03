@@ -21,7 +21,7 @@ export default function Signup() {
       resolver: zodResolver(signupSchema),
     })
 
-  // ... (Your existing useEffect for Recaptcha remains here) ...
+  
   useEffect(() => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container',
@@ -35,7 +35,7 @@ export default function Signup() {
     }
   }, [])
 
-  // ... (Your existing onSubmit, onError, handleVerifyNumber, handleVerifyOtp functions remain exactly the same) ...
+ 
   const onSubmit = async (data) => {
     if (!isOtpVerified) {
       setError('otp', { type: 'custom', message: 'Please verify OTP first' })

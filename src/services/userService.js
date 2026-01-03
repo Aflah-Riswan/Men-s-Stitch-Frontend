@@ -43,3 +43,11 @@ export const updateUserPassword = async (data) =>{
     
   }
 }
+export const updatePhoneVerification = async (phone) =>{
+  try {
+    const response = await axiosInstance.patch('/users/phone/update',{phone})
+    return response.data
+  } catch (error) {
+    console.log(error)
+  }
+}

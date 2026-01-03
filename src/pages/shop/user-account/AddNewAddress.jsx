@@ -8,7 +8,7 @@ import NewsLetter from '../../../Components/NewsLetter';
 import Footer from '../../../Components/Footer';
 import UserSidebar from '../../../Components/user-account-components/UserSidebar';
 import * as addressService from '../../../services/addressService'
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 export default function AddNewAddress() {
 
@@ -32,6 +32,8 @@ export default function AddNewAddress() {
   }, [selectedState]);
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnPath = location.state?.from || '/addresses/add'
 
   const onSubmit = async (data) => {
     const stateObj = State.getStateByCodeAndCountry(data.state, 'IN');
@@ -43,7 +45,7 @@ export default function AddNewAddress() {
     };
     await addressService.addNewAddress(finalData)
     toast.success('address added succesfully')
-    navigate('/addresses')
+    navigate(returnPath,{replace:true})
     console.log("Form Data:", finalData);
   };
 const onError = (errors)=>{

@@ -100,6 +100,7 @@ const Login = () => {
               <input
                 type={reveal ? "text" : 'password'}
                 placeholder="Password"
+                
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-10 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition"
                 {...register("password", { required: "password is required" })}
               />
@@ -143,8 +144,9 @@ const Login = () => {
           <button
             type="submit"
             className="w-full bg-[#C6C6C6] hover:bg-gray-400 text-white font-semibold text-lg py-4 rounded-full mt-6 transition duration-200 shadow-sm"
+           
           >
-            Go To Store
+            Go To Store//
           </button>
         </form>
 

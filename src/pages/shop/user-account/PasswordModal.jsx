@@ -16,9 +16,7 @@ const PasswordModal = ({ isOpen, onClose }) => {
 
   
   const changePasswordSchema = z.object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    
-   
+    currentPassword: z.string().min(1, "Current password is required"), 
     newPassword: passwordValidation, 
     
     confirmPassword: z.string()

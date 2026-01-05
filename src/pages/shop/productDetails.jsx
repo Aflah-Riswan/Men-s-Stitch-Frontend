@@ -39,6 +39,7 @@ export default function ProductDetails() {
     try {
       const response = await axiosInstance.get(`/products/${productId}/details`);
       if (response.data.success) {
+        console.log(response.data.product)
         setProduct(response.data.product);
         setRelatedProducts(response.data.relatedProducts || []);
 
@@ -211,12 +212,12 @@ export default function ProductDetails() {
           </div>
 
           <div className="flex items-end space-x-3 mb-4">
-            <span className="text-2xl font-bold text-black">₹{price}</span>
+            <span className="text-2xl font-bold text-black">₹{product.salePrice}</span>
             {hasDiscount && (
               <>
-                <span className="text-lg text-gray-500 line-through mb-1">₹{originalPrice}</span>
+                <span className="text-lg text-gray-500 line-through mb-1">₹{product.originalPrice}</span>
                 <span className="text-xs font-bold text-red-500 bg-red-100 px-2 py-0.5 rounded mb-1">
-                  -{discountPercentage}%
+                  -{product.productOffer}%
                 </span>
               </>
             )}

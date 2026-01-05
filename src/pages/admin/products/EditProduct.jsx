@@ -15,6 +15,7 @@ import categoryAttributes, { sizes } from '../../../data';
 import ImageCropper from '../../../Components/ImageCropper';
 import productService from '../../../services/productService';
 import Modal from '../../../Components/Modal';
+
 const EditProduct = () => {
 
   const { id } = useParams();
@@ -53,12 +54,25 @@ const EditProduct = () => {
   const [cropQueue, setCropQueue] = useState([]);
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
   const [processedVariantFiles, setProcessedVariantFiles] = useState([]);
-  const [showModal , setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const {
     register, handleSubmit, setValue, getValues, watch, reset,
     formState: { errors }, setError, clearErrors
   } = useForm();
 
+  const watchedOffer = watch('productOffer')
+  const watchedOriginalprice = watch('originalPrice')
+
+  useEffect(()=>{
+  
+    if(watchedOriginalprice){
+      const price = Number(watchedOriginalprice)
+      const offer = Number(watchedOffer) || 0
+      const discount =( price * offer)/100
+      const finalPrice = Math.round(price - discount)
+      setValue('salePrice',finalPrice,{shouldValidate: true})
+    }
+  },[watchedOffer,watchedOriginalprice , setValue])
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -74,6 +88,7 @@ const EditProduct = () => {
             productDescription: product.productDescription,
             originalPrice: product.originalPrice,
             salePrice: product.salePrice,
+            productOffer: product.productOffer || 0, 
             mainCategory: product.mainCategory?._id || product.mainCategory,
             isListed: product.isListed,
             tags: product.tags ? product.tags.join(', ') : '',
@@ -349,8 +364,8 @@ const EditProduct = () => {
 
       const response = await productService.updateProduct(id, payload);
       console.log(response)
-       setShowModal(true)
-      
+      setShowModal(true)
+
 
     } catch (error) {
       console.log(error)
@@ -359,7 +374,7 @@ const EditProduct = () => {
     }
   };
 
-  function handleModalClose (){
+  function handleModalClose() {
     setShowModal(false)
     navigate('/admin/products');
   }
@@ -370,7 +385,7 @@ const EditProduct = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 font-sans text-gray-800">
 
-       <Modal
+      <Modal
         isOpen={showModal}
         title="Success!"
         message="Product updated Succefully."
@@ -409,20 +424,38 @@ const EditProduct = () => {
               </div>
             </div>
 
-            {/* 2. Pricing */}
+            {/* 2. Pricing - MODIFIED UI TO INCLUDE OFFER */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <h3 className="text-lg font-bold mb-5 border-b pb-2">Pricing</h3>
-              <div className="grid grid-cols-2 gap-6">
+              <h3 className="text-lg font-bold mb-5 border-b pb-2">Pricing & Offers</h3>
+              {/* Changed to 3 columns to fit Offer nicely */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Original Price */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Original Price</label>
                   <input type="number" {...register('originalPrice', { required: 'Required', min: 10 })} className="w-full p-3 border rounded-lg" />
                   {errors.originalPrice && <span className="text-xs text-red-500">{errors.originalPrice.message}</span>}
                 </div>
+
+                {/* NEW: Offer (%) Field - Add your logic to register */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Offer (%)</label>
+                  <input 
+                    type="number" 
+                    placeholder="0"
+                    {...register('productOffer')} 
+                    className="w-full p-3 border rounded-lg" 
+                  />
+                  {errors.offer && <span className="text-xs text-red-500">{errors.offer.message}</span>}
+                </div>
+
+                {/* Sale Price */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Sale Price</label>
                   <input type="number" {...register('salePrice', { required: 'Required', min: 1, validate: v => Number(v) < Number(getValues('originalPrice')) || "Must be less than Original" })} className="w-full p-3 border rounded-lg" />
                   {errors.salePrice && <span className="text-xs text-red-500">{errors.salePrice.message}</span>}
                 </div>
+
               </div>
             </div>
 

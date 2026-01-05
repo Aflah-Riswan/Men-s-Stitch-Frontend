@@ -12,11 +12,6 @@ export default function ProductCard({product}) {
   const originalPrice = product ?.originalPrice || 0;
   
 
-  const hasDiscount = originalPrice > price;
-  const discountPercentage = hasDiscount 
-    ? Math.round(((originalPrice - price) / originalPrice) * 100) 
-    : 0;
-
   const ratingValue = product.rating?.average || 0;
   const reviewCount = product.rating?.count || 0;
 
@@ -61,16 +56,16 @@ export default function ProductCard({product}) {
           ₹{price}
         </span>
 
-        {hasDiscount && (
+        
           <>
             <span className="text-sm text-gray-400 line-through">
               ₹{originalPrice}
             </span>
             <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full font-medium">
-              -{discountPercentage}%
+              -{product.productOffer}%
             </span>
           </>
-        )}
+        
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import axios from 'axios';
 import axiosInstance from '../../../utils/axiosInstance';
 import Modal from '../../../Components/Modal';
 import { useNavigate } from 'react-router-dom';
@@ -14,31 +13,32 @@ const AddCategoryPage = () => {
   const [fileName, setFileName] = useState('No file choosen')
   const [preview, setPreview] = useState(null)
   const [listed, setListed] = useState('listed')
-  const { register, handleSubmit, formState: { errors }, setValue, clearErrors } = useForm() 
+  
+  // 1. Added 'watch' to useForm destructuring
+  const { register, handleSubmit, formState: { errors }, setValue, clearErrors, watch } = useForm() 
+  
   const [showModal, setShowModal] = useState(false);
   const [parentCategories, setParentCategories] = useState([])
-
   const [imageToCrop, setImageToCrop] = useState(null) 
   
   const navigate = useNavigate()
+
+  // 2. Watch the discount type in real-time
+  const discountType = watch('discountType');
   
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const response = await categoryService.getCategories()
-        console.log(' response from service : ',response)
         const categories = response.categories
-        console.log(categories)
         const validParents = categories.filter((cat) => cat.parentCategory === null)
         setParentCategories(validParents)
         
       } catch (error) {
         console.log("found error : ",error)
       }
-
     }
     fetchCategories()
-
   },[])
 
   function handleClick(e) {
@@ -46,10 +46,7 @@ const AddCategoryPage = () => {
     e.stopPropagation()
 
     if (inputBoxRef.current) {
-      console.log("2. Opening File Dialog...");
       inputBoxRef.current.click();
-    } else {
-      console.error("Error: Reference to input is null");
     }
   }
 
@@ -86,27 +83,25 @@ const AddCategoryPage = () => {
 
 
   const onSubmit = async (data) => {
-
     const { categoryOffer, categoryName, discountType, isFeatured, maxRedeemable, parentCategory, visibility } = data
-    console.log("discount type = ", discountType)
+    
     try {
-      const formData = new FormData()
-      formData.append('image', data.headerImage[0]) 
-      
-      const uploadresponse = await categoryService.uploadImage( data.headerImage[0])
-      console.log(uploadresponse.data)
+      // Logic adjustment: If Flat discount, send null for maxRedeemable or handle in backend
+      const finalMaxRedeemable = discountType === 'Flat' ? null : maxRedeemable;
 
+      const uploadresponse = await categoryService.uploadImage(data.headerImage[0])
+      
       const categoryData = {
         categoryName,
         image: uploadresponse.imageUrl,
         parentCategory: parentCategory === 'None' ? null : parentCategory,
         categoryOffer: Number(categoryOffer),
         discountType,
-        maxRedeemable,
+        maxRedeemable: finalMaxRedeemable,
         isListed: visibility === 'listed' ? true : false,
         isFeatured,
       }
-      console.log(categoryData)
+      
       const responseCategory = await categoryService.createCategory(categoryData)
       
       if (responseCategory.success) {
@@ -115,7 +110,6 @@ const AddCategoryPage = () => {
     } catch (error) {
       console.log("error in onSubmit : ", error)
     }
-
   }
 
   const handleModalClose = () => {
@@ -150,7 +144,6 @@ const AddCategoryPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Header image</label>
               
-              {/* Hidden Input */}
               <input
                 type="file"
                 className="hidden"
@@ -190,54 +183,72 @@ const AddCategoryPage = () => {
               </div>
             </div>
 
-            {/* --- Offer Details --- */}
-            <div className="flex flex-col md:flex-row gap-6 items-end w-full">
+            {/* --- SMART OFFER SECTION (Reordered) --- */}
+            <div className="flex flex-col md:flex-row gap-6 items-start w-full">
 
-              <div className='flex-1 w-full'>
-                <label className="block text-md font-medium text-gray-700 mb-2">Category Offer:</label>
-                <input
-                  type="number"
-                  placeholder="Category Offer"
-                  {...register('categoryOffer', {
-                    required: "Offer percentage is Required",
-                    min: { value: 0, message: 'cannt be negative' },
-                    max: { value: 100, message: 'cannt become greater than 100' }
-                  })}
-                  className=" no-spinner w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
-                />
-                {errors.categoryOffer && <span className="text-red-500 text-sm mt-1 block">{errors.categoryOffer.message}</span>}
-              </div>
-
-              <div className="flex-1 w-full">
-                <label className="block text-md font-medium text-gray-700 mb-2">Max Redeemable:</label>
-                <input
-                  type="text"
-                  placeholder="Max Redeemable"
-                  {...register('maxRedeemable', {
-                    required: 'maxRedeemable is Required',
-                    min: { value: 1, message: 'must be greater than 1' }
-                  })}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
-                />
-                {errors.maxRedeemable && <span className="text-red-500 text-sm mt-1 block">{errors.maxRedeemable.message}</span>}
-              </div>
-
+              {/* 1. Discount Type (Moved First) */}
               <div className="flex-1 w-full">
                 <label className="block text-md font-medium text-gray-700 mb-2">Discount Type :</label>
                 <div className="relative">
                   <select
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none appearance-none pr-10 text-gray-600"
                     defaultValue=''
-                    {...register('discountType', { required: 'Please select a discount type', validate: (value) => value !== '' || "select a valid discount type" })}
+                    {...register('discountType', { required: 'Please select a discount type' })}
                   >
                     <option value="" disabled>Select Discount Type</option>
-                    <option value='Flat'>Flat</option>
-                    <option value='Percentage'>Percentage</option>
+                    <option value='Flat'>Flat Amount (₹)</option>
+                    <option value='Percentage'>Percentage (%)</option>
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   {errors.discountType && <span className="text-red-500 text-sm mt-1 block">{errors.discountType.message}</span>}
                 </div>
               </div>
+
+              {/* 2. Category Offer (Dynamic Validation) */}
+              <div className='flex-1 w-full'>
+                <label className="block text-md font-medium text-gray-700 mb-2">
+                  {discountType === 'Flat' ? 'Offer Amount (₹)' : 'Offer Percentage (%)'}
+                </label>
+                <input
+                  type="number"
+                  placeholder={discountType === 'Flat' ? "e.g. 500" : "e.g. 20"}
+                  {...register('categoryOffer', {
+                    required: "Offer value is Required",
+                    min: { value: 0, message: 'Cannot be negative' },
+                    // Conditional Validation: Only limit to 100 if it's percentage
+                    validate: (value) => {
+                      if (discountType === 'Percentage' && Number(value) > 100) {
+                        return "Percentage cannot be greater than 100%";
+                      }
+                      return true;
+                    }
+                  })}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-gray-400 focus:bg-white transition-colors placeholder:text-gray-400"
+                />
+                {errors.categoryOffer && <span className="text-red-500 text-sm mt-1 block">{errors.categoryOffer.message}</span>}
+              </div>
+
+              {/* 3. Max Redeemable (Conditional Disable) */}
+              <div className={`flex-1 w-full transition-opacity ${discountType === 'Flat' ? 'opacity-50' : 'opacity-100'}`}>
+                <label className="block text-md font-medium text-gray-700 mb-2">
+                   Max Redeemable 
+                   {discountType === 'Flat' && <span className='text-xs font-normal ml-1 text-gray-400'>(Not applicable)</span>}
+                </label>
+                <input
+                  type="number"
+                  placeholder="Max Cap (e.g. 1000)"
+                  // Logic: Disable if Flat
+                  disabled={discountType === 'Flat'} 
+                  {...register('maxRedeemable', {
+                    // Logic: Require only if Percentage
+                    required: discountType === 'Percentage' ? 'Max redeemable limit is required for % offers' : false,
+                    min: { value: 1, message: 'Must be greater than 1' }
+                  })}
+                  className={`w-full p-3 border border-gray-200 rounded-lg outline-none transition-colors placeholder:text-gray-400 ${discountType === 'Flat' ? 'bg-gray-100 cursor-not-allowed' : 'bg-gray-50 focus:border-gray-400 focus:bg-white'}`}
+                />
+                {errors.maxRedeemable && <span className="text-red-500 text-sm mt-1 block">{errors.maxRedeemable.message}</span>}
+              </div>
+
             </div>
 
             {/* --- Category Name --- */}

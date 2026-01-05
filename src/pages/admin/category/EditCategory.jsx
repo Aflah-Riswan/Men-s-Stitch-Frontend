@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import axiosInstance from '../../../utils/axiosInstance';
@@ -9,25 +9,42 @@ import categoryService from '../../../services/categoryService';
 
 const EditCategory = () => {
   const [isLoading, setLoading] = useState(true)
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  
+  // 1. Add 'watch' here
+  const { register, handleSubmit, reset, formState: { errors }, watch } = useForm()
+  
   const [preview, setPreview] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [showModal, setShowModal] = useState(false)
-  
- 
   const [imageToCrop, setImageToCrop] = useState(null)
+  const [parentCategories, setParentCategories] = useState([])
 
   const navigate = useNavigate()
   const inputBoxRef = useRef(null)
   const { slug } = useParams()
 
+  // 2. Watch the discount type
+  const discountType = watch('discountType');
+
+  // Fetch Parent Categories for the dropdown
+  useEffect(() => {
+    const fetchParents = async () => {
+      try {
+        const response = await categoryService.getCategories()
+        const validParents = response.categories.filter((cat) => cat.parentCategory === null)
+        setParentCategories(validParents)
+      } catch (error) {
+        console.log("Error fetching parents", error)
+      }
+    }
+    fetchParents()
+  }, [])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await categoryService.getCategoryBySlug(slug)
-        console.log(response)
         const item = response.categoryItem
-        console.log(item)
         if (item) {
           reset({
             categoryName: item.categoryName,
@@ -35,7 +52,7 @@ const EditCategory = () => {
             categoryOffer: item.categoryOffer,
             maxRedeemable: item.maxRedeemable,
             discountType: item.discountType,
-            parentCategory: item.parent === null ? 'none' : item.parent, // Handle null parent safely
+            parentCategory: item.parentCategory ? item.parentCategory : 'none',
             isListed: item.isListed ? 'listed' : 'unlisted',
             isFeatured: item.isFeatured
           })
@@ -90,13 +107,16 @@ const EditCategory = () => {
         finalImage = uploadResponse.imageUrl
       }
 
+      // 3. Logic: If Flat, force maxRedeemable to null
+      const finalMaxRedeemable = discountType === 'Flat' ? null : maxRedeemable;
+
       const updatedCategory = {
         categoryName,
         image: finalImage,
         categoryOffer: Number(categoryOffer),
-        maxRedeemable,
+        maxRedeemable: finalMaxRedeemable,
         discountType,
-        parentCategory: parentCategory && parentCategory.toString().toLowerCase() === 'none' ? null : parentCategory,
+        parentCategory: parentCategory === 'none' ? null : parentCategory,
         isListed: isListed === 'listed' ? true : false,
         isFeatured,
       }
@@ -180,56 +200,71 @@ const EditCategory = () => {
                   </div>
                 </div>
 
+                {/* --- SMART OFFER SECTION (Reordered & Updated) --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                  
+                  {/* 1. Discount Type */}
+                  <div>
+                    <label htmlFor="discountType" className="block text-sm font-medium text-gray-700 mb-2">
+                      Discount-Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        id="discountType"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm text-gray-500 appearance-none"
+                        {...register('discountType', { required: 'Please select a discount type' })}
+                      >
+                        <option value='' disabled>Select Discount Type</option>
+                        <option value='Flat'>Flat</option>
+                        <option value='Percentage'>Percentage</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    </div>
+                    {errors.discountType && <span className="text-red-500 text-sm mt-1 block">{errors.discountType.message}</span>}
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 2. Category Offer */}
                   <div>
                     <label htmlFor="categoryOffer" className="block text-sm font-medium text-gray-700 mb-2">
-                      Category Offer:
+                      {discountType === 'Flat' ? 'Offer Amount (₹)' : 'Offer Percentage (%)'}
                     </label>
                     <input
                       type="number"
                       id="categoryOffer"
-                      placeholder="5%"
+                      placeholder={discountType === 'Flat' ? "e.g. 500" : "e.g. 5"}
                       {...register('categoryOffer', {
-                        required: "Offer percentage is Required",
-                        min: { value: 0, message: 'cannot be negative' },
-                        max: { value: 100, message: 'cannot become greater than 100' }
+                        required: "Offer value is Required",
+                        min: { value: 0, message: 'Cannot be negative' },
+                        validate: (value) => {
+                          if (discountType === 'Percentage' && Number(value) > 100) {
+                            return "Percentage cannot be greater than 100%";
+                          }
+                          return true;
+                        }
                       })}
                       className="no-spinner w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm"
                     />
                     {errors.categoryOffer && <span className="text-red-500 text-sm mt-1 block">{errors.categoryOffer.message}</span>}
                   </div>
-                  <div>
+
+                  {/* 3. Max Redeemable */}
+                  <div className={`transition-opacity ${discountType === 'Flat' ? 'opacity-50' : 'opacity-100'}`}>
                     <label htmlFor="maxRedeemable" className="block text-sm font-medium text-gray-700 mb-2">
-                      Max Redeemable:
+                      Max Redeemable
+                      {discountType === 'Flat' && <span className='text-xs font-normal ml-1 text-gray-400'>(N/A)</span>}
                     </label>
                     <input
                       type="number"
                       id="maxRedeemable"
                       placeholder="₹100"
+                      disabled={discountType === 'Flat'}
                       {...register('maxRedeemable', {
-                        required: 'maxRedeemable is Required',
+                        required: discountType === 'Percentage' ? 'Max redeemable limit is required for % offers' : false,
                         min: { value: 1, message: 'must be greater than 1' }
                       })}
-                      className="no-spinner w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm"
+                      className={`no-spinner w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm sm:text-sm ${discountType === 'Flat' ? 'bg-gray-100 cursor-not-allowed' : 'focus:ring-black focus:border-black'}`}
                     />
                     {errors.maxRedeemable && <span className="text-red-500 text-sm mt-1 block">{errors.maxRedeemable.message}</span>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="discountType" className="block text-sm font-medium text-gray-700 mb-2">
-                      Discount-Type
-                    </label>
-                    <select
-                      id="discountType"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm text-gray-500"
-                      {...register('discountType', { required: 'Please select a discount type' })}
-                    >
-                      <option value='' disabled>Select Discount Type</option>
-                      <option value='Flat'>Flat</option>
-                      <option value='Percentage'>Percentage</option>
-                    </select>
-                    {errors.discountType && <span className="text-red-500 text-sm mt-1 block">{errors.discountType.message}</span>}
                   </div>
                 </div>
 
@@ -253,15 +288,19 @@ const EditCategory = () => {
                   <label htmlFor="parentCategory" className="block text-sm font-medium text-gray-700 mb-2">
                     Parent Category
                   </label>
-                  <select
-                    id="parentCategory"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm text-gray-500"
-                    {...register('parentCategory')}
-                  >
-                    <option value='none'>None</option>
-                    <option value='Shirts'>Shirts</option>
-                    <option value='Pants'>Pants</option> 
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="parentCategory"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black sm:text-sm text-gray-500 appearance-none"
+                      {...register('parentCategory')}
+                    >
+                      <option value='none'>None</option>
+                      {parentCategories.map((parent) => (
+                        <option key={parent._id} value={parent._id}>{parent.categoryName}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  </div>
                 </div>
 
                 {/* Visibility & Featured */}

@@ -1,12 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Image as ImageIcon, Trash2 } from 'lucide-react';
 import categoryAttributes, { sizes } from '../../../data';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories , setParentCategories ,setSubCategories } from '../../../redux/slice/categorySlice';
+import { fetchCategories, setParentCategories, setSubCategories } from '../../../redux/slice/categorySlice';
 import { useForm } from 'react-hook-form';
 import ImageUpload from '../../../Components/ImageUpload';
-import axiosInstance from '../../../utils/axiosInstance';
 import ImageCropper from '../../../Components/ImageCropper';
 import Modal from '../../../Components/Modal';
 import productService from '../../../services/productService';
@@ -17,14 +15,14 @@ const AddProducts = () => {
   const [categoryName, setCategoryName] = useState(null)
   const { parentCategories, subCategories, items, isLoading } = useSelector((state) => state.category)
   const { register, handleSubmit, formState: { errors },
-    setError, setValue, clearErrors, trigger, getValues } = useForm()
+    setError, setValue, clearErrors, trigger, getValues , watch} = useForm()
   const [variantImages, setVariantImages] = useState([])
   const [coverImages, setCoverImages] = useState([])
   const [variantsCollection, setVariantCollection] = useState([])
   const [tags, setTags] = useState([])
   const [tagInput, setTagInput] = useState("")
   const [showModal, setShowModal] = useState(false)
-  const [submitting , setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const dispatch = useDispatch()
 
 
@@ -35,6 +33,9 @@ const AddProducts = () => {
   const [cropQueue, setCropQueue] = useState([]);
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
   const [processedVariantFiles, setProcessedVariantFiles] = useState([]);
+
+  const watchedOriginalprice = watch('originalPrice')
+  const watchedOffer = watch('offer')
 
   useEffect(() => {
     dispatch(fetchCategories())
@@ -51,6 +52,18 @@ const AddProducts = () => {
       setAttributes(categoryAttributes[categoryName])
     }
   }, [selectedCategory])
+
+  useEffect(()=>{
+    if(watchedOriginalprice){
+      const price = Number(watchedOriginalprice)
+      const offer = Number(watchedOffer) || 0
+      if(!isNaN(price) && !isNaN(offer) && offer >= 0 && offer <= 100){
+        const discountAmount = (price * offer)/100
+        const finalPrice = Math.round(price- discountAmount)
+        setValue('salePrice',finalPrice ,{shouldValidate:true})
+      }
+    }
+  },[watchedOffer ,watchedOriginalprice , setValue])
 
   function handleSelectCategory(id) {
     const selected = items.find((cat) => cat._id === id)
@@ -245,9 +258,10 @@ const AddProducts = () => {
   }
 
   const onSubmit = async (data) => {
+    console.log(data)
     try {
       if (!data) return false
-      const { productName, productDescription, salePrice, coverImages, mainCategory, subCategory = null, tags, originalPrice } = data
+      const { productName, productDescription, salePrice, coverImages, mainCategory, subCategory = null, tags, originalPrice ,offer } = data
       if (coverImages.length > 0) {
         const response = await productService.uploadMultipleImages(data.coverImages);
         console.log('product image response : ', response.data)
@@ -269,11 +283,12 @@ const AddProducts = () => {
           attributes: formattedAttributes,
           coverImages: urlCollections,
           mainCategory,
+          productOffer : offer,
           subCategory: subCategory === '' ? null : subCategory,
           tags
         }
         const result = await productService.createProduct(finalData)
-          setShowModal(true)  
+        setShowModal(true)
       }
 
     } catch (error) {
@@ -332,7 +347,7 @@ const AddProducts = () => {
                     <input
                       type="text"
                       placeholder="Product title"
-                      {...register('productName', { required: 'Product Name  is Reqquired ', minLength: { value: 3, message: 'Name should be with minimum 3 letters ' }, pattern: { value: /^[A-Za-z' -]+$/, message: 'only letters are allowed as name ' } })}
+                      {...register('productName', { required: 'Product Name  is Reqquired ', minLength: { value: 3, message: 'Name should be with minimum 3 letters ' }, pattern: { value: /^[A-Za-z'’&, -]+$/, message: 'only letters are allowed as name ' } })}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
                     />
                     {errors.productName && <span className="text-red-500 text-sm mt-1 block">{errors.productName.message}</span>}
@@ -350,32 +365,49 @@ const AddProducts = () => {
                 </div>
               </div>
 
-              {/* Pricing Section */}
+              {/* Pricing Section - UPDATED WITH OFFER */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="font-semibold text-lg mb-4 text-gray-800">Pricing</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="font-semibold text-lg mb-4 text-gray-800">Pricing & Offers</h3>
+                
+                {/* Changed to 3 columns to accommodate the Offer field */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
                   {/* Regular Price */}
                   <div className="space-y-2 w-full">
-                    <label className="text-sm font-medium text-gray-700">Product Regular price</label>
+                    <label className="text-sm font-medium text-gray-700">Regular price</label>
                     <input
                       type='number'
                       placeholder="$0.00"
                       {...register('originalPrice', { required: 'Product price is required', min: { value: 10, message: 'Minimum Price is 10' }, })}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition no-spinner"
                     />
                     {errors.originalPrice && <span className="text-red-500 text-sm mt-1 block">{errors.originalPrice.message}</span>}
                   </div>
+
+                  {/* NEW OFFER FIELD */}
+                  <div className="space-y-2 w-full">
+                    <label className="text-sm font-medium text-gray-700">Offer (%)</label>
+                    <input
+                      type='number'
+                      placeholder="0%"
+                      {...register('offer', { min: { value: 0, message: 'Minimum 0%' }, max: { value: 99, message: 'Maximum 99%' } })}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition no-spinner"
+                    />
+                    {errors.offer && <span className="text-red-500 text-sm mt-1 block">{errors.offer.message}</span>}
+                  </div>
+
                   {/* Sale Price */}
                   <div className="space-y-2 w-full">
-                    <label className="text-sm font-medium text-gray-700">Product Sale price</label>
+                    <label className="text-sm font-medium text-gray-700">Sale price</label>
                     <input
                       type="number"
                       placeholder="$0.00"
                       {...register('salePrice', { required: 'Sale Price is Required', min: { value: 10, message: 'Minimum Price is 10' } })}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition no-spinner"
                     />
                     {errors.salePrice && <span className="text-red-500 text-sm mt-1 block">{errors.salePrice.message}</span>}
                   </div>
+                  
                 </div>
               </div>
 
@@ -614,7 +646,7 @@ const AddProducts = () => {
                             onClick={() => handleRemoveTag(index)}
                             className="text-blue-400 hover:text-red-500 transition-colors"
                           >
-                            
+
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                           </button>
                         </div>

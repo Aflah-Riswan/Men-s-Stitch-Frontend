@@ -1,5 +1,5 @@
 
- const categoryAttributes = {
+const categoryAttributes = {
   // --- TOPWEAR ---
   Shirts: [
     { label: "Fabric", options: ["Cotton", "Linen", "Polyester Blend", "Flannel", "Denim", "Silk"] },
@@ -8,7 +8,7 @@
     { label: "Collar Type", options: ["Spread", "Button-Down", "Mandarin", "Cutaway", "Cuban"] },
     { label: "Occasion", options: ["Casual", "Formal", "Party", "Beach"] }
   ],
-  
+
   TShirts: [
     { label: "Neck Type", options: ["Round Neck", "V-Neck", "Polo Collar", "Henley", "High Neck"] },
     { label: "Fit", options: ["Slim Fit", "Regular Fit", "Muscle Fit", "Oversized/Boxy"] },
@@ -76,27 +76,58 @@
     { label: "Fastening", options: ["Lace-Up", "Slip-On", "Velcro"] }
   ],
   Sports: [
-    { 
-      label: "Fabric Technology", 
-      options: ["Moisture-Wicking Polyester", "Nylon Spandex (Compressive)", "Recycled Mesh", "Anti-Odor Treated Knit", "Interlock Jersey"] 
+    {
+      label: "Fabric Technology",
+      options: ["Moisture-Wicking Polyester", "Nylon Spandex (Compressive)", "Recycled Mesh", "Anti-Odor Treated Knit", "Interlock Jersey"]
     },
-    { 
-      label: "Activity Type", 
-      options: ["Gym & Training", "Running", "Basketball", "Football/Soccer", "Yoga & Recovery", "Outdoor/Hiking"] 
+    {
+      label: "Activity Type",
+      options: ["Gym & Training", "Running", "Basketball", "Football/Soccer", "Yoga & Recovery", "Outdoor/Hiking"]
     },
-    { 
-      label: "Fit Type", 
-      options: ["Compression (Second Skin)", "Athletic Fit", "Standard Fit", "Oversized/Pump Cover"] 
+    {
+      label: "Fit Type",
+      options: ["Compression (Second Skin)", "Athletic Fit", "Standard Fit", "Oversized/Pump Cover"]
     },
-    { 
-      label: "Performance Features", 
-      options: ["4-Way Stretch", "Breathable Mesh Panels", "Reflective Detailing", "Quick-Dry", "Water-Resistant (DWR)"] 
+    {
+      label: "Performance Features",
+      options: ["4-Way Stretch", "Breathable Mesh Panels", "Reflective Detailing", "Quick-Dry", "Water-Resistant (DWR)"]
     },
-    { 
-      label: "Waist & Support", 
-      options: ["Drawstring Elastic", "High-Compression Waist", "Internal Liner (2-in-1)", "Side-Split Hem"] 
+    {
+      label: "Waist & Support",
+      options: ["Drawstring Elastic", "High-Compression Waist", "Internal Liner (2-in-1)", "Side-Split Hem"]
+    }
+  ],
+  Innerwear: [
+    {
+      label: "Category",
+      options: ["Briefs", "Boxers", "Trunks", "Boxer Briefs", "Vests"]
+    },
+    {
+      label: "Fit",
+      options: ["Regular Fit", "Slim Fit", "Body Fit"]
+    },
+    {
+      label: "Fabric",
+      options: ["Cotton", "Modal", "Cotton Blend", "Microfiber", "Bamboo Fabric"]
+    },
+    {
+      label: "Waistband",
+      options: ["Elastic", "Soft Elastic", "Branded Elastic", "No-Marks Waistband"]
+    },
+    {
+      label: "Length",
+      options: ["Short Length", "Mid Length", "Long Length"]
+    },
+    {
+      label: "Pattern",
+      options: ["Solid", "Printed", "Striped"]
+    },
+    {
+      label: "Occasion",
+      options: ["Daily Wear", "Active Wear", "Sleep Wear"]
     }
   ]
+
 };
 
 export default categoryAttributes

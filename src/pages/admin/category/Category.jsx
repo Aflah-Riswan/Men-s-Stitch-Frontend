@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Pencil, Trash2, Image as ImageIcon, RotateCcw, Search, Filter } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories ,toggleListButton , deleteCategory } from '../../../redux/slice/categorySlice';  //fetchCategories, toggleListButton, deleteCategory
+import { fetchCategories, toggleListButton, deleteCategory } from '../../../redux/slice/categorySlice';
 import { useNavigate } from 'react-router-dom';
-import { fetchProducts } from '../../../redux/slice/productSlice';  
+import { fetchProducts } from '../../../redux/slice/productSlice';
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import useDebounce from '../../../hooks/useDebounce';
@@ -24,13 +24,13 @@ const Category = () => {
   const categories = useSelector((state) => state.category.items)
   const pagination = useSelector((state) => state.category.pagination)
   const products = useSelector((state) => state.product.items)
-  console.log(categories)
+  
   const dispatch = useDispatch()
 
   useEffect(() => {
     const filters = {
       sort,
-      search : debouncedSearch,
+      search: debouncedSearch,
       currentPage,
       status,
       discount,
@@ -107,7 +107,7 @@ const Category = () => {
             </div>
           </div>
 
-          {/* --- FILTER PANEL*/}
+          {/* --- FILTER PANEL --- */}
           {showFilters && (
             <div className="mb-6 p-5 bg-white border border-gray-200 rounded-xl shadow-sm animate-in fade-in slide-in-from-top-2">
               <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -182,21 +182,45 @@ const Category = () => {
                 <tr>
                   <th className="px-6 py-4 font-medium">SNO</th>
                   <th className="px-6 py-4 font-medium">Category Name</th>
-                  <th className="px-6 py-4 font-medium">Offer</th>
+                  <th className="px-6 py-4 font-medium">Offer Value</th>
+                  <th className="px-6 py-4 font-medium">Discount Type</th>
+                  <th className="px-6 py-4 font-medium">Max Redeemable</th>
                   <th className="px-6 py-4 font-medium">Stock</th>
-                  <th className="px-6 py-4 font-medium">Date Added</th>
-                  <th className="px-6 py-4 font-medium">List / Unlist</th>
+                  <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium text-center">Action</th>
-                  <th className="px-6 py-4 font-medium text-center">Discount-Type</th>
-                  <th className="px-6 py-4 font-medium text-center">Max Redeemable ₹</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {categories.map((item, index) => (
                   <tr key={item._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 text-gray-500">{index + 1}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{item.categoryName}</td>
-                    <td className="px-6 py-4 text-gray-600">{item.categoryOffer}</td>
+                    
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img src={item.image} alt="" className="w-8 h-8 rounded-md object-cover border" />
+                        <span className="font-medium text-gray-800">{item.categoryName}</span>
+                      </div>
+                    </td>
+
+                    {/* --- IMPROVED OFFER COLUMNS --- */}
+                    
+                    {/* Offer Value (Formatted) */}
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${item.discountType === 'Percentage' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                        {item.discountType === 'Flat' ? `₹${item.categoryOffer}` : `${item.categoryOffer}%`}
+                      </span>
+                    </td>
+
+                    {/* Discount Type */}
+                    <td className="px-6 py-4 text-gray-600 font-medium">
+                      {item.discountType}
+                    </td>
+
+                    {/* Max Redeemable (Shows '-' if Flat) */}
+                    <td className="px-6 py-4 text-gray-600">
+                      {item.maxRedeemable ? `₹${item.maxRedeemable}` : <span className="text-gray-400">-</span>}
+                    </td>
+
                     <td className="px-6 py-4 text-gray-600">{products.reduce((acc, product) => {
                       if (product.mainCategory?.categoryName === item.categoryName) {
                         const productStock = product.variants.reduce((vAcc, variant) => {
@@ -207,7 +231,7 @@ const Category = () => {
                       }
                       return acc
                     }, 0)}</td>
-                    <td className="px-6 py-4 text-gray-500">{item.createdAt}</td>
+                    
                     <td className="px-6 py-4">
                       <button
                         className={`
@@ -216,10 +240,11 @@ const Category = () => {
                         `}
                         onClick={() => dispatch(toggleListButton(item._id))}
                       >
-                        <span>{item.isListed ? 'List'.toUpperCase() : 'unlist'.toUpperCase()}</span>
+                        <span>{item.isListed ? 'Active' : 'Hidden'}</span>
                         <div className="w-3 h-3 bg-white rounded-full shadow-sm" />
                       </button>
                     </td>
+
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded border border-gray-200" onClick={() => navigate(`edit/${item.slug}`)}>
@@ -230,8 +255,6 @@ const Category = () => {
                         </button>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center font-medium text-gray-700">{item.discountType}</td>
-                    <td className="px-6 py-4 text-center font-medium text-gray-700">{item.maxRedeemable}</td>
                   </tr>
                 ))}
               </tbody>

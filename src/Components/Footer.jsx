@@ -6,7 +6,6 @@ export default function Footer() {
     // Note: No background color here. The parent handles the background.
     <footer className="font-sans w-full">
       
-        {/* --- NEWSLETTER SECTION REMOVED FROM HERE --- */}
 
         {/* Footer Links Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 mb-8">

@@ -1,0 +1,181 @@
+import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
+import { Wallet as WalletIcon, Plus, History, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+
+// Imports
+import UserSidebar from '../../../Components/user-account-components/UserSidebar';
+import NewsLetter from '../../../Components/NewsLetter';
+import Footer from '../../../Components/Footer';
+
+const Wallet = () => {
+  // --- DUMMY DATA STATE (Same as before) ---
+  const [balance, setBalance] = useState(2450.00);
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const [transactions, setTransactions] = useState([
+    {
+      _id: 'tx_1',
+      type: 'CREDIT',
+      amount: 500,
+      description: 'Added via Razorpay',
+      createdAt: new Date('2024-03-10'),
+    },
+    {
+      _id: 'tx_2',
+      type: 'DEBIT',
+      amount: 1299,
+      description: 'Purchase: Cotton Shirt',
+      createdAt: new Date('2024-03-08'),
+    },
+    {
+      _id: 'tx_3',
+      type: 'CREDIT',
+      amount: 2000,
+      description: 'Refund: Order #ORD-8821',
+      createdAt: new Date('2024-03-01'),
+    }
+  ]);
+
+  const handleAddMoney = async () => {
+    if (!amount || amount < 1) {
+        toast.error("Please enter a valid amount");
+        return;
+    }
+    setLoading(true);
+
+    setTimeout(() => {
+      const newAmount = parseFloat(amount);
+      setBalance((prev) => prev + newAmount);
+      const newTx = {
+        _id: `tx_${Date.now()}`,
+        type: 'CREDIT',
+        amount: newAmount,
+        description: 'Added via Razorpay',
+        createdAt: new Date(),
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+      setAmount('');
+      setLoading(false);
+      toast.success(`₹${newAmount} Added Successfully!`);
+    }, 1500);
+  };
+
+  return (
+    // 1. Root Container (Matches Wishlist)
+    <div className="min-h-screen bg-white font-sans text-gray-800 flex flex-col">
+      
+      {/* 2. Main Content Wrapper */}
+      <div className="flex-grow max-w-7xl mx-auto px-4 md:px-8 py-12 w-full">
+        <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
+          
+          {/* Sidebar */}
+          <UserSidebar activeTab="Wallet" />
+
+          {/* Main Content Area */}
+          <main className="flex-1 min-h-[400px]">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">My Wallet</h1>
+
+            <div className="space-y-8">
+                
+                {/* BALANCE CARD */}
+                <div className="bg-black text-white rounded-2xl p-8 flex justify-between items-center shadow-lg hover:shadow-xl transition-shadow">
+                    <div>
+                        <p className="text-gray-400 text-sm font-medium mb-1">Available Balance</p>
+                        <h2 className="text-4xl font-bold">₹{balance.toFixed(2)}</h2>
+                    </div>
+                    <div className="p-4 bg-gray-800 rounded-full">
+                        <WalletIcon size={32} className="text-white" />
+                    </div>
+                </div>
+
+                {/* ADD MONEY SECTION */}
+                <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900">
+                        <Plus size={20} /> Add Money
+                    </h3>
+                    <div className="flex gap-4">
+                        <div className="relative flex-1">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₹</span>
+                            <input 
+                                type="number" 
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="Enter amount (e.g. 500)"
+                                className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
+                            />
+                        </div>
+                        <button 
+                            onClick={handleAddMoney}
+                            disabled={loading}
+                            className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap shadow-lg shadow-gray-200"
+                        >
+                            {loading ? "Processing..." : "Add Funds"}
+                        </button>
+                    </div>
+                    
+                    <div className="flex gap-3 mt-4 flex-wrap">
+                        {[500, 1000, 2000, 5000].map(amt => (
+                            <button 
+                                key={amt}
+                                onClick={() => setAmount(amt)}
+                                className="px-4 py-2 text-sm border border-gray-200 rounded-full hover:border-black hover:bg-gray-50 transition-colors"
+                            >
+                                + ₹{amt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* TRANSACTION HISTORY */}
+                <div className="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center gap-2">
+                        <History size={18} className="text-gray-600"/>
+                        <span className="font-bold text-gray-900">Transaction History</span>
+                    </div>
+                    <div className="divide-y divide-gray-100 bg-white">
+                        {transactions.length > 0 ? transactions.map((tx) => (
+                            <div key={tx._id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-2 rounded-full ${tx.type === 'CREDIT' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                        {tx.type === 'CREDIT' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">{tx.description}</p>
+                                        <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <span className={`font-bold ${tx.type === 'CREDIT' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {tx.type === 'CREDIT' ? '+' : '-'} ₹{tx.amount}
+                                </span>
+                            </div>
+                        )) : (
+                            <div className="p-8 text-center text-gray-400">No transactions yet</div>
+                        )}
+                    </div>
+                </div>
+
+            </div>
+          </main>
+        </div>
+      </div>
+
+      {/* 3. Footer Section (Matches Wishlist Overlay Style) */}
+      <div className="relative mt-24">
+        <div className="absolute top-0 left-0 right-0 transform -translate-y-1/2 px-4 z-10">
+          <div className="max-w-7xl mx-auto">
+             <NewsLetter />
+          </div>
+        </div>
+        <div className="bg-gray-100 pt-32 pb-8 px-4 md:px-8">
+             <div className="max-w-7xl mx-auto">
+                <Footer />
+             </div>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default Wallet;

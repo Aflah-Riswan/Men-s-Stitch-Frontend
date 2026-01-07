@@ -40,6 +40,7 @@ import OrderDetailsAdmin from './pages/admin/orders/OrderDetails'
 import OrderList from './pages/admin/orders/OrdersList'
 import AccountSettings from './pages/shop/user-account/AccountSettings'
 import PhoneVerificationModal from './Components/PhoneVerifyModal'
+import Wallet from './pages/shop/user-account/Wallet'
 
 function App() {
   const myTestVariable = "hello";
@@ -101,6 +102,7 @@ function App() {
             <Route path='orders/:orderId' element={<OrderDetails/>}/>
             <Route path='wishlist' element={<Wishlist />} />
             <Route path='addresses' element={<Address />} />
+            <Route path='wallet' element={<Wallet/>} />
             <Route path='addresses/add' element={<AddNewAddress />} />
             <Route path='address/:addressId/edit' element={<EditAddress />} />
             <Route path='category/:slug' element={<CategoryPage />} />

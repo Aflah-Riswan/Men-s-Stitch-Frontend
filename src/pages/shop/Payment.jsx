@@ -1,177 +1,316 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronRight } from 'lucide-react';
-import * as orderService from '../../services/orderService'; 
+import { ArrowRight, ChevronRight, CreditCard, Banknote, ShieldCheck, Lock, Zap, CheckCircle2, Smartphone, Wallet } from 'lucide-react';
+import * as orderService from '../../services/orderService';
+import * as paymentService from '../../services/paymentService'
 import { toast } from 'react-hot-toast';
 
 import NewsLetter from '../../Components/NewsLetter';
 import Footer from '../../Components/Footer';
+import axiosInstance from '../../utils/axiosInstance';
 
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addressId ,  paymentSummary } = location.state || {};
+  const { addressId, paymentSummary } = location.state || {};
 
-  const [selectedMethod, setSelectedMethod] = useState('cod');
+  const [selectedMethod, setSelectedMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!addressId) {
       navigate('/checkout');
     }
-    console.log(paymentSummary)
   }, [addressId, navigate]);
+
+  const loadRazorPayScript = () => {
+    console.log(" inside loaderRazorPay SCRIPTS")
+    return new Promise((resolve) => {
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  const handleRazorPayment = async () => {
+
+    try {
+      const isScripted = await loadRazorPayScript()
+      if (!isScripted) return toast.error('failed to load razorpay SDK')
+      const orderData = await paymentService.createPayment(paymentSummary?.grandTotal)
+      console.log(" orderData : ", orderData)
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Men's Sticth",
+        description: 'Order Payment',
+        order_id: orderData.id,
+
+        handler: async function (response) {
+          try {
+            const paymentData = {
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              shippingAddress: addressId,
+              paymentMethod: selectedMethod
+            };
+            const verifyRes = await paymentService.createOnlinePayment(paymentData)
+            console.log("verifyRes : ", verifyRes)
+            if (verifyRes.data.success) {
+              navigate('/order-success', { state: { orderId: response.data.orderId } })
+            }
+          } catch (error) {
+            console.log(error)
+          }
+        },
+        theme: { color: "#000000" }
+      }
+      const paymentObject = new window.Razorpay(options)
+      paymentObject.open()
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   const handlePlaceOrder = async () => {
     setLoading(true);
-    try {
-      const orderData = {
-        addressId,
-        paymentMethod: selectedMethod
-      };
 
-      const res = await orderService.placeOrder(orderData);
-      
-      if (res.data.success) {
-        toast.success("Order Placed Successfully!");
-        navigate('/order-success', { state: { orderId: res.data.orderId } });
+    try {
+      if (selectedMethod === 'razorpay') {
+        console.log(" insdide if condittion")
+        await handleRazorPayment()
+
+      } else if (selectedMethod === 'cod') {
+        const orderData = {
+          addressId, paymentMethod: selectedMethod
+        }
+        const response = await orderService.placeOrder(orderData)
+        if (response.data.success) {
+          navigate('/order-success', { state: { orderId: response.data.orderId } })
+        }
       }
+
     } catch (error) {
+      console.log(" error : ", error)
       toast.error(error.response?.data?.message || "Failed to place order");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="bg-white min-h-screen font-sans text-gray-900 flex flex-col">
-      
-      {/* Breadcrumbs */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full text-xs text-gray-500 flex items-center gap-2">
-        <span>Home</span> <ChevronRight size={12} />
-        <span>cart</span> <ChevronRight size={12} />
-        <span>checkout</span> <ChevronRight size={12} />
-        <span className="font-medium text-gray-900">place order</span>
+
+
+
+  const LogoBadge = ({ text, colorClass }) => (
+    <div className={`px-2 py-1 rounded-md text-[10px] font-extrabold tracking-wider border shadow-sm ${colorClass}`}>
+      {text}
+    </div>
+  );
+
+  const PaymentOption = ({ id, icon: Icon, title, description, themeColor, recommended = false, children }) => {
+    const isSelected = selectedMethod === id;
+    const baseBorder = isSelected ? `border-${themeColor}-600` : 'border-gray-200';
+    const bgEffect = isSelected ? `bg-${themeColor}-50` : 'bg-white hover:bg-gray-50';
+    return (
+      <div
+        onClick={() => setSelectedMethod(id)}
+        className={`relative flex items-start p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer group ${baseBorder} ${bgEffect} ${isSelected ? 'shadow-md' : 'shadow-sm'}`}
+        style={{ borderColor: isSelected ? 'var(--theme-color)' : '' }}
+      >
+
+        <div className="mt-1 mr-5 flex-shrink-0">
+          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isSelected ? 'border-black' : 'border-gray-300'}`}>
+            {isSelected && <div className="w-3 h-3 bg-black rounded-full" />}
+          </div>
+        </div>
+
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className={`font-bold text-lg ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+              {title}
+            </h3>
+
+          </div>
+
+          <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4 max-w-md">
+            {description}
+          </p>
+
+          {children}
+        </div>
+
+
       </div>
+    );
+  };
 
-      {/* Main Checkout Content */}
-      <div className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mb-20">
-        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+  return (
+    <div className="bg-[#F8F9FA] min-h-screen font-sans text-gray-900 flex flex-col">
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-12 gap-y-10">
-          
-          {/* LEFT COLUMN: Payment Methods */}
-          <div className="lg:col-span-7">
-            <div className="border border-gray-200 rounded-[20px] p-6 sm:p-8">
-              <h2 className="text-lg font-bold mb-6">Payment Methods</h2>
-              <hr className="border-gray-100 mb-6" />
-              
-              <div className="space-y-4">
-                <p className="text-sm text-gray-500 mb-4">Select any payment methods</p>
-
-                {/* Option 1: Card */}
-                <div 
-                  onClick={() => setSelectedMethod('card')}
-                  className="flex items-center cursor-pointer group py-1"
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-4 flex-shrink-0 ${selectedMethod === 'card' ? 'border-black' : 'border-gray-300'}`}>
-                    {selectedMethod === 'card' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
-                  </div>
-                  <span className="font-medium flex-1 text-sm sm:text-base">Debit Card / Credit Card</span>
-                  {/* Visual Icons for Card */}
-                  <div className="flex gap-2">
-                    <div className="h-4 sm:h-5 w-7 sm:w-8 bg-[#00579F] rounded flex items-center justify-center text-[6px] sm:text-[8px] text-white font-bold italic tracking-tighter">VISA</div>
-                    <div className="h-4 sm:h-5 w-7 sm:w-8 bg-[#EB001B] rounded flex items-center justify-center text-[6px] sm:text-[8px] text-white font-bold tracking-tighter">MC</div>
-                  </div>
-                </div>
-
-                {/* Option 2: Bank (Visual Placeholder) */}
-                <div className="flex items-center cursor-pointer opacity-50 py-1">
-                  <div className="w-5 h-5 rounded-full border border-gray-300 mr-4 flex-shrink-0" />
-                  <span className="font-medium text-sm sm:text-base">Bank</span>
-                </div>
-
-                {/* Option 3: UPI (Visual Placeholder) */}
-                <div className="flex items-center cursor-pointer opacity-50 py-1">
-                   <div className="w-5 h-5 rounded-full border border-gray-300 mr-4 flex-shrink-0" />
-                   <span className="font-medium text-sm sm:text-base">UPI Method</span>
-                </div>
-
-                {/* Option 4: COD */}
-                <div 
-                  onClick={() => setSelectedMethod('cod')}
-                  className="flex items-center cursor-pointer group py-1"
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-4 flex-shrink-0 ${selectedMethod === 'cod' ? 'border-black' : 'border-gray-300'}`}>
-                    {selectedMethod === 'cod' && <div className="w-2.5 h-2.5 bg-black rounded-full" />}
-                  </div>
-                  <span className="font-medium text-sm sm:text-base">Cash on delivery</span>
-                </div>
-
-                 {/* Option 5: Wallet (Visual Placeholder) */}
-                 <div className="flex items-center cursor-pointer opacity-50 py-1">
-                   <div className="w-5 h-5 rounded-full border border-gray-300 mr-4 flex-shrink-0" />
-                   <span className="font-medium text-sm sm:text-base">Wallet</span>
-                </div>
-
-              </div>
+      {/* --- Header / Breadcrumbs --- */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400">
+            <span className="hover:text-black cursor-pointer transition-colors" onClick={() => navigate('/cart')}>CART</span>
+            <div className="h-px w-4 bg-gray-300"></div>
+            <span className="hover:text-black cursor-pointer transition-colors" onClick={() => navigate('/checkout')}>ADDRESS</span>
+            <div className="h-px w-4 bg-gray-300"></div>
+            <div className="flex items-center gap-2 text-black bg-gray-100 px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              PAYMENT
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Order Summary */}
-          <div className="lg:col-span-5">
-            <div className="bg-gray-50/80 rounded-[20px] p-6 sm:p-8 border border-gray-100 sticky top-4">
-              <h2 className="text-lg font-bold mb-6">Order Summary</h2>
-              
-              <div className="space-y-4 mb-6 text-sm font-medium">
-                <div className="flex justify-between text-gray-500">
+          <div className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-3 py-1 rounded border border-green-100">
+            <Lock size={12} />
+            Secure Checkout
+          </div>
+        </div>
+      </div>
+
+      {/* --- Main Content --- */}
+      <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+
+          {/* LEFT: Payment Methods */}
+          <div className="lg:col-span-8 space-y-6">
+
+            <div>
+              <h1 className="text-2xl font-extrabold text-gray-900">Choose Payment Mode</h1>
+              <p className="text-gray-500 text-sm mt-1">Transactions are encrypted and secured.</p>
+            </div>
+
+            <div className="space-y-5">
+
+              {/* Option 1: Razorpay (Vibrant & Recommended) */}
+              <PaymentOption
+                id="razorpay"
+                icon={ShieldCheck}
+                themeColor="indigo"
+                title="Pay Online"
+                description="Accepts all major Cards, UPI Apps (GPay, PhonePe), and Net Banking."
+                recommended={true}
+              >
+                <div className="flex flex-wrap gap-2">
+                  <LogoBadge text="UPI" colorClass="bg-white border-gray-200 text-gray-700" />
+                  <LogoBadge text="GPay" colorClass="bg-white border-blue-200 text-blue-600" />
+                  <LogoBadge text="VISA" colorClass="bg-blue-900 border-blue-900 text-white italic" />
+                  <LogoBadge text="RuPay" colorClass="bg-orange-500 border-orange-500 text-white" />
+                  <LogoBadge text="HDFC" colorClass="bg-blue-100 border-blue-200 text-blue-800" />
+                </div>
+              </PaymentOption>
+
+              {/* Option 2: COD (Green Theme) */}
+              <PaymentOption
+                id="cod"
+                icon={Banknote}
+                themeColor="emerald"
+                title="Cash on Delivery"
+                description="Pay in cash or via QR code at your doorstep."
+              >
+                <div className="flex items-center gap-2 mt-2 text-xs text-emerald-700 font-medium bg-emerald-50 w-fit px-2 py-1 rounded">
+                  <CheckCircle2 size={12} /> Pay upon delivery
+                </div>
+              </PaymentOption>
+
+              {/* Option 3: Manual Card (Gray/Neutral Theme) */}
+              <PaymentOption
+                id="wallet"
+                icon={Wallet}
+                themeColor="orange"
+                title="Wallet Payment"
+                description="Pay using Paytm, Amazon Pay, or your Men's Stitch Wallet balance."
+              >
+                <div className="flex flex-wrap gap-2 mt-1">
+
+                  <LogoBadge text="Paytm" colorClass="bg-blue-50 border-blue-100 text-blue-600" />
+                  <LogoBadge text="Amazon Pay" colorClass="bg-yellow-50 border-yellow-200 text-yellow-700" />
+                  <LogoBadge text="PhonePe" colorClass="bg-purple-50 border-purple-100 text-purple-600" />
+                  <LogoBadge text="Store Wallet" colorClass="bg-gray-50 border-gray-200 text-gray-600" />
+                </div>
+              </PaymentOption>
+            </div>
+          </div>
+
+          {/* RIGHT: Order Summary */}
+          <div className="lg:col-span-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 sticky top-24">
+              <h2 className="font-bold text-lg mb-6 flex items-center justify-between">
+                <span>Order Summary</span>
+                <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  ID: #{Math.floor(Math.random() * 10000)} {/* Just a visual placeholder */}
+                </span>
+              </h2>
+
+              {/* Receipt Style Details */}
+              <div className="space-y-4 text-sm font-medium text-gray-600 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span className="text-gray-900">₹{paymentSummary.subTotal}</span>
+                  <span className="text-gray-900">₹{paymentSummary?.subTotal || 0}</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Discount (-20%)</span>
-                  <span className="text-red-500">-₹{paymentSummary.discount}</span>
-                </div>
-                <div className="flex justify-between text-gray-500">
-                  <span>Delivery Fee</span>
-                  <span className="text-green-500">
-                    -₹{paymentSummary.shippingFee}
-                  </span>
+                {paymentSummary?.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount Applied</span>
+                    <span>- ₹{paymentSummary.discount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>Shipping</span>
+                  {Number(paymentSummary?.shippingFee) === 0 ? (
+                    <span className="text-green-600">FREE</span>
+                  ) : (
+                    <span className="text-gray-900">₹{paymentSummary?.shippingFee}</span>
+                  )}
                 </div>
               </div>
 
-              <hr className="border-gray-200 mb-6" />
-              <div className="flex justify-between items-center mb-8">
-                <span className="font-bold text-gray-900">Total</span>
-                <span className="font-bold text-xl text-gray-900">₹{paymentSummary.grandTotal}</span>
+              {/* Total */}
+              <div className="flex justify-between items-end mb-8 px-2">
+                <div>
+                  <span className="text-sm text-gray-500 block mb-1">Total Payable</span>
+                  <span className="text-3xl font-extrabold text-gray-900">₹{paymentSummary?.grandTotal || 0}</span>
+                </div>
               </div>
 
-              {/* PLACE ORDER BUTTON */}
-              <button 
+              {/* Action Button */}
+              <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
-                className="w-full bg-black text-white py-4 rounded-full font-bold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-black text-white py-4 rounded-xl font-bold text-sm tracking-wide hover:bg-gray-800 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
               >
-                {loading ? "Processing..." : "Place Order"}
-                {!loading && <ArrowRight size={16} />}
+                {loading ? (
+                  <span>Processing Payment...</span>
+                ) : (
+                  <>
+                    <span>PAY SECURELY</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
               </button>
 
-              <p className="text-[10px] text-gray-400 mt-6 text-center leading-tight">
-                By continuing, I confirm that I have read and accept the <a href="#" className="underline hover:text-gray-600">Terms and Conditions</a> and the <a href="#" className="underline hover:text-gray-600">Privacy Policy</a>.
-              </p>
+              <div className="mt-6 flex justify-center gap-4 opacity-40 grayscale">
+                {/* Replaced empty divs with icons for visual context */}
+                <CreditCard size={24} />
+                <ShieldCheck size={24} />
+                <Smartphone size={24} />
+              </div>
+              <p className="text-[10px] text-center text-gray-400 mt-2">Verified by Razorpay</p>
+
             </div>
           </div>
 
         </div>
       </div>
 
-      
-      <div className="w-full bg-[#F0F0F0] pt-12 pb-8 px-4 sm:px-6 lg:px-8 mt-auto">
-        <div className="max-w-7xl mx-auto space-y-12">
-       
+      {/* Footer Section */}
+      <div className="mt-auto border-t border-gray-200 bg-white pt-10 pb-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <NewsLetter />
-          
-       
           <Footer />
         </div>
       </div>

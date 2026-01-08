@@ -53,6 +53,11 @@ const deleteCoupon = async (couponId) =>{
     console.log(error)
   }
 }
+
+ const getMyCoupons = async () => {
+  const response = await axiosInstance.get('/coupons/user-coupons');
+  return response.data;
+};
 export const couponService = {
   addCoupon,
   getCoupons,
@@ -60,4 +65,5 @@ export const couponService = {
   getCouponById,
   updateCoupon,
   deleteCoupon,
+  getMyCoupons
 }

@@ -9,7 +9,7 @@ import ProductFAQs from "../../Components/products/productFaq";
 import ProductCard from "../../Components/products/ProductCard";
 import Footer from "../../Components/Footer";
 import * as cartService from '../../services/cartService';
-import * as wishlistService  from '../../services/wishlistService';
+import * as wishlistService from '../../services/wishlistService';
 import toast from "react-hot-toast";
 
 export default function ProductDetails() {
@@ -19,7 +19,6 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState(null);
 
-
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedColorCode, setSelectedColorCode] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -28,6 +27,12 @@ export default function ProductDetails() {
 
   const [activeTab, setActiveTab] = useState('details');
   const [relatedProducts, setRelatedProducts] = useState([]);
+
+  // --- NEW: ZOOM STATE ---
+  const [zoomStyle, setZoomStyle] = useState({
+    transformOrigin: "center center",
+    transform: "scale(1)",
+  });
 
   useEffect(() => {
     if (id) {
@@ -39,7 +44,7 @@ export default function ProductDetails() {
     try {
       const response = await axiosInstance.get(`/products/${productId}/details`);
       if (response.data.success) {
-        console.log(response.data.product)
+        // console.log(response.data.product)
         setProduct(response.data.product);
         setRelatedProducts(response.data.relatedProducts || []);
 
@@ -64,16 +69,34 @@ export default function ProductDetails() {
     } catch (error) {
       const message = error.response?.data?.message || "Failed to add to wishlist";
       if (message.includes("already")) {
-        toast('This item is already in your wishlist', { icon: 'ℹ️' });
+        toast('This item is already in your wishlist');
       } else {
         toast.error(message);
       }
     }
   }
 
+ 
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+
+    setZoomStyle({
+      transformOrigin: `${x}% ${y}%`,
+      transform: "scale(2)",
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setZoomStyle({
+      transformOrigin: "center center",
+      transform: "scale(1)",
+    });
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product not found</div>;
-
 
   const price = product?.salePrice || 0;
   const originalPrice = product?.originalPrice || 0;
@@ -82,17 +105,13 @@ export default function ProductDetails() {
 
   const activeVariant = product?.variants?.find((variant) => variant._id === selectedVariant);
 
-
   const rawImages = activeVariant?.variantImages?.length > 0
     ? activeVariant.variantImages
     : product?.coverImages;
   const currentImages = Array.isArray(rawImages) ? rawImages : ["https://via.placeholder.com/400?text=No+Image"];
 
-
-
   const handleCount = (action) => {
     if (action === 'add') {
-
       if (activeVariant && selectedSize) {
         const currentStock = activeVariant.stock[selectedSize];
         if (quantity >= currentStock) {
@@ -111,7 +130,6 @@ export default function ProductDetails() {
   };
 
   const handleCartButton = async () => {
-
     if (!selectedVariant) {
       return toast.error("Please select a color");
     }
@@ -122,14 +140,12 @@ export default function ProductDetails() {
       return toast.error("Quantity must be at least 1");
     }
 
-
     if (activeVariant) {
       const stockAvailable = activeVariant.stock[selectedSize];
       if (stockAvailable < quantity) {
         return toast.error(`Out of stock! Only ${stockAvailable} left.`);
       }
     }
-
 
     const data = {
       productId: product._id,
@@ -145,7 +161,6 @@ export default function ProductDetails() {
       setQuantity(1);
     } catch (error) {
       console.error(error);
-
       toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
@@ -177,13 +192,18 @@ export default function ProductDetails() {
             ))}
           </div>
 
-          {/* Main Image */}
-          <div className="flex-1">
-            <div className="aspect-[3/4] max-h-[500px] w-full bg-gray-100 rounded-lg overflow-hidden relative flex items-center justify-center">
+          {/* Main Image with Zoom Implementation */}
+          <div className="flex-1 relative z-10">
+            <div
+              className="aspect-[3/4] max-h-[500px] w-full bg-gray-100 rounded-lg overflow-hidden relative flex items-center justify-center cursor-crosshair"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+            >
               <img
                 src={currentImages[selectedImage] || currentImages[0]}
                 alt={product?.productName}
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain transition-transform duration-200 ease-out"
+                style={zoomStyle}
               />
             </div>
           </div>
@@ -231,11 +251,9 @@ export default function ProductDetails() {
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-bold text-black uppercase tracking-wider">Choose Size</h3>
-
             </div>
             <div className="flex flex-wrap gap-2">
               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((size) => {
-
                 const stock = activeVariant ? activeVariant.stock[size] : 0;
                 const isOutOfStock = stock <= 0;
                 const isSelected = selectedSize === size;

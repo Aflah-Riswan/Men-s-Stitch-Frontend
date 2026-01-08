@@ -49,7 +49,7 @@ const Payment = () => {
         name: "Men's Sticth",
         description: 'Order Payment',
         order_id: orderData.id,
-
+      
         handler: async function (response) {
           try {
             const paymentData = {
@@ -60,7 +60,15 @@ const Payment = () => {
               paymentMethod: selectedMethod
             };
             const verifyRes = await paymentService.createOnlinePayment(paymentData)
-           
+            
+           if (verifyRes?.data?.success || verifyRes?.success) {
+               const orderId = verifyRes.data?.orderId || verifyRes.orderId;
+               toast.success("Payment Verified!");
+               navigate('/order-success', { state: { orderId: orderId } });
+               
+            } else {
+               toast.error("Payment verification failed on server");
+            }
           } catch (error) {
             console.log(error)
           }
@@ -81,7 +89,7 @@ const Payment = () => {
       if (selectedMethod === 'razorpay') {
         console.log(" insdide if condittion")
         await handleRazorPayment()
-        
+
       } else if (selectedMethod === 'cod' || selectedMethod === 'wallet') {
         const orderData = {
           addressId, paymentMethod: selectedMethod

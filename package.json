@@ -21,6 +21,8 @@
     "axios": "^1.13.2",
     "country-state-city": "^3.2.1",
     "firebase": "^12.6.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.554.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -32,6 +34,7 @@
     "react-router-dom": "^7.9.6",
     "recharts": "^3.5.1",
     "tailwindcss": "^4.1.17",
+    "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {

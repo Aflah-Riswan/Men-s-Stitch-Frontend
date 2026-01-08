@@ -41,6 +41,8 @@ import OrderList from './pages/admin/orders/OrdersList'
 import AccountSettings from './pages/shop/user-account/AccountSettings'
 import PhoneVerificationModal from './Components/PhoneVerifyModal'
 import Wallet from './pages/shop/user-account/Wallet'
+import SalesReport from './pages/admin/SalesReport'
+import MyCoupons from './pages/shop/MyCoupons'
 
 function App() {
   const myTestVariable = "hello";
@@ -86,6 +88,7 @@ function App() {
             <Route path='coupons' element={<Coupon />} />
             <Route path='orders' element={<OrderList/>} />
             <Route path='orders/:orderId' element={<OrderDetailsAdmin/>} />
+            <Route path = 'sales-report' element={<SalesReport/>} />
           </Route>
         </Route>
 
@@ -102,6 +105,7 @@ function App() {
             <Route path='orders/:orderId' element={<OrderDetails/>}/>
             <Route path='wishlist' element={<Wishlist />} />
             <Route path='addresses' element={<Address />} />
+            <Route path='coupons' element={<MyCoupons/>} />
             <Route path='wallet' element={<Wallet/>} />
             <Route path='addresses/add' element={<AddNewAddress />} />
             <Route path='address/:addressId/edit' element={<EditAddress />} />

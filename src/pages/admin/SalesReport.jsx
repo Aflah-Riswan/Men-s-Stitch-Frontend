@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Or use your axiosInstance
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import * as salesService from '../../services/salesService'
+import { toast } from 'react-hot-toast';
+import * as salesService from '../../services/salesService'; // Your frontend service file
 
 const SalesReport = () => {
   const [reportData, setReportData] = useState({ summary: {}, orders: [] });
@@ -11,7 +11,6 @@ const SalesReport = () => {
   const [customDates, setCustomDates] = useState({ from: '', to: '' });
   const [loading, setLoading] = useState(false);
 
-  
   useEffect(() => {
     fetchSalesData();
   }, [filterType]); 
@@ -19,31 +18,40 @@ const SalesReport = () => {
   const fetchSalesData = async () => {
     setLoading(true);
     try {
+      // Construct Query String
       let query = `?period=${filterType}`;
       if (filterType === 'custom' && customDates.from && customDates.to) {
-        query = `?from=${customDates.from}&to=${customDates.to}`;
+        query = `?period=custom&from=${customDates.from}&to=${customDates.to}`;
       }
       
-      const response = await salesService.getSalesReport(query)
-      console.log(" reponse : ", response.data)
-      setReportData(response.data);
+      // Call Service with the query string
+      const response = await salesService.getSalesReport(query);
+      
+      if(response && response.data) {
+          setReportData(response.data);
+      }
     } catch (error) {
       console.error("Error fetching report:", error);
+      toast.error("Failed to fetch report");
     }
     setLoading(false);
   };
 
-  // --- PDF DOWNLOAD LOGIC ---
+  // --- PDF DOWNLOAD ---
   const downloadPDF = () => {
+    if (!reportData.orders || reportData.orders.length === 0) {
+      return toast.error("No data available to download");
+    }
+
     const doc = new jsPDF();
     doc.text('Sales Report', 14, 15);
     doc.text(`Period: ${filterType.toUpperCase()}`, 14, 25);
     
-    // Summary Table
-    doc.text(`Total Sales: Rs.${reportData.summary.totalSales}`, 14, 35);
-    doc.text(`Total Discount: Rs.${reportData.summary.totalDiscount}`, 14, 45);
+    // Summary
+    doc.text(`Total Sales: Rs.${reportData.summary.totalSales || 0}`, 14, 35);
+    doc.text(`Total Discount: Rs.${reportData.summary.totalDiscount || 0}`, 14, 45);
 
-    // Orders Table
+    // Table Data
     const tableColumn = ["Date", "Order ID", "Customer", "Amount", "Discount"];
     const tableRows = reportData.orders.map(order => [
       new Date(order.createdAt).toLocaleDateString(),
@@ -53,7 +61,8 @@ const SalesReport = () => {
       order.discount || 0
     ]);
 
-    doc.autoTable({
+    // Generate Table
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 55,
@@ -62,15 +71,19 @@ const SalesReport = () => {
     doc.save(`sales_report_${filterType}.pdf`);
   };
 
-  // --- EXCEL DOWNLOAD LOGIC ---
+  // --- EXCEL DOWNLOAD ---
   const downloadExcel = () => {
+    if (!reportData.orders || reportData.orders.length === 0) {
+      return toast.error("No data available to download");
+    }
+
     const worksheet = XLSX.utils.json_to_sheet(reportData.orders.map(order => ({
       Date: new Date(order.createdAt).toLocaleDateString(),
       OrderID: order.orderId,
-      Customer: order.user?.email,
+      Customer: order.user?.email || 'Guest',
       TotalAmount: order.totalAmount,
-      Discount: order.discount,
-      PaymentMethod: order.payment.method
+      Discount: order.discount || 0,
+      PaymentMethod: order.payment?.method || 'N/A'
     })));
 
     const workbook = XLSX.utils.book_new();
@@ -82,7 +95,7 @@ const SalesReport = () => {
     <div className="p-8 bg-gray-50 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Sales Report</h1>
 
-      {/* 1. FILTER SECTION */}
+      {/* FILTER SECTION */}
       <div className="bg-white p-6 rounded-xl shadow-sm mb-8 flex flex-wrap gap-4 items-end">
         <div>
            <label className="block text-sm font-bold mb-2">Filter By</label>
@@ -99,7 +112,6 @@ const SalesReport = () => {
            </select>
         </div>
 
-        {/* Custom Date Inputs (Only show if 'custom' is selected) */}
         {filterType === 'custom' && (
           <>
             <div>
@@ -126,7 +138,7 @@ const SalesReport = () => {
         )}
       </div>
 
-      {/* 2. SUMMARY CARDS */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
           <p className="text-gray-500">Total Revenue</p>
@@ -142,7 +154,7 @@ const SalesReport = () => {
         </div>
       </div>
 
-      {/* 3. DOWNLOAD BUTTONS */}
+      {/* DOWNLOAD BUTTONS */}
       <div className="flex justify-end gap-4 mb-4">
         <button 
           onClick={downloadPDF}
@@ -158,7 +170,7 @@ const SalesReport = () => {
         </button>
       </div>
 
-      {/* 4. DATA TABLE */}
+      {/* DATA TABLE */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-100 border-b">
@@ -177,7 +189,7 @@ const SalesReport = () => {
                 <tr key={order._id} className="hover:bg-gray-50">
                   <td className="p-4">{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td className="p-4 font-mono text-sm">{order.orderId}</td>
-                  <td className="p-4">{order.user?.firstName || 'N/A'}</td>
+                  <td className="p-4">{order.user?.firstName || 'Guest'}</td>
                   <td className="p-4 font-bold">₹{order.totalAmount}</td>
                   <td className="p-4 text-red-500">-₹{order.discount || 0}</td>
                   <td className="p-4">

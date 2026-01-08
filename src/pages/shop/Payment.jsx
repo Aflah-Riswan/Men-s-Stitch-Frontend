@@ -60,7 +60,7 @@ const Payment = () => {
               paymentMethod: selectedMethod
             };
             const verifyRes = await paymentService.createOnlinePayment(paymentData)
-            console.log("verifyRes : ", verifyRes)
+           
           } catch (error) {
             console.log(error)
           }
@@ -81,7 +81,7 @@ const Payment = () => {
       if (selectedMethod === 'razorpay') {
         console.log(" insdide if condittion")
         await handleRazorPayment()
-         navigate('/order-success', { state: { orderId: response.data.orderId } })
+        
       } else if (selectedMethod === 'cod' || selectedMethod === 'wallet') {
         const orderData = {
           addressId, paymentMethod: selectedMethod

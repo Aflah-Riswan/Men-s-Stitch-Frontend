@@ -6,7 +6,7 @@ export const signupSchema = z.object({
     .regex(/^[A-Za-z]+$/, 'enter invalid name'),
 
   lastName: z.string().min(1, 'last name is required')
-    .regex(/^[A-Za-z]/, 'enter valid last name'),
+    .regex(/^[A-Za-z]+$/, 'enter valid last name'),
 
   phone: z.string()
     .transform((val) => {
@@ -33,7 +33,8 @@ export const signupSchema = z.object({
 
   agreeTerms: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
-  })
+  }),
+  referralCode: z.string().optional(),
 
 }).refine((data) => data.password === data.confirmPassword,
   { message: ' enter exacly same password', path: ['confirmPassword'] })

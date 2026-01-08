@@ -15,13 +15,13 @@ export default function Signup() {
   const [loading, setLoading] = useState(false)
   const [isOtpVerified, setIsOtpVerified] = useState(false)
   const navigate = useNavigate()
-  
+
   const { register, handleSubmit, formState: { errors },
     trigger, getValues, setError, clearErrors } = useForm({
       resolver: zodResolver(signupSchema),
     })
 
-  
+
   useEffect(() => {
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container',
@@ -35,22 +35,21 @@ export default function Signup() {
     }
   }, [])
 
- 
+
   const onSubmit = async (data) => {
     if (!isOtpVerified) {
       setError('otp', { type: 'custom', message: 'Please verify OTP first' })
       setError('phone', { type: 'custom', message: 'verify your phone number' })
       return
     }
-    const { firstName, lastName, phone, email, password, confirmPassword, agreeTerms } = data
-    const userData = { firstName, lastName, phone, email, password, confirmPassword, agreeTerms }
+    const { firstName, lastName, phone, email, password, confirmPassword, agreeTerms , referralCode} = data
+    const userData = { firstName, lastName, phone, email, password, confirmPassword, agreeTerms , referralCode }
 
     const response = await authService.signup(userData)
     if (response.data.success) {
       const { data } = response
       localStorage.setItem('accessToken', data.accessToken)
       localStorage.setItem('role', data.role)
-      alert("created successfully")
       navigate('/login')
     } else {
       alert(`${response.data.message}`)
@@ -111,11 +110,10 @@ export default function Signup() {
     const token = credentialResponse.credential
     const response = await authService.googleLogin(token)
     if (response.success) {
-      if (response.user.role === 'admin') navigate('/admin/dashboard')
-      else navigate('/')
+      navigate('/login')
     }
   }
-  
+
   const handleError = (err) => {
     console.log("Login Failed", err);
   };
@@ -260,6 +258,18 @@ export default function Signup() {
             {errors.confirmPassword && <span className="text-sm text-red-500 ml-1">{errors.confirmPassword.message}</span>}
           </div>
 
+          <div className="space-y-1">
+            <label className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">
+              Referral Code <span className="text-gray-400 font-normal normal-case">(Optional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. MEN-8392"
+              {...register('referralCode')}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-black placeholder:text-gray-400"
+            />
+          </div>
+
           {/* Terms */}
           <div className="flex items-start gap-3 mt-4">
             <div className="flex items-center h-5">
@@ -294,13 +304,13 @@ export default function Signup() {
           </div>
         </div>
         <div className="flex justify-center w-full">
-           <GoogleLogin 
-             onSuccess={handleSuccess} 
-             onError={handleError} 
-             theme="outline" 
-             shape="pill"
-             width="100%"
-           />
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleError}
+            theme="outline"
+            shape="pill"
+            width="100%"
+          />
         </div>
       </div>
     </div>

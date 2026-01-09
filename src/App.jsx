@@ -43,6 +43,7 @@ import PhoneVerificationModal from './Components/PhoneVerifyModal'
 import Wallet from './pages/shop/user-account/Wallet'
 import SalesReport from './pages/admin/SalesReport'
 import MyCoupons from './pages/shop/MyCoupons'
+import PaymentFailed from './Components/PaymentFailed'
 
 function App() {
   const myTestVariable = "hello";
@@ -53,7 +54,7 @@ function App() {
         position="top-right"
         reverseOrder={false}
         toastOptions={{
-          duration: 3000,
+          duration: 1000,
           style: {
             background: '#363636',
             color: '#fff',
@@ -117,6 +118,7 @@ function App() {
             <Route path='payment' element={<Payment />} />   
             <Route path='order-success' element={<OrderSuccess />} />
             <Route path ='settings' element={<AccountSettings/>}/>
+            <Route path ='payment-failed' element={<PaymentFailed/>}/>
 
           </Route>
 

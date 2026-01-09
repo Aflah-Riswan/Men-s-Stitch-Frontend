@@ -35,7 +35,7 @@ const resetPassword = async (data) => {
 const signup = async (userData) => {
   try {
     const response = await axiosInstance.post('/auth/signup', userData);
-    return response.data;
+    return response;
   } catch (error) {
     throw error.response?.data?.message || "Signup failed. Please try again.";
   }

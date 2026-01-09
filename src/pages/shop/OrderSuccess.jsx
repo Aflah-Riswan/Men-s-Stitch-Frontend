@@ -25,13 +25,13 @@ const OrderSuccess = () => {
         
         <div className="space-x-4">
           <button 
-            onClick={() => navigate('/shop')} 
+            onClick={() => navigate('/')} 
             className="px-6 py-3 border border-black rounded-full hover:bg-gray-50 transition-colors font-medium"
           >
             Continue Shopping
           </button>
           <button 
-            onClick={() => navigate('/profile/orders')} 
+            onClick={() => navigate('/orders')} 
             className="px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors font-medium"
           >
             View Order

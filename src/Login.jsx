@@ -18,11 +18,11 @@ const Login = () => {
   const navigate = useNavigate()
   const onSubmit = async (data) => {
     try {
-      const result = await dispatch(loginUser(data))
+      const result = await dispatch(loginUser(data)).unwrap()
       console.log(result)
       if (result.payload.role === 'admin') {
         navigate('/admin/dashboard')
-      } else {
+      } else if (result.payload.role === 'user') {
         navigate('/')
       }
     } catch (err) {

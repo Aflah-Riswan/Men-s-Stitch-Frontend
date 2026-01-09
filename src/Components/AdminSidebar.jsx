@@ -13,7 +13,8 @@ import {
   List, 
   ShieldCheck, 
   Inbox, 
-  ExternalLink 
+  ExternalLink, 
+  BookOpenCheck
 } from 'lucide-react';
 
 const AdminSidebar = () => {
@@ -58,6 +59,12 @@ const AdminSidebar = () => {
               <NavLink to="/admin/orders" className={getLinkClasses}>
                 <ClipboardList size={20} className="mr-3" />
                 Order Management
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/sales-report" className={getLinkClasses}>
+                <BookOpenCheck size={20} className="mr-3" />
+                Sales Report
               </NavLink>
             </li>
             <li>

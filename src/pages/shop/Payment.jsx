@@ -34,22 +34,27 @@ const Payment = () => {
     })
   }
 
-  const handleRazorPayment = async () => {
-
+const handleRazorPayment = async () => {
     try {
-      const isScripted = await loadRazorPayScript()
-      if (!isScripted) return toast.error('failed to load razorpay SDK')
-      const orderData = await paymentService.createPayment(paymentSummary?.grandTotal)
-      console.log(" orderData : ", orderData)
+      const isScripted = await loadRazorPayScript();
+      if (!isScripted) return toast.error('failed to load razorpay SDK');
+
+      const orderData = await paymentService.createPayment(paymentSummary?.grandTotal);
+      
+      const retryState = {
+        addressId,
+        paymentSummary
+      };
 
       const options = {
         key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "Men's Sticth",
+        name: "Men's Stitch",
         description: 'Order Payment',
         order_id: orderData.id,
-      
+
+        // 1. SUCCESS HANDLER
         handler: async function (response) {
           try {
             const paymentData = {
@@ -59,28 +64,51 @@ const Payment = () => {
               shippingAddress: addressId,
               paymentMethod: selectedMethod
             };
-            const verifyRes = await paymentService.createOnlinePayment(paymentData)
-            
-           if (verifyRes?.data?.success || verifyRes?.success) {
-               const orderId = verifyRes.data?.orderId || verifyRes.orderId;
-               toast.success("Payment Verified!");
-               navigate('/order-success', { state: { orderId: orderId } });
-               
+            const verifyRes = await paymentService.createOnlinePayment(paymentData);
+
+            if (verifyRes?.data?.success || verifyRes?.success) {
+              const orderId = verifyRes.data?.orderId || verifyRes.orderId;
+              toast.success("Payment Verified!");
+              navigate('/order-success', { state: { orderId: orderId } });
             } else {
-               toast.error("Payment verification failed on server");
+              toast.error("Payment verification failed on server");
+              navigate('/payment-failed', { state: { retryData: retryState } });
             }
           } catch (error) {
-            console.log(error)
+            console.log(error);
+            navigate('/payment-failed', { state: { retryData: retryState } });
           }
         },
+        
+        modal: {
+            ondismiss: function() {
+                toast.error("Payment Cancelled");
+                navigate('/payment-failed', { 
+                    state: { retryData: retryState } 
+                });
+            }
+        },
         theme: { color: "#000000" }
-      }
-      const paymentObject = new window.Razorpay(options)
-      paymentObject.open()
+      };
+
+      const paymentObject = new window.Razorpay(options);
+     
+      paymentObject.on('payment.failed', function (response){
+        console.error("Payment Failed:", response.error);
+        toast.error(response.error.description || "Payment Failed");
+        
+        navigate('/payment-failed', { 
+            state: { retryData: retryState } 
+        });
+      });
+
+      paymentObject.open();
+
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      toast.error("Something went wrong initializing payment");
     }
-  }
+  };
 
   const handlePlaceOrder = async () => {
     setLoading(true);

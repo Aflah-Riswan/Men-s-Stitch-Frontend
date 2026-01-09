@@ -8,6 +8,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
 import authService from "../../services/authService"
 import { GoogleLogin } from "@react-oauth/google"
+import toast from "react-hot-toast"
 
 export default function Signup() {
   const [visible, setVisible] = useState(false)
@@ -37,22 +38,27 @@ export default function Signup() {
 
 
   const onSubmit = async (data) => {
-    if (!isOtpVerified) {
-      setError('otp', { type: 'custom', message: 'Please verify OTP first' })
-      setError('phone', { type: 'custom', message: 'verify your phone number' })
-      return
-    }
-    const { firstName, lastName, phone, email, password, confirmPassword, agreeTerms , referralCode} = data
-    const userData = { firstName, lastName, phone, email, password, confirmPassword, agreeTerms , referralCode }
+    try {
+      if (!isOtpVerified) {
+        setError('otp', { type: 'custom', message: 'Please verify OTP first' })
+        setError('phone', { type: 'custom', message: 'verify your phone number' })
+        return
+      }
+      const { firstName, lastName, phone, email, password, confirmPassword, agreeTerms, referralCode } = data
+      const userData = { firstName, lastName, phone, email, password, confirmPassword, agreeTerms, referralCode }
 
-    const response = await authService.signup(userData)
-    if (response.data.success) {
-      const { data } = response
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('role', data.role)
-      navigate('/login')
-    } else {
-      alert(`${response.data.message}`)
+      const response = await authService.signup(userData)
+      if (response.data.success) {
+        const { data } = response
+        localStorage.setItem('accessToken', data.accessToken)
+        localStorage.setItem('role', data.role)
+        navigate('/login', { replace: true })
+      } else {
+        alert(`${response.data.message}`)
+      }
+    } catch (error) {
+       toast.error(" error found")
+       console.log(error)
     }
   }
 

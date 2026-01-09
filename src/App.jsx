@@ -99,7 +99,7 @@ function App() {
 
           <Route index element={<Home />} />
 
-          <Route element={<RequireAuth allowedRoles={['user', 'admin']} />}>
+          <Route element={<RequireAuth allowedRoles={['user']} />}>
             <Route path='product/:id/details' element={<ProductDetails />} />
             <Route path='profile' element={<UserInfo />} />
             <Route path='orders' element={<OrderHistory/>} />

@@ -1,4 +1,4 @@
-import { updateAccessToken, setLogout } from "../redux/slice/authSlice" // Make sure to import logoutUser
+import { updateAccessToken, setLogout } from "../redux/slice/authSlice"
 import axiosInstance from "./axiosInstance"
 import { toast } from 'react-hot-toast'
 
@@ -8,8 +8,13 @@ const setupAxios = (store) => {
 
   axiosInstance.interceptors.request.use(
     (config) => {
-      const state = store.getState()
-      const token = state.auth.accessToken
+      const isAdminRequest = config.url.startsWith('/admin')
+      let token;
+      if (isAdminRequest) {
+        token = localStorage.getItem('adminAccessToken');
+      } else {
+        token = localStorage.getItem('userAccessToken')
+      }
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`
       }
@@ -28,7 +33,7 @@ const setupAxios = (store) => {
     async (error) => {
       const originalRequest = error.config;
       const { response } = error;
-      
+
       if (response?.status === 404) {
         window.location.href = '/404';
         console.log(response)
@@ -67,8 +72,15 @@ const setupAxios = (store) => {
 
         originalRequest._retry = true;
         try {
+          const isAdminRequest = originalRequest.url.startsWith('/admin')
           const res = await axiosInstance.post('/auth/refresh-token');
           const { accessToken } = res.data;
+
+          if (isAdminRequest) {
+            localStorage.setItem('adminAccessToken', accessToken);
+          } else {
+            localStorage.setItem('userAccessToken', accessToken);
+          }
 
           store.dispatch(updateAccessToken(accessToken));
           originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;

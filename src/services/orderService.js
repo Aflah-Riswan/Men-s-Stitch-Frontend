@@ -1,5 +1,7 @@
 import axiosInstance from "../utils/axiosInstance";
 
+
+
 export const placeOrder = async (orderData) => {
   return await axiosInstance.post('/orders/place-order', orderData);
 };
@@ -9,22 +11,23 @@ export const getMyOrders = async () => {
 };
 
 export const cancelOrder = async (orderId, reason, itemId) => {
-  console.log("itemid : ",itemId)
+  console.log("itemid : ", itemId)
   return await axiosInstance.put(`/orders/${orderId}/cancel`, { reason, itemId });
 };
 
 export const returnOrder = async (orderId, itemId, reason) => {
- 
   return await axiosInstance.put(`/orders/${orderId}/items/${itemId}/return`, { reason });
 };
-
 
 export const orderDetails = async (orderId) => {
   return await axiosInstance.get(`/orders/${orderId}`)
 }
 
+
+
 export const getAllOrders = async (page = 1, limit = 10, status = '', search = '') => {
-  const response = await axiosInstance.get('/orders', {
+ 
+  const response = await axiosInstance.get('/admin/orders', {
     params: {
       page,
       limit,
@@ -36,22 +39,21 @@ export const getAllOrders = async (page = 1, limit = 10, status = '', search = '
 };
 
 export const getOrderStats = async () => {
-  const response = await axiosInstance.get('/orders/stats');
+  const response = await axiosInstance.get('/admin/orders/stats');
   return response.data;
 };
 
-export const getOrderDetails = async (orderId) => {
-  console.log("orderId : ", orderId)
-  const response = await axiosInstance.get(`orders/admin/${orderId}`)
+export const getOrderDetailsAdmin = async (orderId) => {
+  const response = await axiosInstance.get(`/admin/orders/${orderId}`)
   return response.data
 }
 
 export const updateOrderStatus = async (orderId, status) => {
-  const response = await axiosInstance.put(`/orders/update-status/${orderId}`, { status });
+  const response = await axiosInstance.put(`/admin/orders/status/${orderId}`, { status });
   return response.data;
 };
 
 export const updateOrderItemStatus = async (orderId, itemId, status) => {
-  const response = await axiosInstance.put(`/orders/update-item-status/${orderId}`, { itemId, status });
+  const response = await axiosInstance.put(`/admin/orders/item-status/${orderId}`, { itemId, status });
   return response.data;
 };

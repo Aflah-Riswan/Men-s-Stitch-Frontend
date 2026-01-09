@@ -1,6 +1,17 @@
-
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
+
+// 1. Load EVERYTHING from storage, not just one based on URL
+const loadStateFromStorage = () => {
+  return {
+    userAccessToken: localStorage.getItem("userAccessToken"),
+    userRole: localStorage.getItem("userRole"),
+    adminAccessToken: localStorage.getItem("adminAccessToken"),
+    adminRole: localStorage.getItem("adminRole"),
+  };
+};
+
+const { userAccessToken, userRole, adminAccessToken, adminRole } = loadStateFromStorage();
 
 export const loginUser = createAsyncThunk(
   'auth/login',
@@ -15,41 +26,67 @@ export const loginUser = createAsyncThunk(
     }
   }
 )
-const storedToken = localStorage.getItem("accessToken")
-const storedRole = localStorage.getItem("role")
-console.log("stored token : ", storedToken)
+
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    role: null || storedRole,
     isLoading: false,
-    accessToken: storedToken ? storedToken : null,
     isError: null,
+    // 2. Store distinct variables to match RequireAuth
+    userAccessToken: userAccessToken || null,
+    userRole: userRole || null,
+    adminAccessToken: adminAccessToken || null,
+    adminRole: adminRole || null,
   },
   reducers: {
     setLogout: (state) => {
-      state.role = null,
-        state.accessToken = null,
-        state.isError = false
-      localStorage.removeItem("accessToken")
-      localStorage.removeItem("role")
+      
+      const isAdminPage = window.location.pathname.startsWith('/admin');
+      
+      if (isAdminPage) {
+        state.adminAccessToken = null;
+        state.adminRole = null;
+        localStorage.removeItem("adminAccessToken");
+        localStorage.removeItem("adminRole");
+      } else {
+        state.userAccessToken = null;
+        state.userRole = null;
+        localStorage.removeItem("userAccessToken");
+        localStorage.removeItem("userRole");
+      }
+      state.isError = false;
     },
     clearError: (state) => {
       state.isError = null
     },
+    
     updateAccessToken: (state, action) => {
-      state.accessToken = action.payload
-      localStorage.setItem("accessToken", action.payload)
+      const isAdminPage = window.location.pathname.startsWith('/admin');
+      if (isAdminPage) {
+        state.adminAccessToken = action.payload;
+        localStorage.setItem("adminAccessToken", action.payload);
+      } else {
+        state.userAccessToken = action.payload;
+        localStorage.setItem("userAccessToken", action.payload);
+      }
     },
     setCredentials: (state, action) => {
-      state.accessToken = action.payload.accessToken
-      state.refreshToken = action.payload.refreshToken
-      state.role = action.payload.user.role
+      const { user, accessToken } = action.payload;
+      state.isLoading = false;
+      state.isError = null;
 
-      localStorage.setItem("accessToken", action.payload.accessToken);
-      localStorage.setItem("role", action.payload.user.role);
-      localStorage.setItem("user", JSON.stringify(action.payload.user));
-    }
+      if (user.role === 'admin') {
+        state.adminAccessToken = accessToken;
+        state.adminRole = user.role;
+        localStorage.setItem("adminAccessToken", accessToken);
+        localStorage.setItem("adminRole", user.role);
+      } else {
+        state.userAccessToken = accessToken;
+        state.userRole = user.role;
+        localStorage.setItem("userAccessToken", accessToken);
+        localStorage.setItem("userRole", user.role);
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -58,12 +95,22 @@ const authSlice = createSlice({
         state.isError = null
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.isLoading = false
-        state.role = action.payload.role
-        state.accessToken = action.payload.accessToken
-        state.isError = null
-        localStorage.setItem("accessToken", action.payload.accessToken)
-        localStorage.setItem('role', action.payload.role)
+        state.isLoading = false;
+        state.isError = null;
+        
+        const { role, accessToken } = action.payload;
+
+        if (role === 'admin') {
+            state.adminAccessToken = accessToken;
+            state.adminRole = role;
+            localStorage.setItem("adminAccessToken", accessToken);
+            localStorage.setItem("adminRole", role);
+        } else {
+            state.userAccessToken = accessToken;
+            state.userRole = role;
+            localStorage.setItem("userAccessToken", accessToken);
+            localStorage.setItem("userRole", role);
+        }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false
@@ -71,5 +118,6 @@ const authSlice = createSlice({
       })
   }
 })
+
 export const { setLogout, clearError, updateAccessToken, setCredentials } = authSlice.actions
 export default authSlice.reducer

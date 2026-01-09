@@ -7,11 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 const Navbar = () => {
-  const { accessToken, role } = useSelector((state) => state.auth)
+  const { userAccessToken, role } = useSelector((state) => state.auth)
   const [search, setSearch] = useState('');
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  console.log("accesstoken  : ", accessToken)
+  console.log("accesstoken  : ", userAccessToken)
 
   function handleSearch(e) {
     if (e.key === 'Enter' || e.type === 'click') {
@@ -92,7 +92,7 @@ const Navbar = () => {
           </button>
 
           <button className="hover:scale-110 transition flex items-center gap-2" onClick={() => dispatch(setLogout())}>
-            {accessToken ? (
+            {userAccessToken ? (
               <>
                 <LogOutIcon className="w-6 h-6 text-black stroke-[1.5]" />
                 <span className="text-sm font-medium">Logout</span>

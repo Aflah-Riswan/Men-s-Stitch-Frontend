@@ -20,7 +20,6 @@ const OrderDetails = () => {
   const [newStatus, setNewStatus] = useState('');
   const [updating, setUpdating] = useState(false);
 
-  // UPDATED: Added Return statuses
   const ORDER_STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
   const ITEM_STATUSES = ['Ordered', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Return Requested', 'Return Approved', 'Return Rejected', 'Returned'];
 
@@ -34,7 +33,8 @@ const OrderDetails = () => {
     try {
       setLoading(true);
 
-      const data = await orderService.getOrderDetails(orderId);
+      const data = await orderService.getOrderDetailsAdmin(orderId);
+      console.log(" data : ",data)
       if (data.success) {
         setOrder(data.order);
       }
@@ -59,12 +59,12 @@ const OrderDetails = () => {
     setIsModalOpen(true);
   };
 
-  // --- NEW: Helper for Quick Return Actions ---
+
   const handleQuickStatusUpdate = async (itemId, status) => {
     if(!window.confirm(`Are you sure you want to set status to: ${status}?`)) return;
     
     try {
-        setLoading(true); // Small local loading effect could be better, but this works
+        setLoading(true); 
         const response = await orderService.updateOrderItemStatus(order._id, itemId, status);
         if (response.success) {
             toast.success(`Status updated to ${status}`);

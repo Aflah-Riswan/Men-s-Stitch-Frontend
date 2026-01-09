@@ -34,6 +34,7 @@ const Coupon = () => {
           sort 
         };
         const response = await couponService.getCoupons(filters);
+        
         setCoupons(response);
       } catch (error) {
         console.error("Failed to fetch coupons", error);

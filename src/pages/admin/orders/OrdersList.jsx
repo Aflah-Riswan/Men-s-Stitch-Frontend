@@ -7,11 +7,12 @@ import * as orderService from '../../../services/orderService';
 import { useNavigate } from 'react-router-dom';
 
 export default function OrderList() {
+  console.log(" orderlist :")
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalOrders: 0, newOrders: 0, delivered: 0, cancelled: 0 });
 
-  // UPDATED: Added 'Return Requested' to tabs
+
   const [activeTab, setActiveTab] = useState('All');
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +24,7 @@ export default function OrderList() {
     const fetchStats = async () => {
       try {
         const data = await orderService.getOrderStats();
+       
         if(data.success) setStats(data.stats);
       } catch (error) {
         console.error("Stats Error", error);
@@ -36,6 +38,7 @@ export default function OrderList() {
       setLoading(true);
       try {
         const data = await orderService.getAllOrders(currentPage, ITEMS_PER_PAGE, activeTab, search);
+         console.log(" data : ",data)
         if (data.success) {
           setOrders(data.orders);
           setTotalPages(data.totalPages);
@@ -61,7 +64,7 @@ export default function OrderList() {
     setCurrentPage(1);
   };
 
-  // UPDATED: Added styles for Return statuses
+  
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Delivered': return 'text-green-600 bg-green-50 border border-green-100';

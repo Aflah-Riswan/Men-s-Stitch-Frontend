@@ -38,7 +38,7 @@ export default function Customers() {
   const fetchUsers = async () => {
     const data = { page : currentPage, search : debouncedSearch, active, limit, sort };
     try {
-      const response = await axiosInstance.get('/users', { params: data });
+      const response = await axiosInstance.get('/admin/users', { params: data });
       if (response.data.success) {
         const { users, currentPage, totalPages } = response.data
         setCurrentPage(currentPage)
@@ -55,7 +55,7 @@ export default function Customers() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axiosInstance.get('/users/analytics')
+      const response = await axiosInstance.get('/admin/users/analytics')
       if (response.data.success) {
         setAnalytics(response.data)
         console.log(response.data)
@@ -67,7 +67,7 @@ export default function Customers() {
 
   const handleBlockUser = async (id, name) => {
     console.log("clicked")
-    const response = await axiosInstance.patch(`users/${id}/block`)
+    const response = await axiosInstance.patch(`/admin/users/${id}/block`)
     console.log(response)
     if (response.data.success) {
       setShowModal(true)
@@ -143,7 +143,7 @@ export default function Customers() {
           {/* You had a 4th card, adding it here to keep the stack even */}
           <StatusCard
             title={'Active Visitors'}
-            value={11040}
+            value={40}
             change={11.43}
             isPositive={false}
           />

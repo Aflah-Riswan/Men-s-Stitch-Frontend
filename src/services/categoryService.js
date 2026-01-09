@@ -1,34 +1,39 @@
-
 import axiosInstance from '../utils/axiosInstance';
 
+// Public: Get all categories (Used by Shop & Admin List)
 const getCategories = async () => {
   try {
     const response = await axiosInstance.get('/categories');
-    console.log("response  in serivs page :' ",response.data)
+    // console.log("response in service page : ", response.data)
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to load categories";
   }
 };
 
+// Admin: Get single category for editing
 const getCategoryBySlug = async (slug) => {
   try {
-    const response = await axiosInstance.get(`/categories/${slug}/edit`);
+    // 🔄 UPDATED: Points to Admin Router
+    const response = await axiosInstance.get(`/admin/categories/${slug}`);
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to fetch category";
   }
 };
 
+// Admin: Update existing category
 const updateCategory = async (slug, categoryData) => {
   try {
-    const response = await axiosInstance.put(`categories/${slug}/edit`, categoryData);
+    // 🔄 UPDATED: Points to Admin Router
+    const response = await axiosInstance.put(`/admin/categories/${slug}`, categoryData);
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to update category";
   }
 };
 
+// Shared: Upload Image (This remains on the public utility route)
 const uploadImage = async (imageFile) => {
   try {
     const formData = new FormData();
@@ -45,9 +50,11 @@ const uploadImage = async (imageFile) => {
   }
 };
 
+// Admin: Create new category
 const createCategory = async (categoryData) => {
   try {
-    const response = await axiosInstance.post('/categories', categoryData);
+    // 🔄 UPDATED: Points to Admin Router
+    const response = await axiosInstance.post('/admin/categories', categoryData);
     return response.data; 
   } catch (error) {
     throw error.response?.data?.message || "Failed to create category";

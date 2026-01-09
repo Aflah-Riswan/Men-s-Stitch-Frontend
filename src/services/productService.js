@@ -1,24 +1,30 @@
 import axiosInstance from '../utils/axiosInstance';
 
-
 const getProductById = async (id) => {
   try {
-    const { data } = await axiosInstance.get(`/products/${id}/edit`);
+    
+    const { data } = await axiosInstance.get(`/admin/products/${id}`);
     return data.product;
   } catch (error) {
     throw error.response?.data?.message || "Failed to fetch product";
   }
 };
 
-
 const updateProduct = async (id, payload) => {
   try {
-    const response = await axiosInstance.put(`/products/${id}/edit`, payload);
+  
+    const response = await axiosInstance.put(`/admin/products/${id}`, payload);
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to update product";
   }
 };
+
+const createProduct = async (productData) => {
+    const response = await axiosInstance.post('/admin/products', productData);
+  return response.data;
+};
+
 
 const getHomeProducts = async () => {
   try {
@@ -92,10 +98,6 @@ const uploadMultipleImages = async (imageFiles) => {
   return response
 };
 
-const createProduct = async (productData) => {
-  const response = await axiosInstance.post('/products', productData);
-  return response.data;
-};
 
 const productService = {
   getProductById,

@@ -17,7 +17,7 @@ export const fetchProducts = createAsyncThunk('products/fetchProducts', async (p
 export const toggleProductList = createAsyncThunk('product/toggleList', async (id, { rejectWithValue }) => {
 
   try {
-    const response = await axiosInstance.patch(`/products/${id}/toggle`)
+    const response = await axiosInstance.patch(`/admin/products/${id}/toggle`)
     console.log('response : ', response.data)
     if (response.data.success) {
       return response.data.updatedData
@@ -32,7 +32,7 @@ export const toggleProductList = createAsyncThunk('product/toggleList', async (i
 
 export const deleteProduct = createAsyncThunk('delete/product', async (id, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.patch(`/products/${id}/delete`)
+    const response = await axiosInstance.patch(`/admin/products/${id}/delete`)
     if (response.data.success) return response.data.deletedData
     else return rejectWithValue(response.data.message)
   } catch (error) {

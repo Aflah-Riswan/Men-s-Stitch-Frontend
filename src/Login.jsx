@@ -20,9 +20,10 @@ const Login = () => {
     try {
       const result = await dispatch(loginUser(data)).unwrap()
       console.log(result)
-      if (result.payload.role === 'admin') {
+      if (result.role === 'admin') {
+        console.log(result)
         navigate('/admin/dashboard')
-      } else if (result.payload.role === 'user') {
+      } else if (result.role === 'user') {
         navigate('/')
       }
     } catch (err) {

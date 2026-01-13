@@ -44,6 +44,7 @@ import Wallet from './pages/shop/user-account/Wallet'
 import SalesReport from './pages/admin/SalesReport'
 import MyCoupons from './pages/shop/MyCoupons'
 import PaymentFailed from './Components/PaymentFailed'
+import TransactionList from './pages/admin/transaction/TransactionList'
 
 function App() {
   const myTestVariable = "hello";
@@ -90,6 +91,7 @@ function App() {
             <Route path='orders' element={<OrderList/>} />
             <Route path='orders/:orderId' element={<OrderDetailsAdmin/>} />
             <Route path = 'sales-report' element={<SalesReport/>} />
+             <Route path = 'transactions' element={<TransactionList/>} />
           </Route>
         </Route>
 

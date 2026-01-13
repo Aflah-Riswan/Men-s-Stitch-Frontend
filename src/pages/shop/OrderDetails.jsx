@@ -41,7 +41,7 @@ const OrderDetails = () => {
 
 
   const getProgressStats = (status) => {
-    const steps = ['Ordered', 'Processing', 'Shipped', 'Delivered'];
+    const steps = ['Ordered', 'Processing', 'Shipped', 'Delivered' ,'Returned', 'Return Approved'];
     
     if (status === 'Cancelled') {
         return { currentIndex: -1, isCancelled: true, color: 'bg-red-500' };
@@ -71,6 +71,7 @@ const OrderDetails = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!order) return <div className="min-h-screen flex items-center justify-center">Order not found</div>;
 
+  
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
 
@@ -97,7 +98,7 @@ const OrderDetails = () => {
                 </div>
               </div>
 
-              {/* 2. REPLACED DUMMY BUTTON WITH PDF DOWNLOAD LINK */}
+              {/* Invoice Download */}
               {order && (
                 <PDFDownloadLink 
                   document={<InvoiceDocument order={order} />} 
@@ -269,6 +270,15 @@ const OrderDetails = () => {
                     <span>Subtotal</span>
                     <span className="font-bold text-gray-900">₹{order.subtotal}</span>
                   </div>
+
+                  {/* --- DISCOUNT DISPLAY LOGIC --- */}
+                  {order.discount > 0 && (
+                    <div className="flex justify-between text-red-500">
+                      <span>Discount {order.couponCode ? `(${order.couponCode})` : ''}</span>
+                      <span className="font-bold">-₹{order.discount}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping Fee</span>
                     <span className="font-bold text-green-500">{order.shippingFee === 0 ? 'Free' : `₹${order.shippingFee}`}</span>
@@ -295,6 +305,7 @@ const OrderDetails = () => {
 
     </div>
   );
+  
 };
 
 export default OrderDetails;

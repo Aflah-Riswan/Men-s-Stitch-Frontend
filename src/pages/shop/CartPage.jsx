@@ -22,6 +22,7 @@ const CartPage = () => {
     try {
       const response = await cartService.getCartItems();
       const cartData = response.data;
+      console.log(cartData)
       const { user } = response.data
       console.log(user)
       setUserDetails(user)

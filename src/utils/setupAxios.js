@@ -9,6 +9,13 @@ const setupAxios = (store) => {
   axiosInstance.interceptors.request.use(
     (config) => {
       const isAdminRequest = config.url.startsWith('/admin')
+
+      console.log(" isAdmin Request : ", isAdminRequest)
+      console.log("Checking URL:", config.url);
+      console.log("Is Admin Request?", isAdminRequest);
+      console.log("Keys in Storage:", Object.keys(localStorage));
+      console.log("Value of adminAccessToken:", localStorage.getItem('adminAccessToken'));
+      
       let token;
       if (isAdminRequest) {
         token = localStorage.getItem('adminAccessToken');
@@ -35,11 +42,10 @@ const setupAxios = (store) => {
       const { response } = error;
 
       if (response?.status === 404) {
-        window.location.href = '/404';
         console.log(response)
+        window.location.href = '/404';
         return Promise.reject(error);
       }
-
       if (response && response.data) {
         const { errorCode, message } = response.data;
         if (response.status !== 401) {

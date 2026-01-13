@@ -6,7 +6,6 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import { useLocation, useParams } from 'react-router-dom';
-import axiosInstance from '../../utils/axiosInstance';
 import categoryAttributes, { sizes } from '../../data';
 import ProductCard from '../../Components/products/ProductCard';
 import Stack from '@mui/material/Stack';
@@ -20,7 +19,11 @@ export default function CategoryPage() {
   const [products, setProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const location = useLocation()
+  
+  // 1. New State for Sorting
+  const [sortBy, setSortBy] = useState('newest'); 
+
+  const location = useLocation();
   const [selectedFilters, setSelectedFilters] = useState({
     minPrice: '',
     maxPrice: '',
@@ -30,12 +33,8 @@ export default function CategoryPage() {
 
   const debouncedFilters = useDebounce(selectedFilters, 500);
 
-  const fetchProducts = useCallback(async (page, filtersToUse) => {
+  const fetchProducts = useCallback(async (page, filtersToUse, sortOption) => {
     try {
-      const params = new URLSearchParams();
-      params.append('page', page);
-      params.append('limit', 10);
-
       const searchParams = new URLSearchParams(location.search);
       const searchQuery = searchParams.get('search');
 
@@ -43,7 +42,8 @@ export default function CategoryPage() {
         page,
         limit: 10,
         search: searchQuery,
-        filters: filtersToUse
+        filters: filtersToUse,
+        sort: sortOption 
       });
       console.log(response)
 
@@ -63,13 +63,13 @@ export default function CategoryPage() {
     if (slug && categoryAttributes[slug]) {
       setAttributes(categoryAttributes[slug]);
     }
-    setCurrentPage(1);
-    fetchProducts(1, debouncedFilters);
-  }, [debouncedFilters, slug, fetchProducts]);
+    fetchProducts(currentPage, debouncedFilters, sortBy); 
+  }, [debouncedFilters, slug, sortBy, currentPage, fetchProducts]);
 
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
     setSelectedFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1); 
   };
 
   const handleSizeToggle = (size) => {
@@ -79,6 +79,7 @@ export default function CategoryPage() {
         : [...prev.sizes, size];
       return { ...prev, sizes: currentSizes };
     });
+    setCurrentPage(1);
   };
 
   const handleAttributeToggle = (categoryLabel, option) => {
@@ -95,14 +96,18 @@ export default function CategoryPage() {
         }
       };
     });
+    setCurrentPage(1);
   };
-
-
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
-    fetchProducts(value, debouncedFilters);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 4. Sort Handler
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1); 
   };
 
   return (
@@ -194,7 +199,7 @@ export default function CategoryPage() {
                           key={opt}
                           onClick={() => handleAttributeToggle(section.label, opt)}
                           className={`px-4 py-2 text-xs rounded-full border transition-colors 
-                                            ${isSelected
+                                              ${isSelected
                               ? 'bg-black text-white border-black'
                               : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
                             }`}
@@ -212,6 +217,33 @@ export default function CategoryPage() {
 
           {/* --- RIGHT CONTENT --- */}
           <div className="flex-1">
+            
+            {/* 5. SORT HEADER UI */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+               <p className="text-sm text-gray-500">
+                 Showing {products.length} Products
+               </p>
+               
+               <div className="flex items-center gap-3">
+                 <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                 <div className="relative">
+                   <select 
+                     value={sortBy}
+                     onChange={handleSortChange}
+                     className="appearance-none border border-gray-300 rounded-md py-2 pl-3 pr-10 text-sm focus:outline-none focus:border-black cursor-pointer bg-white shadow-sm"
+                   >
+                     <option value="newest">Newest First</option>
+                     <option value="oldest">Oldest First</option>
+                     <option value="price_low_high">Price: Low to High</option>
+                     <option value="price_high_low">Price: High to Low</option>
+                     <option value="a_z">Name: A to Z</option>
+                     <option value="z_a">Name: Z to A</option>
+                   </select>
+                   <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                 </div>
+               </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
               {products.length > 0 ? (
                 products.map((product) => (

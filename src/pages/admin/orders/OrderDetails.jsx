@@ -61,7 +61,7 @@ const OrderDetails = () => {
 
 
   const handleQuickStatusUpdate = async (itemId, status) => {
-    if(!window.confirm(`Are you sure you want to set status to: ${status}?`)) return;
+   
     
     try {
         setLoading(true); 

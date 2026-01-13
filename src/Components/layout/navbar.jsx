@@ -22,7 +22,7 @@ const Navbar = () => {
     }
   }
   const handleCategoryClick = (category) => {
-    navigate(`/products/all?search=${encodeURIComponent(category)}`);
+   navigate(`/products/${category}`);
   };
   return (
     <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -48,11 +48,11 @@ const Navbar = () => {
             <li className="cursor-pointer hover:text-gray-500" 
             onClick={() => handleCategoryClick('Shirts')}>Shirts</li>
             <li className="cursor-pointer hover:text-gray-500" 
-            onClick={() => handleCategoryClick('Trousers')}>Trousers</li>
+            onClick={() => handleCategoryClick('Sports')}>Sports</li>
             <li className="cursor-pointer hover:text-gray-500" 
             onClick={() => handleCategoryClick('Innerwears')}>Innerwears</li>
             <li className="cursor-pointer hover:text-gray-500" 
-            onClick={() => handleCategoryClick('T-Shirts')}>T-Shirts</li>
+            onClick={() => handleCategoryClick('TShirts')}>T-Shirts</li>
           </ul>
         </div>
 

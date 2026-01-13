@@ -1,10 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { signupSchema } from '../../utils/signupSchema';
-import axiosInstance from '../../utils/axiosInstance';
+
 import authService from '../../services/authService';
+import { z } from 'zod';
 
 export default function OtpVerification() {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
@@ -14,7 +14,9 @@ export default function OtpVerification() {
   const navigate = useNavigate()
   const { email } = location.state
 
-  const otpSchema = signupSchema.pick({ otp: true })
+   const otpSchema = z.object({
+    otp: z.string().length(6, "OTP must be exactly 6 digits")
+  });
   const { handleSubmit, formState: { errors }, setValue, trigger } = useForm({
     resolver: zodResolver(otpSchema), defaultValues: {
       otp: ''
@@ -50,8 +52,8 @@ export default function OtpVerification() {
       navigate('/reset-password', {
         state: {
           data: {
-            email: email,       
-            otp: formData.otp  
+            email: email,
+            otp: formData.otp
           }
         }
       })

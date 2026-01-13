@@ -20,9 +20,10 @@ export const fetchCategories = createAsyncThunk('category/fetchAllCategory', asy
 })
 export const toggleListButton = createAsyncThunk('category/updateIsLsit', async (id, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.patch(`/categories/${id}/toggle`)
+    const response = await axiosInstance.patch(`/admin/categories/${id}/toggle`)
     return response.data.updated
   } catch (error) {
+    console.log(error)
     return rejectWithValue(error.response?.data?.message || error.message)
   }
 })
@@ -30,7 +31,7 @@ export const toggleListButton = createAsyncThunk('category/updateIsLsit', async 
 export const deleteCategory = createAsyncThunk('category/updateIsDeleted', async (id, { rejectWithValue }) => {
   try {
     confirm("Are you sure")
-    const response = await axiosInstance.patch(`/categories/${id}/delete`)
+    const response = await axiosInstance.patch(`/admin/categories/${id}/delete`)
     if (response.data.success) {
       return response.data.deletedItem
     }

@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, User, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import * as userService from '../../../services/userService'; 
+import * as userService from '../../../services/userService';
 
 const PersonalDetailsModal = ({ isOpen, onClose, currentUser, onUpdateSuccess }) => {
   const fileInputRef = useRef(null);
@@ -33,6 +33,12 @@ const PersonalDetailsModal = ({ isOpen, onClose, currentUser, onUpdateSuccess })
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+    
     if (file) {
       setSelectedFile(file);
       setImagePreview(URL.createObjectURL(file));
@@ -52,13 +58,13 @@ const PersonalDetailsModal = ({ isOpen, onClose, currentUser, onUpdateSuccess })
       data.append('firstName', formData.firstName || '');
       data.append('lastName', formData.lastName || '');
       if (selectedFile) {
-        data.append('profilePic', selectedFile); 
+        data.append('profilePic', selectedFile);
       }
       const response = await userService.updateUserDetails(data);
 
       if (response.success) {
         toast.success("Profile updated successfully");
-        if (onUpdateSuccess) onUpdateSuccess(response.user); 
+        if (onUpdateSuccess) onUpdateSuccess(response.user);
         onClose();
       }
 

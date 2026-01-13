@@ -4,8 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { signupSchema } from '../../utils/signupSchema'; // Import your schema
-import axiosInstance from '../../utils/axiosInstance'; // Import your axios
+
 import authService from '../../services/authService';
+import { z } from 'zod';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -14,12 +15,18 @@ export default function ResetPassword() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const { email, otp } = location.state?.data || {}
-  const resetPasswordSchema = signupSchema
-    .pick({ password: true, confirmPassword: true })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "Passwords do not match",
-      path: ["confirmPassword"],
-    });
+
+  const resetPasswordSchema = z.object({
+    password: z.string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-zA-Z]/, "Must contain alphabets")
+      .regex(/[0-9]/, "Must contain numbers")
+      .regex(/[^a-zA-Z0-9]/, "Must contain special characters"),
+    confirmPassword: z.string()
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(resetPasswordSchema)
@@ -35,11 +42,11 @@ export default function ResetPassword() {
     console.log(data)
     const response = await authService.resetPassword(data)
     console.log(response)
-    if(response.data.success){
+    if (response.data.success) {
       alert("updated succesfully")
       navigate('/login')
     }
-    else{ 
+    else {
       alert("something went wrong")
     }
 

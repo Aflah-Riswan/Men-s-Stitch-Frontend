@@ -35,20 +35,25 @@ const getHomeProducts = async () => {
   }
 };
 
-const getProductsByCategory = async (slug, { page = 1, limit = 10, search, filters = {} }) => {
+const getProductsByCategory = async (slug, { page = 1, limit = 10, search, sort, filters = {} }) => {
   try {
     const params = new URLSearchParams();
+    
+  
     params.append('page', page);
     params.append('limit', limit);
 
-   
+    
     if (search) params.append('search', search);
+    if (sort) params.append('sort', sort);
 
     if (filters.minPrice) params.append('minPrice', filters.minPrice);
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
+    
     if (filters.sizes && filters.sizes.length > 0) {
       params.append('sizes', filters.sizes.join(','));
     }
+    
     if (filters.attributes) {
       Object.keys(filters.attributes).forEach((key) => {
         const values = filters.attributes[key];
@@ -67,7 +72,6 @@ const getProductsByCategory = async (slug, { page = 1, limit = 10, search, filte
     throw error.response?.data?.message || "Failed to fetch category products";
   }
 };
-
 const uploadVariantImages = async (imageFiles) => {
   try {
     const formData = new FormData();

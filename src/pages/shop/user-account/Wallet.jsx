@@ -14,10 +14,13 @@ const Wallet = () => {
   const [loading, setLoading] = useState(false);
   const [description, setDescription] = useState('add money for purchase')
   const [transactions, setTransactions] = useState([]);
-  const [ referralCode , setReferralCode] = useState('')
+  const [error, setError] = useState(null)
+  const [referralCode, setReferralCode] = useState('')
+
   useEffect(() => {
     fetchWalletDetails()
   }, [])
+  if (error) throw error
 
   const fetchWalletDetails = async () => {
     try {
@@ -26,7 +29,11 @@ const Wallet = () => {
       setBalance(response.walletBalance)
       setTransactions(response.transactionDetails)
       setReferralCode(response.referralCode)
+
     } catch (error) {
+      if (error.response?.status === 403) {
+        setError(new Error("Access Denied"))
+      }
       console.log(error)
     }
   }
@@ -45,7 +52,7 @@ const Wallet = () => {
     try {
       const isScripted = await loadRazorPay()
       if (!isScripted) return toast.error('something wnet wrong in script loading')
-       
+
       const orderData = await paymentService.createPayment(amount)
       const options = {
         key: orderData.key_id,
@@ -69,10 +76,10 @@ const Wallet = () => {
             fetchWalletDetails()
             toast.success(" money added to your wallet")
           } catch (error) {
-             console.log(" errro  : ",error)
+            console.log(" errro  : ", error)
           }
         },
-         theme: { color: "#000000" }
+        theme: { color: "#000000" }
       }
       const paymentObject = new window.Razorpay(options)
       paymentObject.open()
@@ -80,23 +87,23 @@ const Wallet = () => {
       console.log(error)
     }
   }
-  const handleAddMoney = async () =>{
+  const handleAddMoney = async () => {
 
     try {
       setLoading(true)
-      await handleRazorPayment ()
+      await handleRazorPayment()
       setLoading(false)
     } catch (error) {
       console.log(error)
     }
   }
 
-  const handleCopyCode = () =>{
+  const handleCopyCode = () => {
 
   }
   return (
     // 1. Root Container (Matches Wishlist)
-<div className="min-h-screen bg-white font-sans text-gray-800 flex flex-col">
+    <div className="min-h-screen bg-white font-sans text-gray-800 flex flex-col">
 
       <div className="flex-grow max-w-7xl mx-auto px-4 md:px-8 py-12 w-full">
         <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
@@ -125,10 +132,10 @@ const Wallet = () => {
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div>
                     <h3 className="text-xl font-bold text-blue-900 mb-2 flex items-center gap-2">
-                       <Gift className="text-blue-600" size={20}/> Refer & Earn ₹100
+                      <Gift className="text-blue-600" size={20} /> Refer & Earn ₹100
                     </h3>
                     <p className="text-blue-700 max-w-md text-sm leading-relaxed">
-                      Share your unique code with friends. They get <span className="font-bold">₹50</span> instantly, 
+                      Share your unique code with friends. They get <span className="font-bold">₹50</span> instantly,
                       and you earn <span className="font-bold">₹100</span> after their first order!
                     </p>
                   </div>
@@ -149,7 +156,7 @@ const Wallet = () => {
                 {/* Decorative Background Icon */}
                 <Gift className="absolute -bottom-6 -right-6 text-blue-100 opacity-50 w-32 h-32 rotate-12 -z-0 pointer-events-none" />
               </div>
-      
+
 
               {/* ADD MONEY SECTION */}
               <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
@@ -196,22 +203,45 @@ const Wallet = () => {
                   <span className="font-bold text-gray-900">Transaction History</span>
                 </div>
                 <div className="divide-y divide-gray-100 bg-white">
-                  {  transactions.map((tx) => (
-                    <div key={tx._id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className={`p-2 rounded-full ${tx.transactionType === 'Credit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                          {tx.transactionType === 'Credit' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                  {transactions.length > 0 ? (
+                    transactions.map((tx) => (
+                      <div key={tx._id} className="p-4 flex justify-between items-start hover:bg-gray-50 transition-colors">
+
+                        <div className="flex items-start gap-4">
+                          {/* Icon */}
+                          <div className={`p-2 rounded-full mt-1 ${tx.transactionType === 'Credit' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            {tx.transactionType === 'Credit' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
+                          </div>
+
+                          {/* Details */}
+                          <div>
+                            <p className="font-bold text-gray-900">{tx.description}</p>
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              <p className="text-xs text-gray-500">
+                                {new Date(tx.createdAt).toLocaleDateString()} at {new Date(tx.createdAt).toLocaleTimeString()}
+                              </p>
+                              {/* 👇 ADDED PAYMENT ID HERE */}
+                              {tx.paymentId && (
+                                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
+                                  ID: {tx.paymentId}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{tx.description}</p>
-                          <p className="text-xs text-gray-500">{new Date(tx.createdAt).toLocaleDateString()}</p>
-                        </div>
+
+                        {/* Amount */}
+                        <span className={`font-bold whitespace-nowrap ${tx.transactionType === 'Credit' ? 'text-green-600' : 'text-red-600'}`}>
+                          {tx.transactionType === 'Credit' ? '+' : '-'} ₹{tx.amount}
+                        </span>
+
                       </div>
-                      <span className={`font-bold ${tx.transactionType === 'Credit' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.transactionType === 'Credit' ? '+' : '-'} ₹{tx.amount}
-                      </span>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-gray-400 text-sm">
+                      No transactions found.
                     </div>
-                  )) }
+                  )}
                 </div>
               </div>
 

@@ -43,7 +43,7 @@ const setupAxios = (store) => {
 
       if (response?.status === 404) {
         console.log(response)
-        window.location.href = '/404';
+        // window.location.href = '/404';
         return Promise.reject(error);
       }
       if (response && response.data) {

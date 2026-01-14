@@ -1,8 +1,8 @@
 import axiosInstance from '../utils/axiosInstance'
 
-export const getTransactions = async (query) =>{
+export const getTransactions = async (params) =>{
   try {
-    const response = await axiosInstance.get(`/admin/transactions`,{query})
+    const response = await axiosInstance.get(`/admin/transactions`,{params})
     return response.data
   } catch (error) {
     

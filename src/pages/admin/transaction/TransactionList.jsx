@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Search,
   ArrowUpRight,
@@ -13,29 +12,70 @@ import {
 } from 'lucide-react';
 import Stack from '@mui/material/Stack';
 import Pagination from '@mui/material/Pagination';
-import *as transactionService from '../../../services/transactionService'
+import * as transactionService from '../../../services/transactionService';
+import useDebounce from '../../../hooks/useDebounce'; // Ensure this path is correct
 
 const TransactionList = () => {
-  const [sort, setSort] = useState('')
-  const [search, setSearch] = useState('')
-  const [type, setType] = useState('')
-  const [method, setMethod] = useState('')
-  const [page, setPage] = useState(1)
-  const [transactions ,setTransactions] = useState([])
-  useEffect(() => {
-    fetchTransactions()
-  }, [search, type, page, method ,sort])
+  // --- STATE ---
+  const [sort, setSort] = useState('newest'); // Default to newest
+  const [search, setSearch] = useState('');
+  const [type, setType] = useState('');
+  const [method, setMethod] = useState('');
+  const [page, setPage] = useState(1);
+  const [transactions, setTransactions] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  const fetchTransactions = async () => {
+  // --- DEBOUNCE SEARCH ---
+  // Prevents API spam while typing
+  const debouncedSearch = useDebounce(search, 500);
+
+  // --- FETCH DATA ---
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
     try {
-      const data = await transactionService.getTransactions({page  ,search , type , method , sort})
-      console.log(" data : ",data)
-      setTransactions([...data.transactions])
+      // Use 'debouncedSearch' instead of raw 'search'
+      const data = await transactionService.getTransactions({
+        page,
+        limit: 10,
+        search: debouncedSearch,
+        type: type === 'All' ? '' : type,
+        method: method === 'All' ? '' : method,
+        sort
+      });
+
+      console.log("Fetched Data:", data);
+
+      if (data && data.transactions) {
+        setTransactions(data.transactions);
+        if (data.pagination) {
+          setTotalPages(data.pagination.totalPages);
+        }
+      } else {
+        setTransactions([]);
+      }
     } catch (error) {
-       console.log(error)
+      console.error("Error fetching transactions:", error);
+      setTransactions([]);
+    } finally {
+      setLoading(false);
     }
-  }
- 
+  }, [page, debouncedSearch, type, method, sort]);
+
+  // --- EFFECTS ---
+
+  // 1. Fetch data when dependencies change
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // 2. Reset Page to 1 when filters change
+  // This is CRITICAL: If you are on page 5 and search "Alex", 
+  // you must go back to page 1 or you won't see results.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, type, method, sort]);
+
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
@@ -60,15 +100,22 @@ const TransactionList = () => {
           <input
             type="text"
             placeholder="Search by Payment ID, Name or Email..."
-            onChange={(e)=>setSearch(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm"
           />
         </div>
 
         {/* Filter Dropdowns */}
         <div className="flex gap-3 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+          
+          {/* Type Filter */}
           <div className="relative min-w-[140px]">
-            <select className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer hover:border-gray-400 transition" onChange={((e)=>setType(e.target.value))}>
+            <select 
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer hover:border-gray-400 transition"
+            >
               <option value="All">All Types</option>
               <option value="Credit">Credits (Income)</option>
               <option value="Debit">Debits (Expense)</option>
@@ -76,14 +123,35 @@ const TransactionList = () => {
             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
 
+          {/* Method Filter */}
           <div className="relative min-w-[140px]">
-            <select className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer hover:border-gray-400 transition" onChange={(e)=>setMethod(e.target.value)}>
+            <select 
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer hover:border-gray-400 transition"
+            >
               <option value="All">All Methods</option>
               <option value="Wallet">Wallet</option>
               <option value="Razorpay">Razorpay</option>
             </select>
             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
+
+           {/* Sort Dropdown (Added Back) */}
+           <div className="relative min-w-[140px]">
+            <select 
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2.5 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer hover:border-gray-400 transition"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="amount_high">Amount: High-Low</option>
+              <option value="amount_low">Amount: Low-High</option>
+            </select>
+            <ArrowDownLeft className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          </div>
+
         </div>
       </div>
 
@@ -103,91 +171,97 @@ const TransactionList = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {  transactions.map((tx) => {
-                const isCredit = tx.transactionType === 'Credit';
+              {loading ? (
+                 <tr><td colSpan="7" className="p-8 text-center text-gray-500">Loading transactions...</td></tr>
+              ) : transactions.length > 0 ? (
+                transactions.map((tx) => {
+                  const isCredit = tx.transactionType === 'Credit';
 
-                return (
-                  <tr key={tx._id} className="hover:bg-gray-50 transition-colors group">
+                  return (
+                    <tr key={tx._id} className="hover:bg-gray-50 transition-colors group">
 
-                    {/* 1. Transaction Info */}
-                    <td className="p-5 max-w-[280px]">
-                      <div className="flex flex-col">
-                        <span className="font-mono text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          {tx.paymentId}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900 leading-snug">
-                          {tx.description}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* 2. User Info */}
-                    <td className="p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 shrink-0">
-                          {tx.user.profilePic ? (
-                            <img src={tx.user.profilePic} alt="" className="w-full h-full rounded-full object-cover" />
-                          ) : <User size={16} strokeWidth={2.5} />}
-                        </div>
+                      {/* 1. Transaction Info */}
+                      <td className="p-5 max-w-[280px]">
                         <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-gray-900">{tx.user.firstName}</span>
-                          <span className="text-xs text-gray-500">{tx.user.email}</span>
+                          <span className="font-mono text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                            {tx.paymentId || 'N/A'}
+                          </span>
+                          <span className="text-sm font-medium text-gray-900 leading-snug">
+                            {tx.description}
+                          </span>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* 3. Date */}
-                    <td className="p-5">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-gray-700 font-medium">
-                          {new Date(tx.createdAt).toLocaleDateString()}
+                      {/* 2. User Info */}
+                      <td className="p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 shrink-0 overflow-hidden">
+                            {tx.user?.profilePic ? (
+                              <img src={tx.user.profilePic} alt="" className="w-full h-full object-cover" />
+                            ) : <User size={16} strokeWidth={2.5} />}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-gray-900">{tx.user?.firstName || 'Unknown'}</span>
+                            <span className="text-xs text-gray-500">{tx.user?.email || 'No Email'}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 3. Date */}
+                      <td className="p-5">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-700 font-medium">
+                            {new Date(tx.createdAt).toLocaleDateString()}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* 4. Method */}
+                      <td className="p-5">
+                        <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border
+                          ${tx.method === 'Razorpay'
+                            ? 'bg-blue-50 text-blue-700 border-blue-100'
+                            : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
+                          {tx.method === 'Razorpay' ? <CreditCard size={14} /> : <Wallet size={14} />}
+                          {tx.method}
+                        </div>
+                      </td>
+
+                      {/* 5. Amount */}
+                      <td className="p-5 text-right">
+                        <div className={`inline-flex items-center gap-1 font-bold text-sm 
+                          ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {isCredit ? '+' : '-'} ₹{tx.amount.toLocaleString()}
+                          {isCredit ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                        </div>
+                      </td>
+
+                      {/* 6. Status */}
+                      <td className="p-5 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border
+                          ${tx.status === 'Success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            tx.status === 'Failed' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                              'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                          {tx.status}
                         </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* 4. Method */}
-                    <td className="p-5">
-                      <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-md text-xs font-medium border
-                         ${tx.method === 'Razorpay'
-                          ? 'bg-blue-50 text-blue-700 border-blue-100'
-                          : 'bg-purple-50 text-purple-700 border-purple-100'}`}>
-                        {tx.method === 'Razorpay' ? <CreditCard size={14} /> : <Wallet size={14} />}
-                        {tx.method}
-                      </div>
-                    </td>
+                      {/* 7. Action Dots */}
+                      <td className="p-5 text-right">
+                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
+                          <MoreVertical size={16} />
+                        </button>
+                      </td>
 
-                    {/* 5. Amount */}
-                    <td className="p-5 text-right">
-                      <div className={`inline-flex items-center gap-1 font-bold text-sm 
-                         ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {isCredit ? '+' : '-'} ₹{tx.amount.toLocaleString()}
-                        {isCredit ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
-                      </div>
-                    </td>
-
-                    {/* 6. Status */}
-                    <td className="p-5 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide border
-                        ${tx.status === 'Success' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          tx.status === 'Failed' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                            'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                        {tx.status}
-                      </span>
-                    </td>
-
-                    {/* 7. Action Dots */}
-                    <td className="p-5 text-right">
-                      <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
-                        <MoreVertical size={16} />
-                      </button>
-                    </td>
-
-                  </tr>
-                )
-              })}
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr><td colSpan="7" className="p-10 text-center text-gray-400">No transactions found matching your filters.</td></tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -196,11 +270,11 @@ const TransactionList = () => {
         <div className="p-4 bg-white border-t border-gray-200 flex justify-center">
           <Stack spacing={2}>
             <Pagination
-              count={10}
+              count={totalPages}
+              page={page}
+              onChange={(e, val) => setPage(val)}
               shape="rounded"
               color="primary"
-            // showFirstButton 
-            // showLastButton
             />
           </Stack>
         </div>

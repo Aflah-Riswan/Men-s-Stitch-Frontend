@@ -1,166 +1,274 @@
+import React, { useEffect, useState } from 'react';
+import { 
+  Users, 
+  ShoppingBag, 
+  DollarSign, 
+  Package, 
+  TrendingUp, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Loader
+} from 'lucide-react';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer
+} from 'recharts';
+import axiosInstance from '../../utils/axiosInstance'; 
 
-import { useDispatch, useSelector } from 'react-redux';
-import { setLogout } from '../../redux/slice/authSlice'; 
-import AdminSidebar from '../../Components/AdminSidebar';
-import { useNavigate } from 'react-router-dom';
+const AdminDashboard = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await axiosInstance.get('/admin/dashboard-stats');
+        if (response.data.success) {
+          setDashboardData(response.data);
+        }
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+        setError("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchDashboardData();
+  }, []);
 
-const DashboardDesign = () => {
- const dispatch = useDispatch()
+  // --- Helper to map Stat Titles to Icons ---
+  const getIconForTitle = (title) => {
+    switch (title) {
+      case 'Total Revenue': return DollarSign;
+      case 'Total Orders': return ShoppingBag;
+      case 'Total Products': return Package;
+      case 'Total Users': return Users;
+      default: return TrendingUp;
+    }
+  };
+
+  // --- Helper to map Stat Titles to Colors ---
+  const getColorForTitle = (title) => {
+    switch (title) {
+      case 'Total Revenue': return 'bg-green-100 text-green-600';
+      case 'Total Orders': return 'bg-blue-100 text-blue-600';
+      case 'Total Products': return 'bg-orange-100 text-orange-600';
+      case 'Total Users': return 'bg-purple-100 text-purple-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-2">
+          <Loader className="animate-spin text-blue-600" size={32} />
+          <p className="text-gray-500 font-medium">Loading Dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="p-10 text-center text-red-500 bg-gray-50 min-h-screen">
+        <p className="font-bold text-lg">{error || "Something went wrong"}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-white border border-red-200 rounded-lg shadow-sm hover:bg-red-50"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const { stats, salesData, topProducts, recentOrders } = dashboardData;
+
   return (
-    <div className="flex h-screen bg-gray-50 font-sans">
-      {/* Sidebar */}
+    <div className="p-6 bg-gray-50 min-h-screen font-sans text-gray-800">
+      
+      {/* 1. HEADER */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+        <p className="text-gray-500 mt-1">Welcome back, Admin. Here's what's happening today.</p>
+      </div>
 
+      {/* 2. STATS CARDS GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => {
+          const Icon = getIconForTitle(stat.title);
+          const colorClass = getColorForTitle(stat.title);
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-gray-800">Dashboard</h2>
-        </header>
-        <button onClick={()=>dispatch(setLogout())}>Logout</button>
-
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6">Overview</h3>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            {/* Total Sales Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h4 className="text-sm font-medium text-gray-500 mb-2">Total Sales</h4>
-              <p className="text-xs text-gray-400 mb-4">Last 7 days</p>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">₹65,805</span>
-                <span className="ml-2 text-sm text-gray-500">Sales</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2 flex items-center">
-                Previous 7days <span className="text-blue-500 ml-1 font-medium"> (₹59,224)</span>
-              </p>
-            </div>
-
-            {/* Total Orders Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h4 className="text-sm font-medium text-gray-500 mb-2">Total Orders</h4>
-              <p className="text-xs text-gray-400 mb-4">Last 7 days</p>
-              <div className="flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">10.7K</span>
-                <span className="ml-2 text-sm text-gray-500">order</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2 flex items-center">
-                Previous 7days <span className="text-blue-500 ml-1 font-medium"> (7.6k)</span>
-              </p>
-            </div>
-
-            {/* Pending & Canceled Card */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h4 className="text-sm font-medium text-gray-500 mb-2">Pending & Canceled</h4>
-              <p className="text-xs text-gray-400 mb-4">Last 7 days</p>
-              <div className="flex space-x-8">
+          return (
+            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Pending</p>
-                  <div className="flex items-baseline">
-                    <span className="text-2xl font-bold text-green-600">509</span>
-                    <span className="ml-2 text-sm text-green-600 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12 7a1 1 0 10-2 0v2a1 1 0 102 0V7zM8 7a1 1 0 10-2 0v2a1 1 0 102 0V7z" clipRule="evenodd" /><path fillRule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm9 12H6a1 1 0 01-1-1V6a1 1 0 011-1h8a1 1 0 011 1v8a1 1 0 01-1 1z" clipRule="evenodd" /></svg>
-                      <span className="font-medium">+204</span>
-                    </span>
-                  </div>
+                  <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                    {stat.type === 'money' ? `₹${stat.value.toLocaleString()}` : stat.value}
+                  </h3>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Canceled</p>
-                  <div className="flex items-baseline">
-                    <span className="text-2xl font-bold text-red-600">94</span>
-                    <span className="ml-2 text-sm text-red-600 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" /></svg>
-                      <span className="font-medium">+14.4%</span>
-                    </span>
-                  </div>
+                <div className={`p-3 rounded-lg ${colorClass}`}>
+                  <Icon size={20} />
                 </div>
               </div>
+              <div className="mt-4 flex items-center gap-1 text-sm">
+                <span className={`flex items-center font-medium ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {stat.isPositive ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                  {stat.change}
+                </span>
+                <span className="text-gray-400">vs last month</span>
+              </div>
             </div>
-          </div>
+          );
+        })}
+      </div>
 
-          {/* Orders Table */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Name</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#12545</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">Ethan Carter</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">$150</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Pending
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">2023-08-15</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#12546</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">Sophia Turner</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">$200</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      Shipped
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">2023-08-14</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#12547</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">Liam Harper</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">$100</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Delivered
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">2023-08-13</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#12548</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">Olivia Foster</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">$250</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Pending
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">2023-08-12</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">#12549</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">Noah Brooks</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">$180</td>
-                  <td className="px-6 py-4">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      Shipped
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">2023-08-11</td>
-                </tr>
-              </tbody>
-            </table>
+      {/* 3. CHARTS SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        
+        {/* Main Sales Chart */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-gray-900">Revenue Analytics</h3>
+            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">Last 7 Days</span>
           </div>
           
-          <div className="mt-4 flex justify-end">
-            <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              View All Orders
-            </button>
+          <div className="h-[300px]">
+            {salesData && salesData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={salesData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#6B7280', fontSize: 12}} 
+                    dy={10} 
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#6B7280', fontSize: 12}} 
+                    tickFormatter={(value) => `₹${value/1000}k`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1F2937', color: '#fff', borderRadius: '8px', border: 'none' }}
+                    itemStyle={{ color: '#fff' }}
+                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="sales" 
+                    stroke="#000" 
+                    strokeWidth={3} 
+                    dot={{r: 4, fill: '#000', strokeWidth: 2, stroke: '#fff'}} 
+                    activeDot={{r: 6}} 
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400">
+                No sales data for this period
+              </div>
+            )}
           </div>
-        </main>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          <h3 className="font-bold text-gray-900 mb-6">Top Selling Products</h3>
+          <div className="space-y-6 flex-1 overflow-y-auto pr-2 max-h-[300px] scrollbar-thin">
+            {topProducts && topProducts.length > 0 ? (
+              topProducts.map((product, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500 font-bold shrink-0">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{product.name}</p>
+                      <p className="text-xs text-gray-500">{product.totalSold} sold</p>
+                    </div>
+                  </div>
+                  <span className="font-semibold text-sm text-gray-900">₹{product.revenue.toLocaleString()}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-10">No top products yet.</p>
+            )}
+          </div>
+        </div>
+
       </div>
+
+      {/* 4. RECENT ORDERS TABLE */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+          <h3 className="font-bold text-gray-900">Recent Orders</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+              <tr>
+                <th className="px-6 py-4">Order ID</th>
+                <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">Date</th>
+                <th className="px-6 py-4">Amount</th>
+                <th className="px-6 py-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {recentOrders && recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <tr key={order.orderId} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 font-mono">
+                      {order.orderId}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{order.user?.firstName || 'Guest'}</span>
+                        <span className="text-xs text-gray-500">{order.user?.email}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                      ₹{order.totalAmount.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+                        ${order.status === 'Delivered' ? 'bg-green-50 text-green-700 border-green-200' :
+                          order.status === 'Processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                          order.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                          'bg-yellow-50 text-yellow-700 border-yellow-200'
+                        }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">No recent orders found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   );
 };
 
-export default DashboardDesign;
+export default AdminDashboard;

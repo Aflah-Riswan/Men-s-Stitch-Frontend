@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom"
 
 export default function RequireAuth({ allowedRoles }) {
   const { userAccessToken, adminAccessToken, userRole, adminRole } = useSelector((state) => state.auth)
+  console.log(" userAccessToken : ",userAccessToken)
   const location = useLocation()
 
   // 1. Determine which token/role we need to check based on the route requirements

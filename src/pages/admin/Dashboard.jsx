@@ -19,11 +19,16 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import axiosInstance from '../../utils/axiosInstance'; 
+import { useDispatch } from 'react-redux';
+import { setLogout } from '../../redux/slice/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -42,6 +47,12 @@ const AdminDashboard = () => {
 
     fetchDashboardData();
   }, []);
+
+const handleLogout = () =>{
+  console.log("clicked")
+  dispatch(setLogout())
+  navigate('/admin/login')
+}
 
   // --- Helper to map Stat Titles to Icons ---
   const getIconForTitle = (title) => {
@@ -99,6 +110,7 @@ const AdminDashboard = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
         <p className="text-gray-500 mt-1">Welcome back, Admin. Here's what's happening today.</p>
+        <button onClick={()=>handleLogout()}>Logout</button>
       </div>
 
       {/* 2. STATS CARDS GRID */}

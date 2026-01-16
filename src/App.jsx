@@ -45,12 +45,15 @@ import SalesReport from './pages/admin/SalesReport'
 import MyCoupons from './pages/shop/MyCoupons'
 import PaymentFailed from './Components/PaymentFailed'
 import TransactionList from './pages/admin/transaction/TransactionList'
+import AdminPublicRoutes from './Components/AdminPublicRoutes'
+import UserPublicRoutes from './Components/UserPublicRoutes'
+
 
 function App() {
   const myTestVariable = "hello";
   return (
     <BrowserRouter>
-    
+
       <Toaster
         position="top-right"
         reverseOrder={false}
@@ -66,12 +69,27 @@ function App() {
 
 
         <Route element={<PublicRoutes />}>
-          <Route path='/login' element={<Login />} />
-          <Route path='/signup' element={<Signup />} />
+
+          <Route path='/login' element={
+            <UserPublicRoutes>
+              <Login role='user'/>
+            </UserPublicRoutes>
+          } />
+
+          <Route path='/signup' element={
+            <UserPublicRoutes>
+              <Signup />
+            </UserPublicRoutes>
+          } />
+          <Route path='/admin/login' element={
+            <AdminPublicRoutes>
+              <Login role='admin' />
+            </AdminPublicRoutes>
+          } />
           <Route path='forgot-password' element={<ForgotPassword />} />
           <Route path='/verify-otp' element={<OtpVerification />} />
           <Route path='/reset-password' element={<ResetPassword />} />
-          <Route path='/phone' element={<PhoneVerificationModal/>} />
+          <Route path='/phone' element={<PhoneVerificationModal />} />
         </Route>
 
 
@@ -88,10 +106,10 @@ function App() {
             <Route path="coupons/add" element={<AddCoupon />} />
             <Route path='coupons/:id/edit' element={<EditCoupon />} />
             <Route path='coupons' element={<Coupon />} />
-            <Route path='orders' element={<OrderList/>} />
-            <Route path='orders/:orderId' element={<OrderDetailsAdmin/>} />
-            <Route path = 'sales-report' element={<SalesReport/>} />
-             <Route path = 'transactions' element={<TransactionList/>} />
+            <Route path='orders' element={<OrderList />} />
+            <Route path='orders/:orderId' element={<OrderDetailsAdmin />} />
+            <Route path='sales-report' element={<SalesReport />} />
+            <Route path='transactions' element={<TransactionList />} />
           </Route>
         </Route>
 
@@ -104,12 +122,12 @@ function App() {
           <Route element={<RequireAuth allowedRoles={['user']} />}>
             <Route path='product/:id/details' element={<ProductDetails />} />
             <Route path='profile' element={<UserInfo />} />
-            <Route path='orders' element={<OrderHistory/>} />
-            <Route path='orders/:orderId' element={<OrderDetails/>}/>
+            <Route path='orders' element={<OrderHistory />} />
+            <Route path='orders/:orderId' element={<OrderDetails />} />
             <Route path='wishlist' element={<Wishlist />} />
             <Route path='addresses' element={<Address />} />
-            <Route path='coupons' element={<MyCoupons/>} />
-            <Route path='wallet' element={<Wallet/>} />
+            <Route path='coupons' element={<MyCoupons />} />
+            <Route path='wallet' element={<Wallet />} />
             <Route path='addresses/add' element={<AddNewAddress />} />
             <Route path='address/:addressId/edit' element={<EditAddress />} />
             <Route path='category/:slug' element={<CategoryPage />} />
@@ -117,10 +135,10 @@ function App() {
             <Route path='cart' element={<CartPage />} />
             <Route path='checkout' element={<Checkout />} />
 
-            <Route path='payment' element={<Payment />} />   
+            <Route path='payment' element={<Payment />} />
             <Route path='order-success' element={<OrderSuccess />} />
-            <Route path ='settings' element={<AccountSettings/>}/>
-            <Route path ='payment-failed' element={<PaymentFailed/>}/>
+            <Route path='settings' element={<AccountSettings />} />
+            <Route path='payment-failed' element={<PaymentFailed />} />
 
           </Route>
 

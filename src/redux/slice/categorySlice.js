@@ -4,9 +4,9 @@ import axiosInstance from "../../utils/axiosInstance";
 
 export const fetchCategories = createAsyncThunk('category/fetchAllCategory', async (params, { rejectWithValue }) => {
   try {
-    console.log("params : ",params)
+    // console.log("params : ",params)
     const response = await axiosInstance.get('/categories',{params})
-    console.log( " response : in thunk : " ,response.data)
+    // console.log( " response : in thunk : " ,response.data)
     if(response.data.success){
       
        return response.data
@@ -23,7 +23,7 @@ export const toggleListButton = createAsyncThunk('category/updateIsLsit', async 
     const response = await axiosInstance.patch(`/admin/categories/${id}/toggle`)
     return response.data.updated
   } catch (error) {
-    console.log(error)
+    // console.log(error)
     return rejectWithValue(error.response?.data?.message || error.message)
   }
 })
@@ -61,13 +61,12 @@ const categorySlice = createSlice({
     },
     setSubCategories: (state, action) => {
       const selectedCategory = action.payload
-      console.log("selected : ",action.payload)
-      console.log("parents : ",state.parentCategories)
+  
       const filtered = state.items.filter(
         (cat) => cat.parentCategory === selectedCategory._id
       )
       state.subCategories = filtered
-      console.log("filtered : ",filtered)
+      // console.log("filtered : ",filtered)
       
     }
     
@@ -79,7 +78,7 @@ const categorySlice = createSlice({
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
         const { categories,pagination } = action.payload
-        console.log("payload : ",action.payload)
+        // console.log("payload : ",action.payload)
         state.isLoading = false
         state.items =categories
         state.pagination = pagination
@@ -93,7 +92,7 @@ const categorySlice = createSlice({
         state.isLoading = true
       })
       .addCase(toggleListButton.fulfilled, (state, action) => {
-        console.log(action.payload)
+       // console.log(action.payload)
         const { _id, isListed } = action.payload
         const existingCategory = state.items.find((cat) => cat._id === _id)
         if (existingCategory) {

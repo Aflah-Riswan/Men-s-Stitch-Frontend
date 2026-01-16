@@ -7,9 +7,10 @@ import { useEffect, useState } from 'react';
 import { EyeClosed, EyeIcon } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google'
 import authService from './services/authService';
+import toast from 'react-hot-toast';
 
 
-const Login = () => {
+const Login = ({ role = 'user' }) => {
 
   const { register, handleSubmit, formState: { errors } } = useForm()
   const [reveal, setReveal] = useState(false)
@@ -18,15 +19,36 @@ const Login = () => {
   const navigate = useNavigate()
   const onSubmit = async (data) => {
     try {
-      const result = await dispatch(loginUser(data)).unwrap()
-      console.log(result)
-      if (result.role === 'admin') {
-        console.log(result)
-        navigate('/admin/dashboard')
-      } else if (result.role === 'user') {
+      const response = await dispatch(loginUser(data)).unwrap()
+
+      if (!response || !response.accessToken) {
+        // This handles the case where backend sends 200 OK but it's actually an error
+        console.log("Login failed (Fake Success):", response);
+        toast.error(response?.message || "Invalid Email or Password");
+        return; // ❌ STOP THE FUNCTION. DO NOT REDIRECT.
+      }
+
+      if (role === 'admin' && response.role !== 'admin') {
+        toast.error("Access Denied: You are not an Admin.");
+        return;
+      }
+
+      // Case B: Admin tries to login on User Page
+      if (role === 'user' && response.role === 'admin') {
+        toast.error("Please use the Admin Login Portal.");
+        // Optional: navigate('/admin/login');
+        return; // Stop here!
+      }
+
+      // 3. Success! Dispatch to Redux based on role
+      if (response.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        console.log(" inside elese : ", response)
         navigate('/')
       }
     } catch (err) {
+      toast.error(err)
       console.log("error found: ", err)
     }
 
@@ -50,7 +72,7 @@ const Login = () => {
   };
   return (
 
-   <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
 
       <div className="bg-white w-full max-w-[450px] rounded-3xl p-8 relative shadow-xl">
 
@@ -74,7 +96,7 @@ const Login = () => {
             create an account
           </a>
         </div>
-        
+
         {isError && <span className="text-xs text-red-500 block mb-2">{isError}</span>}
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -101,7 +123,7 @@ const Login = () => {
               <input
                 type={reveal ? "text" : 'password'}
                 placeholder="Password"
-                
+
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-10 text-gray-700 placeholder-gray-500 focus:outline-none focus:border-gray-500 focus:ring-1 focus:ring-gray-500 transition"
                 {...register("password", { required: "password is required" })}
               />
@@ -140,12 +162,12 @@ const Login = () => {
             </label>
           </div>
           {errors.agreeTerms && <span className="text-red-500 text-xs">You can't login without accepting terms</span>}
-          
+
           {/* Submit Button */}
           <button
             type="submit"
             className="w-full bg-[#C6C6C6] hover:bg-gray-400 text-white font-semibold text-lg py-4 rounded-full mt-6 transition duration-200 shadow-sm"
-           
+
           >
             Go To Store//
           </button>
@@ -164,13 +186,13 @@ const Login = () => {
 
         {/* --- GOOGLE BUTTON START --- */}
         <div className="flex justify-center w-full">
-           <GoogleLogin 
-             onSuccess={handleSuccess} 
-             onError={handleError} 
-             theme="outline"
-             shape="pill"
-             width="100%"
-           />
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={handleError}
+            theme="outline"
+            shape="pill"
+            width="100%"
+          />
         </div>
         {/* --- GOOGLE BUTTON END --- */}
 

@@ -5,16 +5,10 @@ import { toast } from 'react-hot-toast'
 const setupAxios = (store) => {
   console.log("axios interceptors initialized")
 
-
+  // 1. REQUEST INTERCEPTOR
   axiosInstance.interceptors.request.use(
     (config) => {
       const isAdminRequest = config.url.startsWith('/admin')
-
-      console.log(" isAdmin Request : ", isAdminRequest)
-      console.log("Checking URL:", config.url);
-      console.log("Is Admin Request?", isAdminRequest);
-      console.log("Keys in Storage:", Object.keys(localStorage));
-      console.log("Value of adminAccessToken:", localStorage.getItem('adminAccessToken'));
       
       let token;
       if (isAdminRequest) {
@@ -22,6 +16,7 @@ const setupAxios = (store) => {
       } else {
         token = localStorage.getItem('userAccessToken')
       }
+      
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`
       }
@@ -30,8 +25,10 @@ const setupAxios = (store) => {
     (error) => Promise.reject(error)
   )
 
+  // 2. RESPONSE INTERCEPTOR
   axiosInstance.interceptors.response.use(
     (response) => {
+      // Show success toast for non-GET requests if message exists
       if (response.data?.message && response.config.method !== 'get') {
         toast.success(response.data.message);
       }
@@ -41,11 +38,12 @@ const setupAxios = (store) => {
       const originalRequest = error.config;
       const { response } = error;
 
+      // --- Handle 404 ---
       if (response?.status === 404) {
-        console.log(response)
-        // window.location.href = '/404';
         return Promise.reject(error);
       }
+
+      // --- Handle Global Error Toasts (Except 401) ---
       if (response && response.data) {
         const { errorCode, message } = response.data;
         if (response.status !== 401) {
@@ -69,7 +67,17 @@ const setupAxios = (store) => {
         }
       }
 
+      // --- CRITICAL FIX: Handle 401 (Unauthorized) ---
       if (response?.status === 401 && !originalRequest._retry) {
+        
+        // 🛑 FIX START: If the failed request was a LOGIN attempt, STOP HERE.
+        // We must NOT try to refresh the token, or it will create a "Zombie Login".
+        if (originalRequest.url.includes('/login') || originalRequest.url.includes('/auth/login')) {
+             return Promise.reject(error);
+        }
+        // 🛑 FIX END
+
+        // If the refresh token endpoint itself failed, force logout
         if (originalRequest.url.includes('/auth/refresh-token')) {
           store.dispatch(setLogout());
           window.location.href = '/login';
@@ -77,11 +85,15 @@ const setupAxios = (store) => {
         }
 
         originalRequest._retry = true;
+        
         try {
           const isAdminRequest = originalRequest.url.startsWith('/admin')
+          
+          // Attempt to get a new token using the HttpOnly cookie
           const res = await axiosInstance.post('/auth/refresh-token');
           const { accessToken } = res.data;
 
+          // Update LocalStorage and Redux
           if (isAdminRequest) {
             localStorage.setItem('adminAccessToken', accessToken);
           } else {
@@ -89,10 +101,13 @@ const setupAxios = (store) => {
           }
 
           store.dispatch(updateAccessToken(accessToken));
+          
+          // Retry the original failed request with the new token
           originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
-
           return axiosInstance(originalRequest);
+
         } catch (refreshError) {
+          // If refresh fails, log the user out completely
           store.dispatch(setLogout());
           window.location.href = '/login';
           return Promise.reject(refreshError);
@@ -104,4 +119,4 @@ const setupAxios = (store) => {
   );
 };
 
-export default setupAxios
+export default setupAxios;

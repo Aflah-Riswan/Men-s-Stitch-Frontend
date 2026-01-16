@@ -11,7 +11,7 @@ const Navbar = () => {
   const [search, setSearch] = useState('');
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  console.log("accesstoken  : ", userAccessToken)
+ 
 
   function handleSearch(e) {
     if (e.key === 'Enter' || e.type === 'click') {

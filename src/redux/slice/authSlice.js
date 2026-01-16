@@ -18,6 +18,7 @@ export const loginUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/auth/login', userData)
+      console.log("Login API Response:", response.data);
       return response.data
     } catch (error) {
       console.log(error)
@@ -48,6 +49,7 @@ const authSlice = createSlice({
         state.adminRole = null;
         localStorage.removeItem("adminAccessToken");
         localStorage.removeItem("adminRole");
+        window.location.href='/admin/login'
       } else {
         state.userAccessToken = null;
         state.userRole = null;

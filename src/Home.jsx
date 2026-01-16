@@ -33,7 +33,7 @@ export default function Home() {
   useEffect(() => {
     fetchProducts()
     featuredReviews()
-    console.log("categories : ", categories)
+    // console.log("categories : ", categories)
   }, [dispatch])
 
 
@@ -45,26 +45,26 @@ export default function Home() {
         setNewArrivals([...response.data.newArrivals])
         setProducts([...response.data.products])
       } else {
-        console.log(response.data)
+        // console.log(response.data)
         alert('something went wrong')
       }
     } catch (error) {
-      console.log(error)
+      // console.log(error)
     }
   }
   const featuredReviews = async () => {
     try {
       const response = await reviewService.getFeaturedReviews()
-      console.log(response)
+      // console.log(response)
       if (response.data.success) {
         setTestimonials([...response.data.reviews])
-        console.log(response.data)
+        // console.log(response.data)
       }
     } catch (error) {
-      console.log("error in  : ", error)
+      // console.log("error in  : ", error)
     }
   }
-  console.log("State Check:", { featured, newArrivals, products });
+  // console.log("State Check:", { featured, newArrivals, products });
   return (
     <>
 

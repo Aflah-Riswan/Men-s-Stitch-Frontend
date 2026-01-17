@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Truck, MessageSquare, RotateCcw, AlertCircle, XCircle, Package, Eye } from 'lucide-react';
+import { Download, Truck, MessageSquare, RotateCcw, AlertCircle, XCircle, Package, Eye, RefreshCw } from 'lucide-react'; // Added RefreshCw
 import { toast } from 'react-hot-toast';
 import * as orderService from '../../services/orderService';
+import * as addressService from '../../services/addressService'
 
 import UserSidebar from '../../Components/user-account-components/UserSidebar';
 import Footer from '../../Components/Footer';
@@ -13,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
+  const [addresses, setAddresses] = useState([])
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -22,9 +24,16 @@ const OrderHistory = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await orderService.getMyOrders();
-      if (response.data.success) {
-        setOrders(response.data.orders);
+      const [orderRes, addressRes] = await Promise.all([
+        orderService.getMyOrders(),
+        addressService.getAddress()]);
+      console.log(orderRes.data)
+      if (orderRes.data.success) {
+        setOrders(orderRes.data.orders);
+      }
+      if (addressRes.data?.success) {
+        console.log(addressRes.data)
+        setAddresses(addressRes.data.addresses);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -55,22 +64,52 @@ const OrderHistory = () => {
     setActiveModal('return');
   };
 
+ const findMatchingAddress = (address) => {
+    if (!address) return null;
+    const match = addresses.find((addr) => {
+      const savedString = `${addr.addressLine1} ${addr.addressLine2 || ''}`.trim().toLowerCase();
+      const orderString = address.street?.trim().toLowerCase(); 
+      return savedString === orderString;
+    });
+    console.log("Found Match:", match);
+    return match ? match._id : null;
+  }
+  const handleRetryPayment = (order) => {
+
+    const retryPaymentSummary = {
+      subTotal: order.subtotal,
+      discount: order.discount,
+      shippingFee: order.shippingFee,
+      grandTotal: order.totalAmount
+    };
+
+    navigate('/payment', {
+      state: {
+        addressId: findMatchingAddress(order.shippingAddress),
+        paymentSummary: retryPaymentSummary,
+        autoRetry: true
+      },
+      replace: true
+    });
+  };
+
+
   const handleConfirmCancel = async (reason) => {
     const { orderId, itemId } = selectedData;
     try {
       if (itemId) {
-
         await orderService.cancelOrder(orderId, reason, itemId);
         toast.success("Item cancelled successfully");
       } else {
-
         await orderService.cancelEntireOrder(orderId, reason);
         toast.success("Order cancelled successfully");
       }
-
       fetchOrders();
       setActiveModal('none');
     } catch (error) {
+      const msg = error.response?.data?.message || "Failed to cancel";
+      const errorCode = error.response?.data?.errorCode;
+
       if (errorCode === 'COUPON_VIOLATION' && itemId) {
         setActiveModal('none');
         setItemErrors(prev => ({ ...prev, [itemId]: msg }));
@@ -83,7 +122,6 @@ const OrderHistory = () => {
         }, 5000);
       }
       else {
-
         toast.error(msg);
         setActiveModal('none');
       }
@@ -139,6 +177,12 @@ const OrderHistory = () => {
         return { color: 'text-yellow-600', bg: 'bg-yellow-50', actions: [] };
       case 'Return Rejected':
         return { color: 'text-yellow-600', bg: 'bg-yellow-50', actions: [] };
+
+      // ✅ ADDED: Payment Failed Config
+      case 'Payment Failed':
+      case 'Failed':
+        return { color: 'text-red-700', bg: 'bg-red-100', actions: ['retry'] };
+
       default:
         return { color: 'text-lime-600', bg: 'bg-lime-50', actions: ['cancel'] };
     }
@@ -182,7 +226,11 @@ const OrderHistory = () => {
             <div className="space-y-6">
 
               {orders.map((order) => {
-                const isOrderCancellable = !['Cancelled', 'Delivered', 'Returned', 'Return Approved'].includes(order.status);
+                // ✅ MODIFIED: Prevent cancelling if already failed
+                const isOrderCancellable = !['Cancelled', 'Delivered', 'Returned', 'Return Approved', 'Payment Failed', 'Failed'].includes(order.status);
+
+                // ✅ Check if it is a failed order to show Retry button
+                const isPaymentFailed = ['Payment Failed', 'Failed'].includes(order.status);
 
                 return (
                   <div key={order._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -205,6 +253,17 @@ const OrderHistory = () => {
                       </div>
 
                       <div className="flex items-center gap-3 w-full sm:w-auto">
+
+                        {/* ✅ RETRY PAYMENT BUTTON (Only for Failed Orders) */}
+                        {isPaymentFailed && (
+                          <button
+                            onClick={() => handleRetryPayment(order)}
+                            className="flex-1 sm:flex-none border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2"
+                          >
+                            <RefreshCw size={14} /> Retry Payment
+                          </button>
+                        )}
+
                         {/* MAIN CANCEL BUTTON */}
                         {isOrderCancellable && (
                           <button
@@ -228,7 +287,9 @@ const OrderHistory = () => {
                     {/* --- ITEMS LIST --- */}
                     <div className="divide-y divide-gray-100">
                       {order.items.map((item) => {
-                        const displayStatus = (item.itemStatus === 'Cancelled') ? 'Cancelled' : item.itemStatus;
+                        // Handle cancelled items in failed orders
+                        const displayStatus = (item.itemStatus === 'Cancelled') ? 'Cancelled' : (isPaymentFailed ? 'Payment Failed' : item.itemStatus);
+
                         const config = getStatusConfig(displayStatus);
                         const errorMessage = itemErrors[item._id];
 
@@ -256,8 +317,8 @@ const OrderHistory = () => {
                                   {displayStatus}
                                 </span>
 
-                                {/* Item Cancel */}
-                                {config.actions.includes('cancel') && (
+                                {/* Item Cancel (Only if NOT failed) */}
+                                {config.actions.includes('cancel') && !isPaymentFailed && (
                                   <button onClick={() => handleCancelClick(order._id, item._id)} className="text-xs font-medium text-red-600 hover:underline">
                                     Cancel Item
                                   </button>

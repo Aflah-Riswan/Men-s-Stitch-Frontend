@@ -5,22 +5,22 @@ import { RefreshCw, ArrowLeft, Home } from 'lucide-react';
 const PaymentFailed = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Retrieve the data passed from the Payment page so we can "Try Again"
+
   const { retryData } = location.state || {};
 
   const handleTryAgain = () => {
     if (retryData) {
-      // Navigate back to Payment page with the preserved state
+     
       navigate('/payment', { 
         state: { 
           addressId: retryData.addressId, 
-          paymentSummary: retryData.paymentSummary 
+          paymentSummary: retryData.paymentSummary ,
+          autoRetry: true
         },
         replace: true 
       });
     } else {
-      // Fallback if data is lost (e.g. page refresh)
+      
       navigate('/checkout');
     }
   };

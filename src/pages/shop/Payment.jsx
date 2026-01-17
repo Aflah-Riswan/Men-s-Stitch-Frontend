@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronRight, CreditCard, Banknote, ShieldCheck, Lock, Zap, CheckCircle2, Smartphone, Wallet } from 'lucide-react';
 import * as orderService from '../../services/orderService';
@@ -12,8 +12,8 @@ import axiosInstance from '../../utils/axiosInstance';
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addressId, paymentSummary } = location.state || {};
-
+  const { addressId, paymentSummary ,autoRetry} = location.state || {};
+  const hasRetried = useRef(false)
   const [selectedMethod, setSelectedMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
 
@@ -22,6 +22,13 @@ const Payment = () => {
       navigate('/checkout');
     }
   }, [addressId, navigate]);
+
+  useEffect(() => {
+    if (autoRetry && addressId && paymentSummary && !hasRetried.current) {
+      hasRetried.current = true; 
+      handleRazorPayment();
+    }
+  }, [autoRetry, addressId, paymentSummary]);
 
   const loadRazorPayScript = () => {
     console.log(" inside loaderRazorPay SCRIPTS")
@@ -34,13 +41,31 @@ const Payment = () => {
     })
   }
 
-const handleRazorPayment = async () => {
+  const saveFailedOrder = async (razorpayOrderId) => {
+    try {
+      const orderData = {
+        addressId,
+        paymentMethod: 'razorpay',
+        razorpayOrderId,
+        paymentStatus: 'failed',
+        grandTotal: paymentSummary?.grandTotal
+      }
+      const response = await orderService.placeOrder(orderData)
+      if (response.data?.success) {
+        return response.data.orderId
+      }
+    } catch (error) {
+      console.log("error found :", error)
+    }
+  }
+
+  const handleRazorPayment = async () => {
     try {
       const isScripted = await loadRazorPayScript();
       if (!isScripted) return toast.error('failed to load razorpay SDK');
 
       const orderData = await paymentService.createPayment(paymentSummary?.grandTotal);
-      
+
       const retryState = {
         addressId,
         paymentSummary
@@ -72,33 +97,39 @@ const handleRazorPayment = async () => {
               navigate('/order-success', { state: { orderId: orderId } });
             } else {
               toast.error("Payment verification failed on server");
-              navigate('/payment-failed', { state: { retryData: retryState } });
+
+              const failedOrderId = await saveFailedOrder(orderData.id, "Verification Failed");
+              navigate('/payment-failed', {
+                state: { retryData: retryState, orderId: failedOrderId }
+              });
             }
           } catch (error) {
             console.log(error);
             navigate('/payment-failed', { state: { retryData: retryState } });
           }
         },
-        
+
         modal: {
-            ondismiss: function() {
-                toast.error("Payment Cancelled");
-                navigate('/payment-failed', { 
-                    state: { retryData: retryState } 
-                });
-            }
+          ondismiss: async function () {
+            toast.error("Payment Cancelled");
+            const failedOrderId = await saveFailedOrder(orderData.id);
+            navigate('/payment-failed', {
+              state: { retryData: retryState }
+            });
+          }
         },
         theme: { color: "#000000" }
       };
 
       const paymentObject = new window.Razorpay(options);
-     
-      paymentObject.on('payment.failed', function (response){
+
+      paymentObject.on('payment.failed', async function (response) {
+
         console.error("Payment Failed:", response.error);
         toast.error(response.error.description || "Payment Failed");
-        
-        navigate('/payment-failed', { 
-            state: { retryData: retryState } 
+        const failedOrderId = await saveFailedOrder(orderData.id)
+        navigate('/payment-failed', {
+          state: { retryData: retryState }
         });
       });
 

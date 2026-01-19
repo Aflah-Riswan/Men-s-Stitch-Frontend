@@ -65,3 +65,7 @@ export const updateOrderItemStatus = async (orderId, itemId, status) => {
   console.log(" response : ", response)
   return response.data;
 };
+
+export const deleteOrder = async (orderId) => {
+  return await axiosInstance.delete(`/orders/${orderId}`);
+};

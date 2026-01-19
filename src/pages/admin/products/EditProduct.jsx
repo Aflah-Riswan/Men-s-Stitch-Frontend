@@ -63,23 +63,37 @@ const EditProduct = () => {
   const watchedOffer = watch('productOffer')
   const watchedOriginalprice = watch('originalPrice')
 
-  useEffect(()=>{
-  
-    if(watchedOriginalprice){
+  const findMatchingAttributes = (incomingCategoryName) => {
+    if (!incomingCategoryName) return [];
+    const cleanInput = incomingCategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const localKeys = Object.keys(categoryAttributes);
+    const foundKey = localKeys.find((key) => {
+      const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanKey === cleanInput) return true;
+      if (cleanInput === cleanKey + 's') return true;
+      if (cleanInput + 's' === cleanKey) return true;
+      return false;
+    });
+    return foundKey ? categoryAttributes[foundKey] : [];
+  };
+
+  useEffect(() => {
+
+    if (watchedOriginalprice) {
       const price = Number(watchedOriginalprice)
       const offer = Number(watchedOffer) || 0
-      const discount =( price * offer)/100
+      const discount = (price * offer) / 100
       const finalPrice = Math.round(price - discount)
-      setValue('salePrice',finalPrice,{shouldValidate: true})
+      setValue('salePrice', finalPrice, { shouldValidate: true })
     }
-  },[watchedOffer,watchedOriginalprice , setValue])
+  }, [watchedOffer, watchedOriginalprice, setValue])
 
   useEffect(() => {
     dispatch(fetchCategories());
     const fetchData = async () => {
       try {
         const product = await productService.getProductById(id);
-
+        console.log(" product : ",product)
         setProductToEdit(product);
 
         if (product) {
@@ -88,7 +102,7 @@ const EditProduct = () => {
             productDescription: product.productDescription,
             originalPrice: product.originalPrice,
             salePrice: product.salePrice,
-            productOffer: product.productOffer || 0, 
+            productOffer: product.productOffer || 0,
             mainCategory: product.mainCategory?._id || product.mainCategory,
             isListed: product.isListed,
             tags: product.tags ? product.tags.join(', ') : '',
@@ -120,7 +134,10 @@ const EditProduct = () => {
   useEffect(() => {
     if (categories.length > 0 && selectedCategory) {
       const catObj = categories.find((c) => c._id === selectedCategory);
-      if (catObj) setAttributesOptions(categoryAttributes[catObj.categoryName] || []);
+      if (catObj) {
+        const matchedOptions = findMatchingAttributes(catObj.categoryName);
+        setAttributesOptions(matchedOptions);
+      }
     }
   }, [selectedCategory, categories]);
 
@@ -316,6 +333,7 @@ const EditProduct = () => {
         if (variant.isNew && variant.filesToUpload && variant.filesToUpload.length > 0) {
           const vRes = await productService.uploadMultipleImages(variant.filesToUpload)
           return {
+            _id: variant._id,
             productColor: variant.productColor,
             colorCode: variant.colorCode,
             variantImages: vRes.data.urlCollection,
@@ -429,7 +447,7 @@ const EditProduct = () => {
               <h3 className="text-lg font-bold mb-5 border-b pb-2">Pricing & Offers</h3>
               {/* Changed to 3 columns to fit Offer nicely */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+
                 {/* Original Price */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Original Price</label>
@@ -440,11 +458,11 @@ const EditProduct = () => {
                 {/* NEW: Offer (%) Field - Add your logic to register */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Offer (%)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     placeholder="0"
-                    {...register('productOffer')} 
-                    className="w-full p-3 border rounded-lg" 
+                    {...register('productOffer')}
+                    className="w-full p-3 border rounded-lg"
                   />
                   {errors.offer && <span className="text-xs text-red-500">{errors.offer.message}</span>}
                 </div>

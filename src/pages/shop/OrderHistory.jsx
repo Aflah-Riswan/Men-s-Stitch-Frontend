@@ -87,7 +87,8 @@ const OrderHistory = () => {
       state: {
         addressId: findMatchingAddress(order.shippingAddress),
         paymentSummary: retryPaymentSummary,
-        autoRetry: true
+        autoRetry: true,
+        failedOrderId: order._id
       },
       replace: true
     });

@@ -97,6 +97,7 @@ const handleLogout = () =>{
         >
           Retry
         </button>
+        <button onClick={()=>handleLogout()}>Logout</button>
       </div>
     );
   }

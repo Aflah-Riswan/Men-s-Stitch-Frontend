@@ -12,7 +12,7 @@ import axiosInstance from '../../utils/axiosInstance';
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addressId, paymentSummary ,autoRetry} = location.state || {};
+  const { addressId, paymentSummary, autoRetry , failedOrderId } = location.state || {};
   const hasRetried = useRef(false)
   const [selectedMethod, setSelectedMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ const Payment = () => {
 
   useEffect(() => {
     if (autoRetry && addressId && paymentSummary && !hasRetried.current) {
-      hasRetried.current = true; 
+      hasRetried.current = true;
       handleRazorPayment();
     }
   }, [autoRetry, addressId, paymentSummary]);
@@ -92,9 +92,17 @@ const Payment = () => {
             const verifyRes = await paymentService.createOnlinePayment(paymentData);
 
             if (verifyRes?.data?.success || verifyRes?.success) {
-              const orderId = verifyRes.data?.orderId || verifyRes.orderId;
+              const newOrderId = verifyRes.data?.orderId || verifyRes.orderId;
+              if (failedOrderId) {
+                try {
+                  await orderService.deleteOrder(failedOrderId);
+                  console.log("Old failed order removed:", failedOrderId);
+                } catch (err) {
+                  console.error("Failed to remove old order", err);
+                }
+              }
               toast.success("Payment Verified!");
-              navigate('/order-success', { state: { orderId: orderId } });
+              navigate('/order-success', { state: { orderId: newOrderId } });
             } else {
               toast.error("Payment verification failed on server");
 

@@ -8,6 +8,7 @@ import ImageUpload from '../../../Components/ImageUpload';
 import ImageCropper from '../../../Components/ImageCropper';
 import Modal from '../../../Components/Modal';
 import productService from '../../../services/productService';
+import toast from 'react-hot-toast';
 
 const AddProducts = () => {
   const [selectedCategory, setCategory] = useState('')
@@ -15,7 +16,7 @@ const AddProducts = () => {
   const [categoryName, setCategoryName] = useState(null)
   const { parentCategories, subCategories, items, isLoading } = useSelector((state) => state.category)
   const { register, handleSubmit, formState: { errors },
-    setError, setValue, clearErrors, trigger, getValues , watch} = useForm()
+    setError, setValue, clearErrors, trigger, getValues, watch } = useForm()
   const [variantImages, setVariantImages] = useState([])
   const [coverImages, setCoverImages] = useState([])
   const [variantsCollection, setVariantCollection] = useState([])
@@ -49,21 +50,43 @@ const AddProducts = () => {
 
   useEffect(() => {
     if (selectedCategory) {
-      setAttributes(categoryAttributes[categoryName])
+      const matchedAttr = findMatchingAttributes(categoryName)
+      if(matchedAttr){
+       setAttributes(matchedAttr)
+      }else{
+        toast.error('cant find the attributes')
+        setAttributes([])
+      }
+      
     }
   }, [selectedCategory])
 
-  useEffect(()=>{
-    if(watchedOriginalprice){
+  const findMatchingAttributes = (incomingCategoryName) => {
+    if (!incomingCategoryName) return [];
+    const cleanInput = incomingCategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const localKeys = Object.keys(categoryAttributes);
+    const foundKey = localKeys.find((key) => {
+      const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanKey === cleanInput) return true;
+      if (cleanInput === cleanKey + 's') return true;
+      if (cleanInput + 's' === cleanKey) return true;
+      if (cleanInput.replace('ies', 'y') === cleanKey) return true;
+      return false;
+    });
+    return foundKey ? categoryAttributes[foundKey] : [];
+  };
+
+  useEffect(() => {
+    if (watchedOriginalprice) {
       const price = Number(watchedOriginalprice)
       const offer = Number(watchedOffer) || 0
-      if(!isNaN(price) && !isNaN(offer) && offer >= 0 && offer <= 100){
-        const discountAmount = (price * offer)/100
-        const finalPrice = Math.round(price- discountAmount)
-        setValue('salePrice',finalPrice ,{shouldValidate:true})
+      if (!isNaN(price) && !isNaN(offer) && offer >= 0 && offer <= 100) {
+        const discountAmount = (price * offer) / 100
+        const finalPrice = Math.round(price - discountAmount)
+        setValue('salePrice', finalPrice, { shouldValidate: true })
       }
     }
-  },[watchedOffer ,watchedOriginalprice , setValue])
+  }, [watchedOffer, watchedOriginalprice, setValue])
 
   function handleSelectCategory(id) {
     const selected = items.find((cat) => cat._id === id)
@@ -261,7 +284,7 @@ const AddProducts = () => {
     console.log(data)
     try {
       if (!data) return false
-      const { productName, productDescription, salePrice, coverImages, mainCategory, subCategory = null, tags, originalPrice ,offer } = data
+      const { productName, productDescription, salePrice, coverImages, mainCategory, subCategory = null, tags, originalPrice, offer } = data
       if (coverImages.length > 0) {
         const response = await productService.uploadMultipleImages(data.coverImages);
         console.log('product image response : ', response.data)
@@ -283,7 +306,7 @@ const AddProducts = () => {
           attributes: formattedAttributes,
           coverImages: urlCollections,
           mainCategory,
-          productOffer : offer,
+          productOffer: offer,
           subCategory: subCategory === '' ? null : subCategory,
           tags
         }
@@ -368,10 +391,10 @@ const AddProducts = () => {
               {/* Pricing Section - UPDATED WITH OFFER */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <h3 className="font-semibold text-lg mb-4 text-gray-800">Pricing & Offers</h3>
-                
+
                 {/* Changed to 3 columns to accommodate the Offer field */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  
+
                   {/* Regular Price */}
                   <div className="space-y-2 w-full">
                     <label className="text-sm font-medium text-gray-700">Regular price</label>
@@ -407,7 +430,7 @@ const AddProducts = () => {
                     />
                     {errors.salePrice && <span className="text-red-500 text-sm mt-1 block">{errors.salePrice.message}</span>}
                   </div>
-                  
+
                 </div>
               </div>
 

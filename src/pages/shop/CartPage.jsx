@@ -22,11 +22,8 @@ const CartPage = () => {
     try {
       const response = await cartService.getCartItems();
       const cartData = response.data;
-      console.log(cartData)
       const { user } = response.data
-      console.log(user)
       setUserDetails(user)
-      console.log(cartData)
       setCart(cartData);
     } catch (error) {
       console.error("Cart fetch error:", error);
@@ -39,7 +36,8 @@ const CartPage = () => {
     try {
 
       const response = await cartService.getCoupons();
-      const coupons = response.data.coupons || response.data || [];
+      const coupons = response.data.coupons|| [];
+       console.log(" coupons : ",coupons)
       setAvailableCoupons(coupons);
     } catch (error) {
       console.log("Could not fetch coupons", error);

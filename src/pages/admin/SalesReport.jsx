@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-hot-toast';
-import { Download, TrendingUp, RefreshCcw, ShoppingBag, XCircle } from 'lucide-react';
+import { Download, TrendingUp, RefreshCcw, ShoppingBag, XCircle, Package, CreditCard, BarChart3 } from 'lucide-react';
 import * as salesService from '../../services/salesService'; 
 
 const SalesReport = () => {
@@ -47,25 +47,91 @@ const SalesReport = () => {
     setLoading(false);
   };
 
-  // --- PDF DOWNLOAD (Updated to show Products) ---
+  // Calculate Product & Order Statistics on the Client Side ---
+  const stats = useMemo(() => {
+    const orders = reportData.orders || [];
+    const productMap = {};
+    let totalItemsSold = 0;
+
+    orders.forEach(order => {
+        // Skip cancelled orders for product stats if desired
+        if (order.status === 'Cancelled') return;
+
+        order.items.forEach(item => {
+            totalItemsSold += item.quantity;
+            if (productMap[item.name]) {
+                productMap[item.name].qty += item.quantity;
+                productMap[item.name].revenue += (item.price || 0) * item.quantity; 
+            } else {
+                productMap[item.name] = {
+                    qty: item.quantity,
+                    revenue: (item.price || 0) * item.quantity
+                };
+            }
+        });
+    });
+
+   
+    const topProducts = Object.entries(productMap)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.qty - a.qty)
+        .slice(0, 5); // Get top 5
+
+    const averageOrderValue = reportData.summary.totalOrders > 0 
+        ? (reportData.summary.netSales / reportData.summary.totalOrders) 
+        : 0;
+
+    return { totalItemsSold, topProducts, averageOrderValue };
+  }, [reportData]);
+
+  //  PDF DOWNLOAD 
+
   const downloadPDF = () => {
     if (!reportData.orders || reportData.orders.length === 0) return toast.error("No data available");
 
     const doc = new jsPDF();
+    
+   
+    let dateText = filterType.toUpperCase();
+    if (filterType === 'custom' && customDates.from && customDates.to) {
+        const fromDate = new Date(customDates.from).toLocaleDateString();
+        const toDate = new Date(customDates.to).toLocaleDateString();
+        dateText = `${fromDate} to ${toDate}`;
+    }
+
+   
+    doc.setFontSize(18);
     doc.text('Sales Report', 14, 15);
+    
     doc.setFontSize(10);
-    doc.text(`Period: ${filterType.toUpperCase()} | Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+    doc.setTextColor(100); 
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    doc.text(`Period: ${dateText}`, 14, 27);
+
+   
+    doc.setTextColor(0); 
+    doc.setFontSize(11); 
     
-    // 👇 Updated Column Header
+    
+    doc.text(`Total Orders: ${reportData.summary.totalOrders}`, 14, 40);
+    doc.text(`Total Cancelled: ${reportData.summary.cancelledOrders}`, 14, 46);
+    doc.text(`Total Refunds: ${reportData.summary.totalRefunds}`, 14, 52);
+
+
+    doc.text(`Total Revenue (Gross): ${reportData.summary.grossSales}`, 100, 40);
+    doc.text(`Total Collected (Net): ${reportData.summary.netSales}`, 100, 46);
+    doc.text(`Avg Order Value: ${stats.averageOrderValue?.toFixed(2) || 0}`, 100, 52);
+
+ 
+    doc.setDrawColor(200);
+    doc.line(14, 58, 196, 58);
+
     const tableColumn = ["Date", "Products", "Customer", "Status", "Amount", "Pay Status"];
-    
     const tableRows = reportData.orders.map(order => {
-      // 👇 Create a string of product names for the PDF
       const productNames = order.items.map(item => `${item.name} (x${item.quantity})`).join(", ");
-      
       return [
         new Date(order.createdAt).toLocaleDateString(),
-        productNames, // Show names instead of ID
+        productNames,
         order.user?.firstName || 'Guest',
         order.status,
         order.totalAmount,
@@ -76,20 +142,32 @@ const SalesReport = () => {
     autoTable(doc, { 
       head: [tableColumn], 
       body: tableRows, 
-      startY: 30,
-      styles: { fontSize: 8 }, // Smaller font to fit product names
-      columnStyles: { 1: { cellWidth: 60 } } // Give more width to Product column
+      startY: 65,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 128, 185] }, 
+      columnStyles: { 1: { cellWidth: 50 } }
     });
+
     doc.save(`sales_report_${filterType}.pdf`);
   };
 
-  // --- EXCEL DOWNLOAD (Updated to show Products) ---
+  //  EXCEL DOWNLOAD 
   const downloadExcel = () => {
     if (!reportData.orders || reportData.orders.length === 0) return toast.error("No data available");
 
+    // 1. Summary Sheet
+    const summaryData = [
+        { Metric: "Total Gross Revenue", Value: reportData.summary.grossSales },
+        { Metric: "Total Net Collected", Value: reportData.summary.netSales },
+        { Metric: "Total Refunds", Value: reportData.summary.totalRefunds },
+        { Metric: "Total Items Sold", Value: stats.totalItemsSold },
+        { Metric: "Average Order Value", Value: stats.averageOrderValue.toFixed(2) },
+    ];
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+
+    // 2. Orders Sheet
     const ordersSheet = XLSX.utils.json_to_sheet(reportData.orders.map(order => ({
       Date: new Date(order.createdAt).toLocaleDateString(),
-      // 👇 Join product names with commas
       Products: order.items.map(i => `${i.name} (x${i.quantity})`).join(", "), 
       Customer: order.user?.email || 'Guest',
       Status: order.status,
@@ -97,8 +175,13 @@ const SalesReport = () => {
       PaymentStatus: order.payment?.status || 'Pending'
     })));
 
+    // 3. Top Products Sheet
+    const productsSheet = XLSX.utils.json_to_sheet(stats.topProducts);
+
     const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
     XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+    XLSX.utils.book_append_sheet(workbook, productsSheet, "Top Products");
     XLSX.writeFile(workbook, `sales_report_${filterType}.xlsx`);
   };
 
@@ -107,7 +190,10 @@ const SalesReport = () => {
   return (
     <div className="p-8 bg-gray-50 min-h-screen font-sans">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Sales Dashboard</h1>
+        <div>
+            <h1 className="text-3xl font-bold text-gray-800">Sales Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1">Overview of your store's performance</p>
+        </div>
         
         <div className="flex gap-3">
             <button onClick={downloadPDF} className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium">
@@ -151,48 +237,55 @@ const SalesReport = () => {
         )}
       </div>
 
-      {/* SUMMARY CARDS */}
+      {/*  FINANCIAL SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Gross Sales */}
+        {/* Gross Revenue */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
           <div className="absolute right-0 top-0 h-full w-1 bg-blue-500"></div>
           <div className="flex items-center gap-3 mb-2">
-             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition"><TrendingUp size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Gross Sales</span>
+             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><TrendingUp size={20} /></div>
+             <span className="text-sm font-semibold text-gray-500">Total Revenue (Gross)</span>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">₹{getRevenue()}</h2>
+          <p className="text-xs text-gray-400 mt-1">Before deductions</p>
         </div>
 
-        {/* Net Sales */}
+        {/* Net Collected */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
           <div className="absolute right-0 top-0 h-full w-1 bg-green-500"></div>
           <div className="flex items-center gap-3 mb-2">
-             <div className="p-2 bg-green-50 text-green-600 rounded-lg group-hover:scale-110 transition"><ShoppingBag size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Net Sales</span>
+             <div className="p-2 bg-green-50 text-green-600 rounded-lg"><ShoppingBag size={20} /></div>
+             <span className="text-sm font-semibold text-gray-500">Total Collected (Net)</span>
           </div>
           <h2 className="text-3xl font-bold text-green-600">₹{reportData.summary.netSales || 0}</h2>
+          <p className="text-xs text-gray-400 mt-1">Cash in hand</p>
         </div>
 
-        {/* Refunds */}
+        {/* Avg Order Value (New) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
+          <div className="absolute right-0 top-0 h-full w-1 bg-purple-500"></div>
+          <div className="flex items-center gap-3 mb-2">
+             <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CreditCard size={20} /></div>
+             <span className="text-sm font-semibold text-gray-500">Avg. Order Value</span>
+          </div>
+          <h2 className="text-3xl font-bold text-purple-600">₹{stats.averageOrderValue.toFixed(0)}</h2>
+          <p className="text-xs text-gray-400 mt-1">Per successful order</p>
+        </div>
+
+        {/* Total Refunds */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
           <div className="absolute right-0 top-0 h-full w-1 bg-orange-500"></div>
           <div className="flex items-center gap-3 mb-2">
-             <div className="p-2 bg-orange-50 text-orange-600 rounded-lg group-hover:scale-110 transition"><RefreshCcw size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Refunds</span>
+             <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><RefreshCcw size={20} /></div>
+             <span className="text-sm font-semibold text-gray-500">Total Refunds</span>
           </div>
           <h2 className="text-3xl font-bold text-orange-600">₹{reportData.summary.totalRefunds || 0}</h2>
-        </div>
-
-        {/* Cancelled */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
-          <div className="absolute right-0 top-0 h-full w-1 bg-red-500"></div>
-          <div className="flex items-center gap-3 mb-2">
-             <div className="p-2 bg-red-50 text-red-600 rounded-lg group-hover:scale-110 transition"><XCircle size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Cancelled Orders</span>
-          </div>
-          <h2 className="text-3xl font-bold text-red-600">{reportData.summary.cancelledOrders || 0}</h2>
+          <p className="text-xs text-gray-400 mt-1">Reversed transactions</p>
         </div>
       </div>
+
+ 
+
 
       {/* DATA TABLE */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
@@ -203,7 +296,6 @@ const SalesReport = () => {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-              {/* 👇 Changed Header from Order ID to Products */}
               <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Products</th>
               <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Customer</th>
               <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
@@ -221,7 +313,6 @@ const SalesReport = () => {
                   <tr key={order._id} className={`transition ${rowClass}`}>
                     <td className="p-4 text-sm text-gray-600 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
                     
-                    {/* 👇 Changed to display Product Names */}
                     <td className="p-4">
                         <div className="flex flex-col gap-1">
                             {order.items.map((item, index) => (

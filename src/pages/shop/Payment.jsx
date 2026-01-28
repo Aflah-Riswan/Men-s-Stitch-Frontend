@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, ChevronRight, CreditCard, Banknote, ShieldCheck, Lock, Zap, CheckCircle2, Smartphone, Wallet } from 'lucide-react';
+import { ArrowRight, ChevronRight, CreditCard, Banknote, ShieldCheck, Lock, Zap, CheckCircle2, Smartphone, Wallet, AlertCircle } from 'lucide-react';
 import * as orderService from '../../services/orderService';
 import * as paymentService from '../../services/paymentService'
 import { toast } from 'react-hot-toast';
@@ -12,7 +12,7 @@ import axiosInstance from '../../utils/axiosInstance';
 const Payment = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addressId, paymentSummary, autoRetry , failedOrderId } = location.state || {};
+  const { addressId, paymentSummary, autoRetry, failedOrderId } = location.state || {};
   const hasRetried = useRef(false)
   const [selectedMethod, setSelectedMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
@@ -184,7 +184,17 @@ const Payment = () => {
     </div>
   );
 
-  const PaymentOption = ({ id, icon: Icon, title, description, themeColor, recommended = false, children }) => {
+  const PaymentOption = ({ id, icon: Icon, title, description, themeColor, disabled = true, children }) => {
+    if (disabled === false) {
+      return (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-100 p-3 rounded-lg">
+          <AlertCircle className="text-red-500 mt-0.5 flex-shrink-0" size={16} />
+          <p className="text-xs text-red-600 font-medium leading-snug">
+            "Cash on Delivery is unavailable for orders above ₹1,000. Please use online payment."
+          </p>
+        </div>
+      )
+    }
     const isSelected = selectedMethod === id;
     const baseBorder = isSelected ? `border-${themeColor}-600` : 'border-gray-200';
     const bgEffect = isSelected ? `bg-${themeColor}-50` : 'bg-white hover:bg-gray-50';
@@ -283,6 +293,7 @@ const Payment = () => {
                 icon={Banknote}
                 themeColor="emerald"
                 title="Cash on Delivery"
+                disabled={paymentSummary?.grandTotal >= 1000}
                 description="Pay in cash or via QR code at your doorstep."
               >
                 <div className="flex items-center gap-2 mt-2 text-xs text-emerald-700 font-medium bg-emerald-50 w-fit px-2 py-1 rounded">
@@ -314,9 +325,6 @@ const Payment = () => {
             <div className="bg-white p-6 rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100 sticky top-24">
               <h2 className="font-bold text-lg mb-6 flex items-center justify-between">
                 <span>Order Summary</span>
-                <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  ID: #{Math.floor(Math.random() * 10000)} {/* Just a visual placeholder */}
-                </span>
               </h2>
 
               {/* Receipt Style Details */}
@@ -332,7 +340,7 @@ const Payment = () => {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Shipping</span>
+                  <span>Delivery</span>
                   {Number(paymentSummary?.shippingFee) === 0 ? (
                     <span className="text-green-600">FREE</span>
                   ) : (
@@ -366,7 +374,6 @@ const Payment = () => {
               </button>
 
               <div className="mt-6 flex justify-center gap-4 opacity-40 grayscale">
-                {/* Replaced empty divs with icons for visual context */}
                 <CreditCard size={24} />
                 <ShieldCheck size={24} />
                 <Smartphone size={24} />

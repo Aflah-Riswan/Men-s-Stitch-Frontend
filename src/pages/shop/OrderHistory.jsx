@@ -179,7 +179,7 @@ const OrderHistory = () => {
       case 'Return Rejected':
         return { color: 'text-yellow-600', bg: 'bg-yellow-50', actions: [] };
 
-      // ✅ ADDED: Payment Failed Config
+      
       case 'Payment Failed':
       case 'Failed':
         return { color: 'text-red-700', bg: 'bg-red-100', actions: ['retry'] };
@@ -227,10 +227,7 @@ const OrderHistory = () => {
             <div className="space-y-6">
 
               {orders.map((order) => {
-                // ✅ MODIFIED: Prevent cancelling if already failed
                 const isOrderCancellable = !['Cancelled', 'Delivered', 'Returned', 'Return Approved', 'Payment Failed', 'Failed'].includes(order.status);
-
-                // ✅ Check if it is a failed order to show Retry button
                 const isPaymentFailed = ['Payment Failed', 'Failed'].includes(order.status);
 
                 return (
@@ -255,7 +252,6 @@ const OrderHistory = () => {
 
                       <div className="flex items-center gap-3 w-full sm:w-auto">
 
-                        {/* ✅ RETRY PAYMENT BUTTON (Only for Failed Orders) */}
                         {isPaymentFailed && (
                           <button
                             onClick={() => handleRetryPayment(order)}
@@ -288,7 +284,7 @@ const OrderHistory = () => {
                     {/* --- ITEMS LIST --- */}
                     <div className="divide-y divide-gray-100">
                       {order.items.map((item) => {
-                        // Handle cancelled items in failed orders
+                     
                         const displayStatus = (item.itemStatus === 'Cancelled') ? 'Cancelled' : (isPaymentFailed ? 'Payment Failed' : item.itemStatus);
 
                         const config = getStatusConfig(displayStatus);

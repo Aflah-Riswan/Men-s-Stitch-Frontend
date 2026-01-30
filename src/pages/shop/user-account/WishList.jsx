@@ -21,6 +21,7 @@ export default function Wishlist() {
   const fetchWishlist = async () => {
     try {
       const data = await wishlistService.getWishlist();
+      console.log(data)
       setWishlistItems(data.products || []);
     } catch (error) {
       console.error("Failed to fetch wishlist", error);

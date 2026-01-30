@@ -293,7 +293,7 @@ const Payment = () => {
                 icon={Banknote}
                 themeColor="emerald"
                 title="Cash on Delivery"
-                disabled={paymentSummary?.grandTotal >= 1000}
+                disabled={paymentSummary?.grandTotal <= 1000}
                 description="Pay in cash or via QR code at your doorstep."
               >
                 <div className="flex items-center gap-2 mt-2 text-xs text-emerald-700 font-medium bg-emerald-50 w-fit px-2 py-1 rounded">

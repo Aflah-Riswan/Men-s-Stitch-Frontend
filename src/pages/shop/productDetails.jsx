@@ -21,14 +21,14 @@ export default function ProductDetails() {
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [selectedColorCode, setSelectedColorCode] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedSize, setSelectedSize] = useState('M');
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   const [activeTab, setActiveTab] = useState('details');
   const [relatedProducts, setRelatedProducts] = useState([]);
 
-  // --- NEW: ZOOM STATE ---
+  // ZOOM STATE ---
   const [zoomStyle, setZoomStyle] = useState({
     transformOrigin: "center center",
     transform: "scale(1)",
@@ -64,7 +64,15 @@ export default function ProductDetails() {
   const handleWishlistButton = async () => {
     if (!product?._id) return;
     try {
-      await wishlistService.addToWishlist(product._id);
+      const data = {
+        productId: product._id,
+        variantId: selectedVariant,
+        size: selectedSize,
+        colorCode: selectedColorCode,
+        quantity: quantity
+      };
+      console.log(" data : ",data)
+      await wishlistService.addToWishlist(data);
       toast.success("Added to your wishlist!");
     } catch (error) {
       const message = error.response?.data?.message || "Failed to add to wishlist";
@@ -76,7 +84,7 @@ export default function ProductDetails() {
     }
   }
 
- 
+
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
@@ -154,7 +162,7 @@ export default function ProductDetails() {
       colorCode: selectedColorCode,
       quantity: quantity
     };
-
+console.log(" data : ",data)
     try {
       await cartService.addToCart(data);
       toast.success('Added item to cart successfully!');

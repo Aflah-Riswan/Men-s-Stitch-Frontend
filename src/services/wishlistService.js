@@ -1,8 +1,8 @@
 import axiosInstance from "../utils/axiosInstance"
 
-export const addToWishlist = async (productId) => {
+export const addToWishlist = async (data) => {
   try {
-    const response = await axiosInstance.post('/wishlist/add', { productId });
+    const response = await axiosInstance.post('/wishlist/add', { data });
     return response.data;
   } catch (error) {
     throw error;

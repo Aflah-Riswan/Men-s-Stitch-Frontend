@@ -7,9 +7,9 @@ import * as userService from '../../../services/userService';
 import { passwordValidation } from '../../../utils/passwordValidation'; 
 import toast from 'react-hot-toast';
 
-const PasswordModal = ({email, isOpen, onClose }) => {
-  
-
+const PasswordModal = ({currentUser, isOpen, onClose }) => {
+  console.log(" hellooo")
+ console.log(" emial : ",currentUser)
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -76,7 +76,7 @@ const PasswordModal = ({email, isOpen, onClose }) => {
             </label>
             <input
               type="email"
-              value={email}
+              value='assdsfdsf'
               readOnly
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none cursor-not-allowed"
             />

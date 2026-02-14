@@ -41,14 +41,19 @@ const AccountSettings = () => {
 
       {showPersonalModal && <PersonalDetailsModal
         isOpen={showPersonalModal}
-        onClose={() => setShowPersonalModal(false)}
+        onClose={() => {setShowPersonalModal(false)
+          fetchUser()
+        }}
+        
         currentUser={user} 
       />}
 
       {showPasswordModal && <PasswordModal 
         isOpen={showPasswordModal}
-        onClose={() => setShowPasswordModal(false)}
-        email={user.email}
+        onClose={() => {setShowPasswordModal(false)
+          fetchUser()
+        }}
+        currentUser={user} 
       />}
 
 

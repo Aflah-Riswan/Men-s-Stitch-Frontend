@@ -7,7 +7,7 @@ import * as userService from '../../../services/userService';
 import { passwordValidation } from '../../../utils/passwordValidation'; 
 import toast from 'react-hot-toast';
 
-const PasswordModal = ({ isOpen, onClose }) => {
+const PasswordModal = ({email, isOpen, onClose }) => {
   
 
   const [showCurrent, setShowCurrent] = useState(false);
@@ -76,7 +76,7 @@ const PasswordModal = ({ isOpen, onClose }) => {
             </label>
             <input
               type="email"
-              value="riswanaflah@gmail.com"
+              value={email}
               readOnly
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none cursor-not-allowed"
             />

@@ -48,6 +48,7 @@ const AccountSettings = () => {
       {showPasswordModal && <PasswordModal 
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
+        email={user.email}
       />}
 
 

@@ -76,7 +76,7 @@ const PasswordModal = ({currentUser, isOpen, onClose }) => {
             </label>
             <input
               type="email"
-              value='assdsfdsf'
+              value={currentUser.email}
               readOnly
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none cursor-not-allowed"
             />

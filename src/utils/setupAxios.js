@@ -9,14 +9,14 @@ const setupAxios = (store) => {
   axiosInstance.interceptors.request.use(
     (config) => {
       const isAdminRequest = config.url.startsWith('/admin')
-      
+
       let token;
       if (isAdminRequest) {
         token = localStorage.getItem('adminAccessToken');
       } else {
         token = localStorage.getItem('userAccessToken')
       }
-      
+
       if (token) {
         config.headers['Authorization'] = `Bearer ${token}`
       }
@@ -28,22 +28,28 @@ const setupAxios = (store) => {
   // 2. RESPONSE INTERCEPTOR
   axiosInstance.interceptors.response.use(
     (response) => {
-      // Show success toast for non-GET requests if message exists
-      if (response.data?.message && response.config.method !== 'get') {
-        toast.success(response.data.message);
-      }
+      // if (response.data?.message && response.config.method !== 'get') {
+      //   toast.success(response.data.message);
+      // }
       return response;
     },
     async (error) => {
       const originalRequest = error.config;
       const { response } = error;
 
-      // --- Handle 404 ---
+    
       if (response?.status === 404) {
         return Promise.reject(error);
       }
+   
+      if (response?.status === 403 && response?.data?.message?.includes('Blocked')) {
+        toast.error("Your account has been blocked. Logging out...");
+        store.dispatch(setLogout());
+        localStorage.removeItem('userAccessToken');
+        window.location.href = '/login';
+        return ;
+      }
 
-      // --- Handle Global Error Toasts (Except 401) ---
       if (response && response.data) {
         const { errorCode, message } = response.data;
         if (response.status !== 401) {
@@ -69,15 +75,11 @@ const setupAxios = (store) => {
 
       // --- CRITICAL FIX: Handle 401 (Unauthorized) ---
       if (response?.status === 401 && !originalRequest._retry) {
-        
-        // 🛑 FIX START: If the failed request was a LOGIN attempt, STOP HERE.
-        // We must NOT try to refresh the token, or it will create a "Zombie Login".
-        if (originalRequest.url.includes('/login') || originalRequest.url.includes('/auth/login')) {
-             return Promise.reject(error);
-        }
-        // 🛑 FIX END
 
-        // If the refresh token endpoint itself failed, force logout
+        if (originalRequest.url.includes('/login') || originalRequest.url.includes('/auth/login')) {
+          return Promise.reject(error);
+        }
+        
         if (originalRequest.url.includes('/auth/refresh-token')) {
           store.dispatch(setLogout());
           window.location.href = '/login';
@@ -85,10 +87,10 @@ const setupAxios = (store) => {
         }
 
         originalRequest._retry = true;
-        
+
         try {
           const isAdminRequest = originalRequest.url.startsWith('/admin')
-          
+
           // Attempt to get a new token using the HttpOnly cookie
           const res = await axiosInstance.post('/auth/refresh-token');
           const { accessToken } = res.data;
@@ -101,7 +103,7 @@ const setupAxios = (store) => {
           }
 
           store.dispatch(updateAccessToken(accessToken));
-          
+
           // Retry the original failed request with the new token
           originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
           return axiosInstance(originalRequest);

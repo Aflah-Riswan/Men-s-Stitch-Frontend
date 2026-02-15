@@ -33,7 +33,6 @@ const authSlice = createSlice({
   initialState: {
     isLoading: false,
     isError: null,
-    // 2. Store distinct variables to match RequireAuth
     userAccessToken: userAccessToken || null,
     userRole: userRole || null,
     adminAccessToken: adminAccessToken || null,

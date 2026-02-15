@@ -20,27 +20,22 @@ const Login = ({ role = 'user' }) => {
   const onSubmit = async (data) => {
     try {
       const response = await dispatch(loginUser(data)).unwrap()
-
       if (!response || !response.accessToken) {
-        // This handles the case where backend sends 200 OK but it's actually an error
         console.log("Login failed (Fake Success):", response);
         toast.error(response?.message || "Invalid Email or Password");
-        return; // ❌ STOP THE FUNCTION. DO NOT REDIRECT.
+        return; 
       }
 
       if (role === 'admin' && response.role !== 'admin') {
         toast.error("Access Denied: You are not an Admin.");
         return;
       }
-
-      // Case B: Admin tries to login on User Page
       if (role === 'user' && response.role === 'admin') {
         toast.error("Please use the Admin Login Portal.");
-        // Optional: navigate('/admin/login');
-        return; // Stop here!
+      
+        return; 
       }
 
-      // 3. Success! Dispatch to Redux based on role
       if (response.role === 'admin') {
         navigate('/admin/dashboard');
       } else {

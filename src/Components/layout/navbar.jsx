@@ -1,8 +1,9 @@
-import { Search, ShoppingCart, User, Menu, Heart, LogInIcon, LogOutIcon } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, Heart, LogInIcon, LogOutIcon, X } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setLogout } from '../../redux/slice/authSlice';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { fetchCategories } from '../../redux/slice/categorySlice';
 
 const Navbar = () => {
   const { userAccessToken } = useSelector((state) => state.auth);
@@ -14,11 +15,16 @@ const Navbar = () => {
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const categories = useSelector((state) => state.category.items)
   const location = useLocation();
 
   useEffect(() => {
      setSearch(decodeURIComponent(searchParams.get('search') || ''));
   }, [searchParams]);
+
+    useEffect(() => {
+      dispatch(fetchCategories())
+    }, [dispatch])
 
   const getCurrentCategory = () => {
      const pathSegments = location.pathname.split('/');
@@ -40,12 +46,15 @@ const Navbar = () => {
     }
   };
 
+  const handleClear = () => {
+    setSearch('');
+    navigate(`/`);
+  };
+
   function handleSearch(e) {
     if (e.key === 'Enter' || e.type === 'click') {
       if (search.trim()) {
         const category = getCurrentCategory();
-        
-        // ✅ APPLY FIX: Convert "tshirt" -> "t-shirt" before navigating
         const cleanSearch = normalizeSearch(search.trim());
 
         navigate(`/products/${category}?search=${encodeURIComponent(cleanSearch)}`);
@@ -57,7 +66,7 @@ const Navbar = () => {
     navigate(`/products/${category}`);
   };
 
-  return (
+ return (
     <nav className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
       <div className="max-w-[1240px] mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
 
@@ -71,11 +80,24 @@ const Navbar = () => {
             Men's Stitch
           </h1>
 
+          {/* 4. Dynamic Category List */}
           <ul className="hidden md:flex gap-6 text-base font-medium text-gray-800 ml-10">
-            <li className="cursor-pointer hover:text-gray-500" onClick={() => handleCategoryClick('Shirts')}>Shirts</li>
-            <li className="cursor-pointer hover:text-gray-500" onClick={() => handleCategoryClick('Sports')}>Sports</li>
-            <li className="cursor-pointer hover:text-gray-500" onClick={() => handleCategoryClick('Innerwears')}>Innerwears</li>
-            <li className="cursor-pointer hover:text-gray-500" onClick={() => handleCategoryClick('TShirts')}>T-Shirts</li>
+            {categories.length > 0 ? (
+              categories.map((cat) => (
+                <li 
+                  key={cat._id} // Assuming your DB uses _id
+                  className="cursor-pointer hover:text-gray-500 capitalize" 
+                  onClick={() => handleCategoryClick(cat.categoryName)}
+                >
+                  {cat.categoryName}
+                </li>
+              ))
+            ) : (
+              // Optional: Show a few default items or a skeleton if loading fails/is slow
+              <>
+               <li className="text-gray-400">Loading...</li>
+              </>
+            )}
           </ul>
         </div>
 
@@ -91,9 +113,17 @@ const Navbar = () => {
               placeholder="Search for products..."
               value={search}
               onChange={handleInputChange} 
-              className="w-full bg-gray-100 rounded-full py-3 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition-all"
+              className="w-full bg-gray-100 rounded-full py-3 pl-12 pr-10 text-sm outline-none focus:ring-2 focus:ring-gray-200 transition-all"
               onKeyDown={handleSearch}
             />
+            {search && (
+              <button 
+                onClick={handleClear}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-500" />
+              </button>
+            )}
           </div>
         </div>
 

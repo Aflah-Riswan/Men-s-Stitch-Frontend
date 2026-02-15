@@ -8,7 +8,6 @@ export const fetchCategories = createAsyncThunk('category/fetchAllCategory', asy
     const response = await axiosInstance.get('/categories',{params})
     // console.log( " response : in thunk : " ,response.data)
     if(response.data.success){
-      
        return response.data
     }else{
       rejectWithValue(response.data.message)

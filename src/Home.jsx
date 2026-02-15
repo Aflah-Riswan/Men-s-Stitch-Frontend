@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import productService from './services/productService';
 import reviewService from './services/reviewService';
 import NewsLetter from './Components/NewsLetter';
+import * as userService from './services/userService'
 export default function Home() {
 
   const dispatch = useDispatch()
@@ -33,9 +34,16 @@ export default function Home() {
   useEffect(() => {
     fetchProducts()
     featuredReviews()
-    // console.log("categories : ", categories)
   }, [dispatch])
 
+  useEffect(()=>{
+    fetchUser()
+  })
+
+ const fetchUser = async () => {
+    const  { data }  = await userService.getUserDetails()
+     console.log(" user : ",data)
+  }
 
   const fetchProducts = async () => {
     try {

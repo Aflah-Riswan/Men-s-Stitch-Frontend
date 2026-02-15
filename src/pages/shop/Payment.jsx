@@ -92,7 +92,7 @@ const Payment = () => {
             const verifyRes = await paymentService.createOnlinePayment(paymentData);
 
             if (verifyRes?.data?.success || verifyRes?.success) {
-              const newOrderId = verifyRes.data?.orderId || verifyRes.orderId;
+              const newOrderId = verifyRes?.order.orderId;
               if (failedOrderId) {
                 try {
                   await orderService.deleteOrder(failedOrderId);
@@ -102,7 +102,7 @@ const Payment = () => {
                 }
               }
               toast.success("Payment Verified!");
-              navigate('/order-success', { state: { orderId: newOrderId } });
+              navigate('/order-success', { state: { orderId: newOrderId , data : verifyRes } });
             } else {
               toast.error("Payment verification failed on server");
 

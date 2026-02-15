@@ -9,7 +9,8 @@ import Footer from '../../Components/Footer';
 const OrderSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { orderId } = location.state || { orderId: "Unknown" };
+  const { orderId , data } = location.state || { orderId: "Unknown" };
+  console.log(data , "; data")
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-gray-900">

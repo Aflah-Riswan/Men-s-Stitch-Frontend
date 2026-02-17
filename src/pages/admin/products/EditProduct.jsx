@@ -4,11 +4,10 @@ import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   ArrowLeft, Save, Trash2, Plus,
-  Image as ImageIcon, Loader2, UploadCloud, X
+  Loader2, UploadCloud
 } from 'lucide-react';
+import { toast } from 'react-hot-toast'; // Assuming you use react-hot-toast based on code context
 
-
-import axiosInstance from '../../../utils/axiosInstance';
 import { fetchCategories } from '../../../redux/slice/categorySlice';
 import categoryAttributes, { sizes } from '../../../data';
 
@@ -27,15 +26,14 @@ const EditProduct = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-
+  // Cover Images State
   const [existingCoverImages, setExistingCoverImages] = useState([]);
   const [newCoverFiles, setNewCoverFiles] = useState([]);
   const [newCoverPreviews, setNewCoverPreviews] = useState([]);
 
-
+  // Variant State
   const [oldVariants, setOldVariants] = useState([]);
   const [showVariantDetail, setShowVariantDetail] = useState(false);
-
 
   const [newVariantParams, setNewVariantParams] = useState({
     colorName: '',
@@ -46,15 +44,18 @@ const EditProduct = () => {
   const [newVariantPreviews, setNewVariantPreviews] = useState([]);
   const [variantErrors, setVariantErrors] = useState({});
 
+  // Attribute Options State
   const [attributesOptions, setAttributesOptions] = useState([]);
 
-
+  // Cropper State
   const [imageToCrop, setImageToCrop] = useState(null)
   const [croppingTarget, setCroppingTarget] = useState(null)
   const [cropQueue, setCropQueue] = useState([]);
   const [currentCropIndex, setCurrentCropIndex] = useState(0);
   const [processedVariantFiles, setProcessedVariantFiles] = useState([]);
+  
   const [showModal, setShowModal] = useState(false)
+
   const {
     register, handleSubmit, setValue, getValues, watch, reset,
     formState: { errors }, setError, clearErrors
@@ -62,7 +63,9 @@ const EditProduct = () => {
 
   const watchedOffer = watch('productOffer')
   const watchedOriginalprice = watch('originalPrice')
+  const selectedCategory = watch('mainCategory');
 
+  // --- Helper: Find Attributes based on Category Name ---
   const findMatchingAttributes = (incomingCategoryName) => {
     if (!incomingCategoryName) return [];
     const cleanInput = incomingCategoryName.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -77,8 +80,8 @@ const EditProduct = () => {
     return foundKey ? categoryAttributes[foundKey] : [];
   };
 
+  // --- Effect 1: Auto-Calculate Sale Price ---
   useEffect(() => {
-
     if (watchedOriginalprice) {
       const price = Number(watchedOriginalprice)
       const offer = Number(watchedOffer) || 0
@@ -88,12 +91,12 @@ const EditProduct = () => {
     }
   }, [watchedOffer, watchedOriginalprice, setValue])
 
+  // --- Effect 2: Fetch Categories & Product Data ---
   useEffect(() => {
     dispatch(fetchCategories());
     const fetchData = async () => {
       try {
         const product = await productService.getProductById(id);
-        console.log(" product : ",product)
         setProductToEdit(product);
 
         if (product) {
@@ -106,16 +109,11 @@ const EditProduct = () => {
             mainCategory: product.mainCategory?._id || product.mainCategory,
             isListed: product.isListed,
             tags: product.tags ? product.tags.join(', ') : '',
+            // Populate attributes in reset data
+            attributes: product.attributes || {}
           };
 
-          if (product.attributes) {
-            Object.entries(product.attributes).forEach(([key, value]) => {
-              setValue(`attributes.${key}`, value);
-            });
-          }
-
           setExistingCoverImages(product.coverImages ? [product.coverImages] : []);
-
           setOldVariants(product.variants || []);
           setLoading(false);
 
@@ -128,9 +126,7 @@ const EditProduct = () => {
     fetchData();
   }, [id, dispatch, reset]);
 
-
-
-  const selectedCategory = watch('mainCategory');
+  // --- Effect 3: Update Attribute Options when Category Changes ---
   useEffect(() => {
     if (categories.length > 0 && selectedCategory) {
       const catObj = categories.find((c) => c._id === selectedCategory);
@@ -141,8 +137,19 @@ const EditProduct = () => {
     }
   }, [selectedCategory, categories]);
 
+  // --- Effect 4 (CRITICAL FIX): Sync Attribute Values ---
+  // This ensures that once the dropdown options are loaded, the values are re-selected
+  useEffect(() => {
+    if (attributesOptions.length > 0 && productToEdit?.attributes) {
+      Object.entries(productToEdit.attributes).forEach(([key, value]) => {
+        // Force the form to set the value again now that options exist
+        setValue(`attributes.${key}`, value);
+      });
+    }
+  }, [attributesOptions, productToEdit, setValue]);
 
 
+  // --- Image Handling ---
   const handleCoverImagesChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -156,7 +163,6 @@ const EditProduct = () => {
     e.target.value = '';
   };
 
-
   const handleVariantImagesAdd = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -166,7 +172,6 @@ const EditProduct = () => {
       return;
     }
     setVariantErrors(prev => ({ ...prev, images: null }));
-
 
     const fileReaders = files.map(file => {
       return new Promise((resolve) => {
@@ -178,49 +183,37 @@ const EditProduct = () => {
 
     const imagesToCrop = await Promise.all(fileReaders);
 
-
     setCropQueue(imagesToCrop);
     setProcessedVariantFiles([]);
     setCurrentCropIndex(0);
     setCroppingTarget('variant');
-
-
     setImageToCrop(imagesToCrop[0]);
     e.target.value = '';
   };
 
   const onCropDone = (croppedFile) => {
-
     if (croppingTarget === 'cover') {
       setExistingCoverImages([]);
-
       setNewCoverFiles([croppedFile]);
-
       const previewUrl = URL.createObjectURL(croppedFile);
       setNewCoverPreviews([previewUrl]);
-
       clearErrors('coverImages');
       setImageToCrop(null);
       setCroppingTarget(null);
     }
     else if (croppingTarget === 'variant') {
-
       const updatedProcessed = [...processedVariantFiles, croppedFile];
       setProcessedVariantFiles(updatedProcessed);
-
       const nextIndex = currentCropIndex + 1;
 
       if (nextIndex < cropQueue.length) {
         setCurrentCropIndex(nextIndex);
         setImageToCrop(cropQueue[nextIndex]);
       } else {
-
         const finalFiles = [...newVariantFiles, ...updatedProcessed];
         setNewVariantFiles(finalFiles);
-
         const newPreviews = updatedProcessed.map(file => URL.createObjectURL(file));
         setNewVariantPreviews([...newVariantPreviews, ...newPreviews]);
-
         setImageToCrop(null);
         setCroppingTarget(null);
         setCropQueue([]);
@@ -249,6 +242,7 @@ const EditProduct = () => {
   };
 
 
+  // --- Variant Logic ---
   const handleNewStockChange = (size, value) => {
     setNewVariantParams(prev => ({
       ...prev,
@@ -271,7 +265,6 @@ const EditProduct = () => {
       setVariantErrors(errors);
       return;
     }
-
     setVariantErrors({});
 
     const newVariant = {
@@ -288,11 +281,7 @@ const EditProduct = () => {
     setNewVariantFiles([]);
     setNewVariantPreviews([]);
     toast.success("Variant added to list!", {
-      style: {
-        borderRadius: '10px',
-        background: '#333',
-        color: '#fff',
-      },
+      style: { borderRadius: '10px', background: '#333', color: '#fff' },
     });
   };
 
@@ -301,33 +290,28 @@ const EditProduct = () => {
   };
 
 
-
+  // --- Submit Handler ---
   const onSubmit = async (data) => {
     setSubmitting(true);
     try {
-
       const totalCoverImages = existingCoverImages.length + newCoverFiles.length;
       if (totalCoverImages !== 1) {
         setSubmitting(false);
-
         setError('coverImages', {
           type: 'manual',
           message: 'You must have exactly 1 cover image.'
         });
+        return; 
       }
+
       let finalCoverImageString = "";
       if (existingCoverImages.length > 0) {
         finalCoverImageString = existingCoverImages[0];
       }
-
       else if (newCoverFiles.length > 0) {
-        const formData = new FormData();
-        formData.append('images', newCoverFiles[0]);
         const res = await productService.uploadMultipleImages(newCoverFiles)
         finalCoverImageString = res.data.urlCollection[0];
       }
-
-
 
       const processedVariants = await Promise.all(oldVariants.map(async (variant, index) => {
         if (variant.isNew && variant.filesToUpload && variant.filesToUpload.length > 0) {
@@ -361,9 +345,7 @@ const EditProduct = () => {
           variantImages: variant.variantImages,
           stock: hasChange ? updatedStock : variant.stock
         };
-
       }));
-
 
       const payload = {
         ...data,
@@ -373,20 +355,17 @@ const EditProduct = () => {
         attributes: data.attributes || {}
       };
 
-
       delete payload.newProductColor;
       delete payload.newColorCode;
 
       console.log("Submitting Payload:", payload);
 
-
-      const response = await productService.updateProduct(id, payload);
-      console.log(response)
+      await productService.updateProduct(id, payload);
       setShowModal(true)
-
 
     } catch (error) {
       console.log(error)
+      toast.error("Failed to update product");
     } finally {
       setSubmitting(false);
     }
@@ -397,7 +376,6 @@ const EditProduct = () => {
     navigate('/admin/products');
   }
 
-
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={32} /></div>;
 
   return (
@@ -406,7 +384,7 @@ const EditProduct = () => {
       <Modal
         isOpen={showModal}
         title="Success!"
-        message="Product updated Succefully."
+        message="Product updated Successfully."
         onConfirm={handleModalClose}
         type="success"
       />
@@ -442,20 +420,15 @@ const EditProduct = () => {
               </div>
             </div>
 
-            {/* 2. Pricing - MODIFIED UI TO INCLUDE OFFER */}
+            {/* 2. Pricing */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-bold mb-5 border-b pb-2">Pricing & Offers</h3>
-              {/* Changed to 3 columns to fit Offer nicely */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                {/* Original Price */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Original Price</label>
                   <input type="number" {...register('originalPrice', { required: 'Required', min: 10 })} className="w-full p-3 border rounded-lg" />
                   {errors.originalPrice && <span className="text-xs text-red-500">{errors.originalPrice.message}</span>}
                 </div>
-
-                {/* NEW: Offer (%) Field - Add your logic to register */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Offer (%)</label>
                   <input
@@ -466,14 +439,11 @@ const EditProduct = () => {
                   />
                   {errors.offer && <span className="text-xs text-red-500">{errors.offer.message}</span>}
                 </div>
-
-                {/* Sale Price */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Sale Price</label>
                   <input type="number" {...register('salePrice', { required: 'Required', min: 1, validate: v => Number(v) < Number(getValues('originalPrice')) || "Must be less than Original" })} className="w-full p-3 border rounded-lg" />
                   {errors.salePrice && <span className="text-xs text-red-500">{errors.salePrice.message}</span>}
                 </div>
-
               </div>
             </div>
 
@@ -500,7 +470,6 @@ const EditProduct = () => {
                       </div>
                       <button type="button" onClick={() => removeVariant(i)} className="text-gray-400 hover:text-red-500"><Trash2 size={18} /></button>
                     </div>
-
 
                     {showVariantDetail && !v.isNew && (
                       <div className="grid grid-cols-6 gap-2 mt-3 pt-3 border-t">
@@ -622,7 +591,7 @@ const EditProduct = () => {
           {/* RIGHT COLUMN */}
           <div className="space-y-6">
 
-            {/* 5. Cover Images - UPDATED UI */}
+            {/* 5. Cover Images */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <h3 className="text-lg font-bold mb-4">Product Cover Image</h3>
               <div className="grid grid-cols-2 gap-3 mb-3">
@@ -648,7 +617,6 @@ const EditProduct = () => {
               </label>
               {errors.coverImages && <span className="text-xs text-red-500 mt-1 block">{errors.coverImages.message}</span>}
             </div>
-
 
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 sticky top-6">
               <h3 className="text-lg font-bold mb-4">Organization</h3>
@@ -679,7 +647,6 @@ const EditProduct = () => {
           </div>
 
         </form>
-
 
         {imageToCrop && (
           <ImageCropper

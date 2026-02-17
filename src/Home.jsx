@@ -38,7 +38,7 @@ export default function Home() {
 
   useEffect(()=>{
     fetchUser()
-  })
+  },[])
 
  const fetchUser = async () => {
     const  { data }  = await userService.getUserDetails()

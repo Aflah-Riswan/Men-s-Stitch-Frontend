@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { toast } from 'react-hot-toast';
-import { Download, TrendingUp, RefreshCcw, ShoppingBag, XCircle, Package, CreditCard, BarChart3 } from 'lucide-react';
+import { Download, TrendingUp, RefreshCcw, ShoppingBag, CreditCard } from 'lucide-react';
 import * as salesService from '../../services/salesService'; 
 
 const SalesReport = () => {
@@ -11,7 +11,6 @@ const SalesReport = () => {
     summary: { 
         totalOrders: 0, 
         grossSales: 0, 
-        totalSales: 0, 
         netSales: 0, 
         totalRefunds: 0, 
         totalDiscount: 0, 
@@ -47,14 +46,13 @@ const SalesReport = () => {
     setLoading(false);
   };
 
-  // Calculate Product & Order Statistics on the Client Side ---
+  // Client-side statistics calculation
   const stats = useMemo(() => {
     const orders = reportData.orders || [];
     const productMap = {};
     let totalItemsSold = 0;
 
     orders.forEach(order => {
-        // Skip cancelled orders for product stats if desired
         if (order.status === 'Cancelled') return;
 
         order.items.forEach(item => {
@@ -70,92 +68,107 @@ const SalesReport = () => {
             }
         });
     });
-
    
     const topProducts = Object.entries(productMap)
         .map(([name, data]) => ({ name, ...data }))
         .sort((a, b) => b.qty - a.qty)
-        .slice(0, 5); // Get top 5
+        .slice(0, 5); 
 
     const averageOrderValue = reportData.summary.totalOrders > 0 
-        ? (reportData.summary.netSales / reportData.summary.totalOrders) 
+        ? (reportData.summary.grossSales / reportData.summary.totalOrders) 
         : 0;
 
     return { totalItemsSold, topProducts, averageOrderValue };
   }, [reportData]);
 
-  //  PDF DOWNLOAD 
-
+  // --- PDF DOWNLOAD (Updated: Flattened Product Lines) ---
   const downloadPDF = () => {
     if (!reportData.orders || reportData.orders.length === 0) return toast.error("No data available");
 
     const doc = new jsPDF();
     
-   
+    // Header
     let dateText = filterType.toUpperCase();
     if (filterType === 'custom' && customDates.from && customDates.to) {
-        const fromDate = new Date(customDates.from).toLocaleDateString();
-        const toDate = new Date(customDates.to).toLocaleDateString();
-        dateText = `${fromDate} to ${toDate}`;
+        dateText = `${new Date(customDates.from).toLocaleDateString()} to ${new Date(customDates.to).toLocaleDateString()}`;
     }
 
-   
     doc.setFontSize(18);
     doc.text('Sales Report', 14, 15);
-    
     doc.setFontSize(10);
     doc.setTextColor(100); 
     doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
     doc.text(`Period: ${dateText}`, 14, 27);
 
-   
+    // Summary
     doc.setTextColor(0); 
-    doc.setFontSize(11); 
-    
-    
     doc.text(`Total Orders: ${reportData.summary.totalOrders}`, 14, 40);
-    doc.text(`Total Cancelled: ${reportData.summary.cancelledOrders}`, 14, 46);
-    doc.text(`Total Refunds: ${reportData.summary.totalRefunds}`, 14, 52);
-
-
-    doc.text(`Total Revenue (Gross): ${reportData.summary.grossSales}`, 100, 40);
-    doc.text(`Total Collected (Net): ${reportData.summary.netSales}`, 100, 46);
-    doc.text(`Avg Order Value: ${stats.averageOrderValue?.toFixed(2) || 0}`, 100, 52);
-
- 
+    doc.text(`Total Revenue: ${reportData.summary.grossSales}`, 80, 40);
+    doc.text(`Net Collected: ${reportData.summary.netSales}`, 140, 40);
+    
     doc.setDrawColor(200);
-    doc.line(14, 58, 196, 58);
+    doc.line(14, 45, 196, 45);
 
-    const tableColumn = ["Date", "Products", "Customer", "Status", "Amount", "Pay Status"];
-    const tableRows = reportData.orders.map(order => {
-      const productNames = order.items.map(item => `${item.name} (x${item.quantity})`).join(", ");
-      return [
-        new Date(order.createdAt).toLocaleDateString(),
-        productNames,
-        order.user?.firstName || 'Guest',
-        order.status,
-        order.totalAmount,
-        order.payment?.status
-      ];
+    // Table Columns
+    const tableColumn = ["Date", "Order ID", "Product", "Qty", "Price", "Total", "Status"];
+    const tableRows = [];
+
+    // Flattening Logic: Loop Orders -> Loop Items
+    reportData.orders.forEach(order => {
+      order.items.forEach(item => {
+        const itemTotal = (item.price * item.quantity).toFixed(2);
+        const rowData = [
+          new Date(order.createdAt).toLocaleDateString(),
+          order.orderId || order._id.substring(0, 8),
+          item.name,
+          item.quantity,
+          item.price,
+          itemTotal,
+          order.status
+        ];
+        tableRows.push(rowData);
+      });
     });
 
     autoTable(doc, { 
       head: [tableColumn], 
       body: tableRows, 
-      startY: 65,
+      startY: 50,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [41, 128, 185] }, 
-      columnStyles: { 1: { cellWidth: 50 } }
+      columnStyles: { 2: { cellWidth: 50 } } // Wider column for product name
     });
 
     doc.save(`sales_report_${filterType}.pdf`);
   };
 
-  //  EXCEL DOWNLOAD 
+  // --- EXCEL DOWNLOAD (Updated: Flattened Product Lines) ---
   const downloadExcel = () => {
     if (!reportData.orders || reportData.orders.length === 0) return toast.error("No data available");
 
-    // 1. Summary Sheet
+    // 1. Detailed Rows
+    const detailedData = [];
+    
+    reportData.orders.forEach(order => {
+        order.items.forEach(item => {
+            detailedData.push({
+                "Date": new Date(order.createdAt).toLocaleDateString(),
+                "Order ID": order.orderId || order._id,
+                "Customer Name": order.user?.firstName || 'Guest',
+                "Customer Email": order.user?.email || 'N/A',
+                "Product Name": item.name,
+                "Variant/Size": item.size || 'N/A',
+                "Quantity": item.quantity,
+                "Unit Price": item.price,
+                "Line Total": item.price * item.quantity,
+                "Order Status": order.status,
+                "Payment Method": order.payment?.method || 'N/A',
+                "Payment Status": order.payment?.status || 'Pending'
+            });
+        });
+    });
+
+    // 2. Summary Sheet
     const summaryData = [
         { Metric: "Total Gross Revenue", Value: reportData.summary.grossSales },
         { Metric: "Total Net Collected", Value: reportData.summary.netSales },
@@ -163,25 +176,16 @@ const SalesReport = () => {
         { Metric: "Total Items Sold", Value: stats.totalItemsSold },
         { Metric: "Average Order Value", Value: stats.averageOrderValue.toFixed(2) },
     ];
+
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
-
-    // 2. Orders Sheet
-    const ordersSheet = XLSX.utils.json_to_sheet(reportData.orders.map(order => ({
-      Date: new Date(order.createdAt).toLocaleDateString(),
-      Products: order.items.map(i => `${i.name} (x${i.quantity})`).join(", "), 
-      Customer: order.user?.email || 'Guest',
-      Status: order.status,
-      TotalAmount: order.totalAmount,
-      PaymentStatus: order.payment?.status || 'Pending'
-    })));
-
-    // 3. Top Products Sheet
+    const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
     const productsSheet = XLSX.utils.json_to_sheet(stats.topProducts);
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
-    XLSX.utils.book_append_sheet(workbook, ordersSheet, "Orders");
+    XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Sales");
     XLSX.utils.book_append_sheet(workbook, productsSheet, "Top Products");
+
     XLSX.writeFile(workbook, `sales_report_${filterType}.xlsx`);
   };
 
@@ -200,7 +204,7 @@ const SalesReport = () => {
                 <Download size={16} /> PDF
             </button>
             <button onClick={downloadExcel} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition shadow-sm font-medium">
-                <Download size={16} /> Excel
+                <Download size={16} /> Excel (Detailed)
             </button>
         </div>
       </div>
@@ -237,57 +241,46 @@ const SalesReport = () => {
         )}
       </div>
 
-      {/*  FINANCIAL SUMMARY CARDS */}
+      {/* FINANCIAL SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Gross Revenue */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-blue-500"></div>
           <div className="flex items-center gap-3 mb-2">
              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><TrendingUp size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Total Revenue (Gross)</span>
+             <span className="text-sm font-semibold text-gray-500">Gross Revenue</span>
           </div>
           <h2 className="text-3xl font-bold text-gray-900">₹{getRevenue()}</h2>
-          <p className="text-xs text-gray-400 mt-1">Before deductions</p>
         </div>
 
-        {/* Net Collected */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-green-500"></div>
           <div className="flex items-center gap-3 mb-2">
              <div className="p-2 bg-green-50 text-green-600 rounded-lg"><ShoppingBag size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Total Collected (Net)</span>
+             <span className="text-sm font-semibold text-gray-500">Net Collected</span>
           </div>
           <h2 className="text-3xl font-bold text-green-600">₹{reportData.summary.netSales || 0}</h2>
-          <p className="text-xs text-gray-400 mt-1">Cash in hand</p>
         </div>
 
-        {/* Avg Order Value (New) */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-purple-500"></div>
           <div className="flex items-center gap-3 mb-2">
              <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CreditCard size={20} /></div>
              <span className="text-sm font-semibold text-gray-500">Avg. Order Value</span>
           </div>
           <h2 className="text-3xl font-bold text-purple-600">₹{stats.averageOrderValue.toFixed(0)}</h2>
-          <p className="text-xs text-gray-400 mt-1">Per successful order</p>
         </div>
 
-        {/* Total Refunds */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
           <div className="absolute right-0 top-0 h-full w-1 bg-orange-500"></div>
           <div className="flex items-center gap-3 mb-2">
              <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><RefreshCcw size={20} /></div>
-             <span className="text-sm font-semibold text-gray-500">Total Refunds</span>
+             <span className="text-sm font-semibold text-gray-500">Refunds</span>
           </div>
           <h2 className="text-3xl font-bold text-orange-600">₹{reportData.summary.totalRefunds || 0}</h2>
-          <p className="text-xs text-gray-400 mt-1">Reversed transactions</p>
         </div>
       </div>
 
- 
-
-
-      {/* DATA TABLE */}
+      {/* TABLE VISUALIZATION (UI Stays Nested/Grouped) */}
       <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
         <div className="p-4 border-b border-gray-200 bg-gray-50/50">
             <h3 className="font-bold text-gray-700">Detailed Transaction History</h3>
@@ -295,12 +288,12 @@ const SalesReport = () => {
         <table className="w-full text-left border-collapse">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Products</th>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Customer</th>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
-              <th className="p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Payment</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Date</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Products</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Customer</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Amount</th>
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">Payment</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

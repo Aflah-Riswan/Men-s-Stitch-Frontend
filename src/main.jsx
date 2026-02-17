@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
       <ErrorBoundary>
-        <GoogleOAuthProvider clientId='1038200323211-2q1j4h4sn8ept3ura07qfptrbdmqr2pb.apps.googleusercontent.com' >
+        <GoogleOAuthProvider clientId='521062829902-l786i25amsbnue0npub703ush4gh4b36.apps.googleusercontent.com' >
              <App />
         </GoogleOAuthProvider>
         
